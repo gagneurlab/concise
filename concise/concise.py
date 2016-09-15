@@ -82,7 +82,7 @@ class Concise(object):
     # TODO: change all N_ uppercase to lowercase for consistency
     # correct types
     _correct_arg_types = {
-        "pooling_layer": {str, future.types.newstr.newstr},
+        "pooling_layer": {str},
         "batch_size": {int, np.int64},
         "n_epochs": {int, np.int64},
         "motif_length": {int, np.int64},
@@ -96,7 +96,7 @@ class Concise(object):
         "motif_lamb": {float, np.float64},
         "spline_lamb": {float, np.float64},
         "spline_param_lamb": {float, np.float64},
-        "init_motifs": {str, future.types.newstr.newstr, tuple, list, type(None)},  # motifs to intialize
+        "init_motifs": {str, tuple, list, type(None)},  # motifs to intialize
         "init_bias": {list, np.ndarray, float, int, np.int64, type(None), np.float64},
         "init_sd_motif": {float, np.float64},
         "init_sd_w": {float, np.float64},         # initial weight scale of feature w or motif w
