@@ -23,7 +23,7 @@ CONCISE (COnvolutional neural Network for CIS-regulatory Elements) is a model fo
 
 
 * Free software: MIT license
-* Documentation: https://concise.readthedocs.io.  
+* Documentation: https://concise-bio.readthedocs.io
 
 Features
 --------
@@ -122,4 +122,4 @@ Where to go from here:
 ----------------------
 
 * See the example file `<scripts/example-workflow.py>`_
-* Read the API Documenation https://concise.readthedocs.io/documentation
+* Read the API Documenation https://concise-bio.readthedocs.io/en/latest/documentation.html
