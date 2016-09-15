@@ -6,16 +6,17 @@ CONCISE
 .. image:: https://img.shields.io/pypi/v/concise.svg
         :target: https://pypi.python.org/pypi/concise
 
-.. image:: https://img.shields.io/travis/avsecz/concise.svg
-        :target: https://travis-ci.org/avsecz/concise
+.. image:: https://img.shields.io/travis/Avsecz/concise.svg
+        :target: https://travis-ci.org/Avsecz/concise
 
-.. image:: https://readthedocs.org/projects/concise/badge/?version=latest
-        :target: https://concise-py.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/concise-bio/badge/?version=latest
+        :target: https://concise-bio.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-.. image:: https://pyup.io/repos/github/avsecz/concise/shield.svg
-     :target: https://pyup.io/repos/github/avsecz/concise/
-     :alt: Updates
+..
+   .. image:: https://pyup.io/repos/github/avsecz/concise/shield.svg
+	:target: https://pyup.io/repos/github/avsecz/concise/
+	:alt: Updates
 
 
 CONCISE (COnvolutional neural Network for CIS-regulatory Elements) is a model for predicting PTR features like mRNA half-life from cis-regulatory elements using deep learning. 
@@ -39,7 +40,7 @@ Installation
 
 After installing the following prerequisites:
 
-1. Python (2 or 3) with pip (see `Python installation guide`_ and `pip documentation`_)
+1. Python (3.4 or 3.5) with pip (see `Python installation guide`_ and `pip documentation`_)
 2. TensorFlow python package (see `TensorFlow installation guide`_ or `Installing Tensorflow on AWS GPU-instance`_)
 
 install CONCISE using pip:

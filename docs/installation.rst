@@ -7,7 +7,7 @@ Installation
 Prerequisites
 --------------
 
-1. Python (2 or 3) with pip (see `Python installation guide`_ and `pip documentation`_)
+1. Python (3.4 or 3.5) with pip (see `Python installation guide`_ and `pip documentation`_)
 2. TensorFlow python package (see `TensorFlow installation guide`_ or `Installing Tensorflow on AWS GPU-instance`_)
 
 .. _pip documentation: https://pip.pypa.io
