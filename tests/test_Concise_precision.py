@@ -7,12 +7,6 @@ test_concise
 
 Tests for `concise` module.
 """
-from __future__ import unicode_literals
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
 import pytest
 import numpy as np
 from sklearn.linear_model import LinearRegression
@@ -25,7 +19,7 @@ class TestConciseBasic(object):
 
     @classmethod
     def setup_class(cls):
-        cls.data = load_example_data(trim_seq_len = 1)
+        cls.data = load_example_data(trim_seq_len=1)
         cls.data[0]["n_motifs"] = 1
         cls.data[0]["motif_length"] = 1
         cls.data[0]["step_size"] = 0.001
@@ -35,7 +29,7 @@ class TestConciseBasic(object):
     def test_no_error(self):
         # test the nice print:
         param, X_feat, X_seq, y, id_vec = self.data
-        
+
         dc = concise.Concise(n_epochs=50, **param)
         dc.train(X_feat, X_seq, y, X_feat, X_seq, y, n_cores=1)
 
@@ -48,7 +42,6 @@ class TestConciseBasic(object):
         # # weights has to be the same as for linear regression
         # (dc_coef - lm.coef_) / lm.coef_
 
-
         # they both have to predict the same
         y_pred = dc.predict(X_feat, X_seq)
         mse_lm = mse(y, lm.predict(X_feat))
@@ -60,7 +53,6 @@ class TestConciseBasic(object):
 
         # dc.plot_accuracy()
         # dc.plot_pos_bias()
-        
 
     @classmethod
     def teardown_class(cls):

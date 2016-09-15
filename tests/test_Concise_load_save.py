@@ -7,12 +7,6 @@ test_concise
 
 Tests for `concise` module.
 """
-from __future__ import unicode_literals
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
 import pytest
 import os
 import numpy as np
@@ -39,7 +33,7 @@ class TestConciseLoad(object):
 
         # save to file
         cls.dc.save(cls.json_file_path)
-        
+
     # TODO: check this function
     # Step    0 (epoch 0): loss nan, train mse: nan, validation mse: nan
     # Step  100 (epoch 0): loss nan, train mse: nan, validation mse: nan

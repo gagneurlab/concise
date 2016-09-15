@@ -1,15 +1,9 @@
-from __future__ import unicode_literals
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
 import concise
 import pandas as pd
 # import os
 # dir_root = os.path.dirname(os.path.realpath(__file__)) + "/../../../../"
 
-def load_example_data(trim_seq_len = 200):
+def load_example_data(trim_seq_len=200):
     param = {}
     # column names
     csv_file_path = "./data/pombe_half-life_UTR3.csv"
