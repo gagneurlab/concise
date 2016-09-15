@@ -15,6 +15,7 @@ requirements = [
     "scipy",
     "scikit-learn",
     "matplotlib",
+    'future',
 ]
 
 test_requirements = [
