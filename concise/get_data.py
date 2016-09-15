@@ -189,12 +189,12 @@ def seq_pad_and_trim(sequence_vec, seq_align="end", trim_seq_len=None):
         # pad and subset
     if seq_align == "end":
         # pad
-        padded_sequence_vec = [seq.rjust(max_seq_len, "N") for seq in sequence_vec]
+        padded_sequence_vec = [seq.rjust(max_seq_len, str("N")) for seq in sequence_vec]
         # trim
         padded_sequence_vec = [seq[-trim_seq_len:] for seq in padded_sequence_vec]
     elif seq_align == "start":
         # pad
-        padded_sequence_vec = [seq.ljust(max_seq_len, "N") for seq in sequence_vec]
+        padded_sequence_vec = [seq.ljust(max_seq_len, str("N")) for seq in sequence_vec]
         # trim
         padded_sequence_vec = [seq[0:trim_seq_len] for seq in padded_sequence_vec]
     else:
