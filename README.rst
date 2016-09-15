@@ -28,13 +28,21 @@ CONCISE (COnvolutional neural Network for CIS-regulatory Elements) is a model fo
 Features
 --------
 
-* TODO explain similarity with DeepBind and featureREDUCE  
-* CONCISE uses TensorFlow at its core and is hence able of using GPU computing
+* Architecture:
+::
+
+      Sequence +-> Conv -> reLU -> average pool  +->   y   <-+ Additional linear features
+                                 ^
+                                 |
+          Positional bias  +-----+
+
+
 * Very simple API
 * Serializing the model to JSON
   - allows to analyze the results in any langugage of choice
-* Helper function for random hyper-parameter search
-  
+* Helper function for hyper-parameter random search
+* CONCISE uses TensorFlow at its core and is hence able of using GPU computing
+
 Installation
 ------------
 
