@@ -5,15 +5,6 @@
 # - write additional method continue training
 # - train - starts training from scratch?
 # TODO: init_motifs input check - don't allow longer motifs than the motif_length
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from builtins import open
-from builtins import range
-from builtins import str
-from future import standard_library
-standard_library.install_aliases()
 from . import analyze
 from . import get_data
 from . import splines
@@ -251,7 +242,7 @@ class Concise(object):
                                                                  mean=0.0,
                                                                  stddev=self._param["init_sd_w"]),
                                              name="tf_filter_out_weights"
-            )
+                                             )
             # and biases
             # TODO: one could have b = mean(y) initialization
             filter_out_biases = tf.Variable(tf.constant(1.0, shape=[self._num_labels]),
@@ -737,7 +728,7 @@ class Concise(object):
     def predict(self, X_feat, X_seq):
         """
         Predict the response variable :py:attr:`y` for new input data (:py:attr:`X_feat`, :py:attr:`X_seq`).
-        
+
         Args:
             X_feat: Feature design matrix. Same format as :py:attr:`X_feat` in :py:meth:`train`
             X_seq:  Sequenc design matrix. Same format as  :py:attr:`X_seq` in :py:meth:`train`
@@ -906,7 +897,7 @@ class Concise(object):
         Returns:
             Concise: Loaded Concise object.
         """
-        
+
         # convert back to numpy
         data = helper.read_json(file_path)
         return Concise.from_dict(data)
@@ -918,7 +909,7 @@ class ConciseCV(object):
     Args:
         concise_model (Concise): Initialized Concise model with :py:func:`Concise`
     """
-    
+
     # TODO: check the input - all sub-models have to have the same
     def __init__(self, concise_model):
 
@@ -936,13 +927,12 @@ class ConciseCV(object):
         """
         return self._param
 
-
     def get_unused_param(self):
         """
         Returns:
             dict: Model's additional parameters specified with :py:attr:`**kwargs` in :py:func:`Concise.__init__` of :py:attr:`concise_model`.
         """
-        
+
         return self._concise_model.get_unused_param()
 
     # TODO: Check
@@ -1097,7 +1087,7 @@ class ConciseCV(object):
             Concise: Globally fitted model.
         """
         return self._concise_global_model
-    
+
     def to_dict(self):
         """
         Returns:

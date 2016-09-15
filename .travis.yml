@@ -5,8 +5,6 @@ python: 3.5
 env:
 - TOXENV=py35
 - TOXENV=py34
-- TOXENV=py27
-- TOXENV=pypy
 install:
   - pip install -U tox
 script: tox -e ${TOXENV}
@@ -19,4 +17,4 @@ deploy:
   on:
     tags: true
     repo: avsecz/concise
-    condition: $TOXENV == py27
+    condition: $TOXENV == py35

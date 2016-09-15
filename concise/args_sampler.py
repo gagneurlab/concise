@@ -1,13 +1,6 @@
 """
 Sample random arguments from a dict of parameters
 """
-from __future__ import unicode_literals
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-from future import standard_library
-standard_library.install_aliases()
-
 import numpy as np
 import random
 
@@ -47,7 +40,7 @@ def sample_params(params):
     Note:
         - :python:`{[1,2], [3,4]}` is invalid. Use :python:`{(1,2), (3,4)}` instead.
         - You can allways use :python:`{}` with a single element to by-pass sampling.
-        
+
     """
     def sample_log(myrange):
         x = np.random.uniform(np.log10(myrange[0]), np.log10(myrange[1]))
