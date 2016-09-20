@@ -62,12 +62,14 @@ class Concise(object):
         init_motifs (list of chr): List of motifs used to initialize the model. Their length has to be smaller or equal to :py:attr:`motif_length`. If it is smaller, they will be padded with undefined bases (N's). Number of provided motifs (list length) has to be smaller or equal to :py:attr:`n_motifs`. If it is smaller, :code:`'NN...NN'` will be used for the missing motifs.
         init_motifs_scale (float): Scale at which to initialize the motif weights. If small (close to 1), the provided :py:attr:`init_motifs` will have a small impact.
         nonlinearity_scale_factor (float): Scaling factor after the pooling layer. This is useful in order to have all the weights roughly on the same scale (and hence be able to use a single :py:attr:`step_size`).
-        init_bias (float): Initial value for the bias.
+        init_motif_bias (float): Initial value for the bias.
         init_sd_motif (float): Standard deviation of the noise added to initialized motif weights.
         init_sd_w (float): Standard deviation of the noise added to initialized feature weights.
+
         print_every (int): Number of iteration steps after the training information is printed.
         **kwargs (any): Additional unused parameters that get stored in the model file. Useful to store say the pre-processing information.
     """
+#        init_feat_w_lm (bool): If True, model is initialized by fitting a linear model to the response using :py:attr:`X_feat` as features.
 
     # TODO: __repr__
     # TODO: change all N_ uppercase to lowercase for consistency
@@ -88,7 +90,7 @@ class Concise(object):
         "spline_lamb": {float, np.float64},
         "spline_param_lamb": {float, np.float64},
         "init_motifs": {str, tuple, list, type(None)},  # motifs to intialize
-        "init_bias": {list, np.ndarray, float, int, np.int64, type(None), np.float64},
+        "init_motif_bias": {list, np.ndarray, float, int, np.int64, type(None), np.float64},
         "init_sd_motif": {float, np.float64},
         "init_sd_w": {float, np.float64},         # initial weight scale of feature w or motif w
         "print_every": {int, np.int64}
@@ -125,9 +127,10 @@ class Concise(object):
                  init_motifs_scale=1,  # scale at which to initialize the weights
                  # right scale
                  nonlinearity_scale_factor=1,
-                 init_bias=0,
+                 init_motif_bias=0,
                  init_sd_motif=1e-2,
                  init_sd_w=1e-3,         # initial weight scale of feature w or motif w
+                 # init_feat_w_lm=False,    # initalize features with a linear model
                  # outuput detail
                  print_every=100,
                  **kwargs):
@@ -178,7 +181,7 @@ class Concise(object):
         """
         return self.unused_param
 
-    def _get_var_initialization(self, graph):
+    def _get_var_initialization(self, graph, X_feat_train, y_train):
         # setup filter initial
 
         # motif -> filter_array
@@ -191,33 +194,41 @@ class Concise(object):
             del motifs
 
         # update filter bias according to the filter_array width
-        if self._param["init_bias"] is None and self._param["init_motifs"] is not None:
+        if self._param["init_motif_bias"] is None and self._param["init_motifs"] is not None:
             # Initialization logic:
             # - 2 missmatches or more should yield a *negative* score,
             # - 1 missmatch or less should yield a *positive* score:
             biases = np.sum(np.amax(filter_init_array, axis=2), axis=1)[0]
-            self._param["init_bias"] = - (biases - 1.5 * self._param["init_motifs_scale"])
+            self._param["init_motif_bias"] = - (biases - 1.5 * self._param["init_motifs_scale"])
             del biases
         else:
-            self._param["init_bias"] = 0
+            self._param["init_motif_bias"] = 0
+
+        # if self._param["init_feat_w_lm"]:
+        #     lm = LinearRegression()
+        #     lm.fit(X_feat_train, y_train)
+        #     feature_weights_init, final_bias_init = lm.coef_, lm.intercept_
+        # else:
+        feature_weights_init, final_bias_init = (0, 0)
+            
 
         # Finally, define the variables
         with graph.as_default():
             # Define variables.
             # --------------------------------------------
             # 1. convolution filter
-            layer1_filter = tf.Variable(tf.truncated_normal(
+            motif_base_weights = tf.Variable(tf.truncated_normal(
                 [1, self._param["motif_length"], self._num_channels, self._param["n_motifs"]],
-                mean=0, stddev=self._param["init_sd_motif"]), name="tf_layer1_filter"
+                mean=0, stddev=self._param["init_sd_motif"]), name="tf_motif_base_weights"
             )
 
             # intialize around the known motif
             if self._param["init_motifs"] is not None:
-                layer1_filter += filter_init_array
+                motif_base_weights += filter_init_array
 
             # + ReLU's
-            layer1_biases = tf.Variable(tf.zeros([self._param["n_motifs"]]), name="tf_layer1_biases") + \
-                self._param["init_bias"]
+            motif_bias = tf.Variable(tf.zeros([self._param["n_motifs"]]), name="tf_motif_bias") + \
+                self._param["init_motif_bias"]
 
             # --------------------------------------------
             # initalize spline weights
@@ -232,30 +243,34 @@ class Concise(object):
 
             # --------------------------------------------
             # NN
-            # feature weights
-            feat_weights = tf.Variable(tf.truncated_normal([self._param["n_add_features"], self._num_labels],
-                                                           mean=0,
-                                                           stddev=self._param["init_sd_w"]),
-                                       name="tf_feat_weights")
             # motif weights
-            filter_out_weights = tf.Variable(tf.truncated_normal([self._param["n_motifs"], self._num_labels],
+            motif_weights = tf.Variable(tf.truncated_normal([self._param["n_motifs"], self._num_labels],
                                                                  mean=0.0,
                                                                  stddev=self._param["init_sd_w"]),
-                                             name="tf_filter_out_weights"
+                                             name="tf_motif_weights"
                                              )
-            # and biases
-            # TODO: one could have b = mean(y) initialization
-            filter_out_biases = tf.Variable(tf.constant(1.0, shape=[self._num_labels]),
-                                            name="tf_filter_out_biases")
+
+            # feature weights
+            feature_weights = tf.Variable(tf.truncated_normal([self._param["n_add_features"], self._num_labels],
+                                                           mean=0,
+                                                              stddev=self._param["init_sd_w"],
+                                                              dtype=tf.float32),
+                                       name="tf_feature_weights")
+            feature_weights = feature_weights + feature_weights_init
+
+            final_bias = tf.Variable(tf.constant(final_bias_init,
+                                                 shape=[self._num_labels],
+                                                 dtype=tf.float32),
+                                            name="tf_final_bias")
             # --------------------------------------------
             # store all the initalized variables to a dictionary
             var = {
-                "layer1_filter": layer1_filter,
-                "layer1_biases": layer1_biases,
+                "motif_base_weights": motif_base_weights,
+                "motif_bias": motif_bias,
                 "spline_weights": spline_weights,
-                "feat_weights": feat_weights,
-                "filter_out_weights": filter_out_weights,
-                "filter_out_biases": filter_out_biases
+                "feature_weights": feature_weights,
+                "motif_weights": motif_weights,
+                "final_bias": final_bias
             }
 
         return var
@@ -278,17 +293,17 @@ class Concise(object):
             # 1 x NN
 
             def model(data, tf_X_feat, var):
-                conv = tf.nn.conv2d(data, var["layer1_filter"],
+                conv = tf.nn.conv2d(data, var["motif_base_weights"],
                                     strides=[1, 1, 1, 1], padding='VALID', name="conv")
 
                 # use the non-linearity
                 if self._param["nonlinearity"] == "exp":
-                    hidden = tf.exp(conv + var["layer1_biases"])
+                    hidden = tf.exp(conv + var["motif_bias"])
                 elif self._param["nonlinearity"] == "relu":
-                    hidden = tf.nn.relu(conv + var["layer1_biases"])
+                    hidden = tf.nn.relu(conv + var["motif_bias"])
                 else:
                     raise Warning("nonlinearity parameter not valid. Using relu")
-                    hidden = tf.nn.relu(conv + var["layer1_biases"])
+                    hidden = tf.nn.relu(conv + var["motif_bias"])
 
                 # multiply by positional bias
                 if self._param["n_splines"] is not None:
@@ -316,8 +331,8 @@ class Concise(object):
                 pool_layer *= self._param["nonlinearity_scale_factor"]
 
                 # train a NN on top of it
-                return tf.matmul(pool_layer, var["filter_out_weights"]) + \
-                    tf.matmul(tf_X_feat, var["feat_weights"]) + var["filter_out_biases"]
+                return tf.matmul(pool_layer, var["motif_weights"]) + \
+                    tf.matmul(tf_X_feat, var["feature_weights"]) + var["final_bias"]
 
             # define the loss
             y_pred = model(tf_X_seq, tf_X_feat, var)
@@ -326,10 +341,10 @@ class Concise(object):
             loss = tf.reduce_mean(tf.square(y_pred - tf_y))
 
             # add regularization
-            # regularization = motif_lamb * tf.nn.l2_loss(layer1_filter) +
-            # lamb * tf.nn.l2_loss(filter_out_weights)
-            regularization = self._param["motif_lamb"] * tf_helper.l1_loss(var["layer1_filter"]) + \
-                self._param["lamb"] * tf_helper.l1_loss(var["filter_out_weights"])
+            # regularization = motif_lamb * tf.nn.l2_loss(motif_base_weights) +
+            # lamb * tf.nn.l2_loss(motif_weights)
+            regularization = self._param["motif_lamb"] * tf_helper.l1_loss(var["motif_base_weights"]) + \
+                self._param["lamb"] * tf_helper.l1_loss(var["motif_weights"])
             loss += regularization
 
             if self._param["n_splines"] is not None:
@@ -397,14 +412,14 @@ class Concise(object):
         Get model weights
         """
         # transform the weights into our form
-        motif_tensor_raw = var_res["layer1_filter"][0]
-        motif_tensor = np.swapaxes(motif_tensor_raw, 0, 2)
+        motif_base_weights_raw = var_res["motif_base_weights"][0]
+        motif_base_weights = np.swapaxes(motif_base_weights_raw, 0, 2)
 
         # get weights
-        motif_weights = var_res["filter_out_weights"]
-        motif_bias = var_res["layer1_biases"]
-        final_bias = var_res["filter_out_biases"]
-        feat_weights_out = var_res["feat_weights"]
+        motif_weights = var_res["motif_weights"]
+        motif_bias = var_res["motif_bias"]
+        final_bias = var_res["final_bias"]
+        feature_weights = var_res["feature_weights"]
 
         # get the GAM prediction:
         spline_pred = None
@@ -420,11 +435,11 @@ class Concise(object):
             spline_pred.reshape([-1])
             spline_weights = var_res["spline_weights"]
 
-        weights = {"motif_tensor": motif_tensor,
+        weights = {"motif_base_weights": motif_base_weights,
                    "motif_weights": motif_weights,
                    "motif_bias": motif_bias,
                    "final_bias": final_bias,
-                   "feat_weights_out": feat_weights_out,
+                   "feature_weights": feature_weights,
                    "spline_pred": spline_pred,
                    "spline_weights": spline_weights
                    }
@@ -562,7 +577,7 @@ class Concise(object):
 
         # setup graph and variables
         self._graph = tf.Graph()
-        self._var = self._get_var_initialization(self._graph)
+        self._var = self._get_var_initialization(self._graph, X_feat_train = X_feat, y_train = y)
         self._other_var = self._build_graph(self._graph, self._var)
         # TODO: save the intialized parameters
         var_res_init = self._get_var_res(self._graph, self._var, self._other_var)
@@ -716,11 +731,11 @@ class Concise(object):
         exec_time = toc - tic
         self._exec_time = exec_time
         print('That took %fs' % exec_time)
-        # weights = {"motif_tensor": motif_tensor,
+        # weights = {"motif_base_weights": motif_base_weights,
         #            "motif_weights": motif_weights,
         #            "motif_bias": motif_bias,
         #            "final_bias": final_bias,
-        #            "feat_weights_out": feat_weights_out,
+        #            "feature_weights": feature_weights,
         #            "spline_pred": spline_pred
         #            }
         return var_res
@@ -832,24 +847,24 @@ class Concise(object):
             return
 
         # layer 1
-        motif_tensor_raw = np.swapaxes(weights["motif_tensor"], 2, 0)
-        layer1_filter = motif_tensor_raw[np.newaxis]
-        layer1_biases = weights["motif_bias"]
+        motif_base_weights_raw = np.swapaxes(weights["motif_base_weights"], 2, 0)
+        motif_base_weights = motif_base_weights_raw[np.newaxis]
+        motif_bias = weights["motif_bias"]
 
-        feat_weights = weights["feat_weights_out"]
+        feature_weights = weights["feature_weights"]
         spline_weights = weights["spline_weights"]
 
         # filter
-        filter_out_weights = weights["motif_weights"]
-        filter_out_biases = weights["final_bias"]
+        motif_weights = weights["motif_weights"]
+        final_bias = weights["final_bias"]
 
         var_res = {
-            "layer1_filter": layer1_filter,
-            "layer1_biases": layer1_biases,
+            "motif_base_weights": motif_base_weights,
+            "motif_bias": motif_bias,
             "spline_weights": spline_weights,
-            "feat_weights": feat_weights,
-            "filter_out_weights": filter_out_weights,
-            "filter_out_biases": filter_out_biases
+            "feature_weights": feature_weights,
+            "motif_weights": motif_weights,
+            "final_bias": final_bias
         }
 
         # cast everything to float32

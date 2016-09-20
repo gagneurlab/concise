@@ -49,7 +49,7 @@ ARGS = {
     "init_motifs_scale": [1e-2, 1e2],
 
     # initialization
-    "init_bias": {None},   # None means use the offset method
+    "init_motif_bias": {None},   # None means use the offset method
     "init_sd_filter": [1e-3, 1e-1],
     "init_sd_w": [1e-5, 1e-1],
     "print_every": 100

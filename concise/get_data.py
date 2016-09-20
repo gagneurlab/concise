@@ -105,6 +105,7 @@ def prepare_data(dt, features, response, sequence, id_column=None, seq_align="en
         id_column (str): Name of the column used as the row identifier.
         seq_align (str): one of ``{"start", "end"}``. To which end should we align sequences?
         trim_seq_len (int): Consider only first `trim_seq_len` bases of each sequence when generating the sequence design matrix. If :python:`None`, set :py:attr:`trim_seq_len` to the longest sequence length, hence whole sequences are considered.
+        standardize_features (bool): If True, column in the returned matrix matrix :py:attr:`X_seq` are normalied to have zero mean and unit variance.
 
 
     Returns:
@@ -137,6 +138,10 @@ def prepare_data(dt, features, response, sequence, id_column=None, seq_align="en
                           trim_seq_len=trim_seq_len)
     X_seq = np.array(X_seq, dtype="float32")
     id_vec = np.array(dt[id_column])
+
+    # if standardize_features:
+    #     X_feat = preprocessing.scale(X_feat)
+        
     return X_feat, X_seq, y, id_vec
 
 

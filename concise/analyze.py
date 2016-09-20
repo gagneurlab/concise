@@ -59,7 +59,7 @@ def cv_list2dt(cv_list):
 def print_report(weights):
     np.set_printoptions(suppress=True, precision=2)
     print("motif tensor:")
-    print(weights["motif_tensor"])
+    print(weights["motif_base_weights"])
 
     print("motif_weights:")
     print(weights["motif_weights"])
@@ -68,20 +68,20 @@ def print_report(weights):
     print("final_bias")
     print(weights["final_bias"])
 
-    print("feat_weights")
-    print(weights["feat_weights_out"])
+    print("feature_weights")
+    print(weights["feature_weights"])
 
     def myfunc(x):
         return ['A', 'C', 'G', 'T'][x]
 
     # get the maximal index at each position:
     print("argmax letter:\n")
-    best_letter = np.argmax(weights["motif_tensor"], axis=1)
+    best_letter = np.argmax(weights["motif_base_weights"], axis=1)
     vfunc = np.vectorize(myfunc)
     print(np.reshape(np.array(([''.join(i) for i in vfunc(best_letter)])), [-1, 1]))
 
     print("\nargmin letter:\n")
-    worst_letter = np.argmin(weights["motif_tensor"], axis=1)
+    worst_letter = np.argmin(weights["motif_base_weights"], axis=1)
     print(np.reshape(np.array(([''.join(i) for i in vfunc(worst_letter)])), [-1, 1]))
 
 
