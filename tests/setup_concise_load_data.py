@@ -1,5 +1,6 @@
 import concise
 import pandas as pd
+from sklearn import preprocessing
 # import os
 # dir_root = os.path.dirname(os.path.realpath(__file__)) + "/../../../../"
 

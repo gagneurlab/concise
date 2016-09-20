@@ -8,29 +8,41 @@ test_concise
 Tests for `concise` module.
 """
 import pytest
+import os
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
 from concise import concise
+from concise import helper
 from tests.setup_concise_load_data import load_example_data
 from concise.math_helper import mse
 
-class TestConcisePrediction(object):
-
+class TestConciseNormalize(object):
+    """
+    Test saving/loading to file
+    """
     @classmethod
     def setup_class(cls):
-        cls.data = load_example_data(trim_seq_len=1, standardize_features = False)
-        # cls.data2 = load_example_data(trim_seq_len=1, standardize_features = True)
-        cls.data[0]["n_motifs"] = 1
-        cls.data[0]["motif_length"] = 1
-        cls.data[0]["step_size"] = 0.001
+        cls.data = load_example_data(standardize_features = True)
 
-        # pass
+    def test_concise_dict_equality(self):
+        param, X_feat, X_seq, y, id_vec = self.data
+        assert np.all(np.abs(np.mean(X_feat, axis = 0)) < 1e-6)
+        assert np.all(np.abs(np.std(X_feat , axis = 0)- 1) < 1e-3)
 
-    def test_non_std(self):
+class TestInitialize(object):
+    """
+    Test saving/loading to file
+    """
+    @classmethod
+    def setup_class(cls):
+        # cls.data = load_example_data(standardize_features = True)
+        cls.data = load_example_data(standardize_features = False)
+
+    def test_init_lm_false(self):
         # test the nice print:
         param, X_feat, X_seq, y, id_vec = self.data
-
+        param["init_feat_w_lm"] = False
         dc = concise.Concise(n_epochs=50, **param)
         dc.train(X_feat, X_seq, y, X_feat, X_seq, y, n_cores=1)
 
@@ -55,14 +67,11 @@ class TestConcisePrediction(object):
 
         assert mse(lm.predict(X_feat), y_pred) < 0.005
 
-        # dc.plot_accuracy()
-        # dc.plot_pos_bias()
 
-
-    # def test_std(self):
+    # def test_init_lm_true(self):
     #     # test the nice print:
-    #     param, X_feat, X_seq, y, id_vec = self.data2
-
+    #     param, X_feat, X_seq, y, id_vec = self.data
+    #     param["init_feat_w_lm"] = True
     #     dc = concise.Concise(n_epochs=50, **param)
     #     dc.train(X_feat, X_seq, y, X_feat, X_seq, y, n_cores=1)
 
