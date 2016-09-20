@@ -210,7 +210,6 @@ class Concise(object):
         #     feature_weights_init, final_bias_init = lm.coef_, lm.intercept_
         # else:
         feature_weights_init, final_bias_init = (0, 0)
-            
 
         # Finally, define the variables
         with graph.as_default():
@@ -245,23 +244,23 @@ class Concise(object):
             # NN
             # motif weights
             motif_weights = tf.Variable(tf.truncated_normal([self._param["n_motifs"], self._num_labels],
-                                                                 mean=0.0,
-                                                                 stddev=self._param["init_sd_w"]),
-                                             name="tf_motif_weights"
-                                             )
+                                                            mean=0.0,
+                                                            stddev=self._param["init_sd_w"]),
+                                        name="tf_motif_weights"
+                                        )
 
             # feature weights
             feature_weights = tf.Variable(tf.truncated_normal([self._param["n_add_features"], self._num_labels],
-                                                           mean=0,
+                                                              mean=0,
                                                               stddev=self._param["init_sd_w"],
                                                               dtype=tf.float32),
-                                       name="tf_feature_weights")
+                                          name="tf_feature_weights")
             feature_weights = feature_weights + feature_weights_init
 
             final_bias = tf.Variable(tf.constant(final_bias_init,
                                                  shape=[self._num_labels],
                                                  dtype=tf.float32),
-                                            name="tf_final_bias")
+                                     name="tf_final_bias")
             # --------------------------------------------
             # store all the initalized variables to a dictionary
             var = {
@@ -577,7 +576,7 @@ class Concise(object):
 
         # setup graph and variables
         self._graph = tf.Graph()
-        self._var = self._get_var_initialization(self._graph, X_feat_train = X_feat, y_train = y)
+        self._var = self._get_var_initialization(self._graph, X_feat_train=X_feat, y_train=y)
         self._other_var = self._build_graph(self._graph, self._var)
         # TODO: save the intialized parameters
         var_res_init = self._get_var_res(self._graph, self._var, self._other_var)
