@@ -29,6 +29,7 @@ Features
 --------
 
 * Architecture:
+  
 ::
 
       Sequence +-> Conv -> reLU -> average pool  +->   y   <-+ Additional linear features
