@@ -1,5 +1,5 @@
 ===============================
-CONCISE (COnvolutional neural Network for CIS-regulatory Elements)
+CONCISE
 ===============================
 
 
