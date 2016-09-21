@@ -6,9 +6,12 @@
 Welcome to CONCISE's documentation!
 ======================================
 
-CONCISE (COnvolutional neural Network for CIS-regulatory Elements) is a model for predicting PTR features like mRNA half-life from cis-regulatory elements using deep learning.
+CONCISE (COnvolutional neural Network for CIS-regulatory Elements) is a model for predicting any quatitative outcome (say mRNA half-life) from cis-regulatory sequence using deep learning. 
 
-  
+* Developed by the Gagneur Lab (computational biology):  http://www.gagneurlab.in.tum.de
+* Free software: MIT license
+* Source code on Github: https://github.com/Avsecz/concise
+
 Contents:
 
 .. toctree::
