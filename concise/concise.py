@@ -10,9 +10,9 @@ from . import get_data
 from . import splines
 from . import math_helper
 from . import helper
+from . import tf_helper
 import numpy as np
 import tensorflow as tf
-from . import tf_helper
 import pprint
 import json
 import os
@@ -20,6 +20,7 @@ import inspect
 import copy
 import time
 from sklearn.cross_validation import KFold
+from sklearn.linear_model import LinearRegression
 
 # def train(param, X_feat_train, X_seq_train, y_train,
 #           X_seq_valid=None, X_feat_valid=None, y_valid=None,
@@ -47,6 +48,7 @@ class Concise(object):
         nonlinearity (str): Activation function to use after the convolutional layer. Can be :code:`"relu"` or :code:`"exp"`
         batch_size (int): Batch size - number of training samples used in one parameter update iteration.
         n_epochs (int): Number of epochs - how many times should a single training sample be used in the parameter update iteration.
+        regress_out_feat (bool): If True, the features provided in :py:attr:`X_feat` will be regressed using a linear model. 
         motif_length (int): Length of the trained motif (number), i.e. width of the convolutional filter.
         n_motifs (int): Number of motifs to train.
         step_size (float): Step size or learning rate. Size of the parameter update in the ADAM optimizer. Very important tuning parameter.
@@ -108,6 +110,7 @@ class Concise(object):
                  nonlinearity="relu",  # relu or exp
                  batch_size=32,
                  n_epochs=3,
+                 regress_out_feat=False,
                  # network details
                  motif_length=9,
                  n_motifs=6,
@@ -149,6 +152,9 @@ class Concise(object):
         self._accuracy = None
 
         self.unused_param = kwargs
+
+        self.bias_regress_out = None
+        self.w_regress_out = None
 
         # setup splines
         self._splines = None
@@ -397,7 +403,20 @@ class Concise(object):
             return None
 
         var_res = self._var_res
-        return self._var_res_to_weights(var_res)
+        weights = self._var_res_to_weights(var_res)
+        # add the regress out weights
+        weights["w_regress_out"] = self.w_regress_out
+        weights["bias_regress_out"] = self.bias_regress_out
+        # save to the side
+        weights["final_bias_fit"] = weights["final_bias"]
+        weights["feature_weights_fit"] = weights["feature_weights"]
+
+        # act as if you had normal weights
+        if self.bias_regress_out is not None and self.w_regress_out is not None:
+            weights["final_bias"] = weights["final_bias"] + self.bias_regress_out
+            weights["feature_weights"] = weights["feature_weights"] * self.w_regress_out
+
+        return weights
 
     def get_init_weights(self):
         """
@@ -553,6 +572,16 @@ class Concise(object):
         # input check
         assert X_seq.shape[0] == X_feat.shape[0] == y.shape[0]
         assert y.shape == (X_feat.shape[0], 1)
+
+        # regress out the features if necessary
+        if self._param["regress_out_feat"]:
+            lm = LinearRegression()
+            lm.fit(X_feat, y)
+            y_pred = lm.predict(X_feat)
+            self.bias_regress_out = lm.intercept_
+            self.w_regress_out = lm.coef_
+            # generate a new X_feat
+            X_feat = y_pred.reshape((-1, 1))
 
         # extract data specific parameters
         self._param["seq_length"] = X_seq.shape[2]
@@ -747,6 +776,11 @@ class Concise(object):
             X_feat: Feature design matrix. Same format as :py:attr:`X_feat` in :py:meth:`train`
             X_seq:  Sequenc design matrix. Same format as  :py:attr:`X_seq` in :py:meth:`train`
         """
+
+        # tranform X_feat to your form if necessary
+        if self._param["regress_out_feat"]:
+            X_feat = np.dot(X_feat, self.w_regress_out) + self.bias_regress_out
+
         return self._get_other_var(X_feat, X_seq, variable="y_pred")
 
     def _get_other_var(self, X_feat, X_seq, variable="y_pred"):
@@ -899,7 +933,27 @@ class Concise(object):
         dc.unused_param = obj_dict["unused_param"]
         dc._accuracy = obj_dict["output"]["accuracy"]
         dc._splines = obj_dict["output"]["splines"]
-        dc._set_var_res(obj_dict["output"]["weights"])
+
+        weights = obj_dict["output"]["weights"]
+
+        # skip to the next step
+        if weights is None:
+            dc.w_regress_out = None
+            dc.bias_regress_out = None
+            return dc
+
+        # regress out features
+        dc.w_regress_out = weights.pop("w_regress_out", None)
+        dc.bias_regress_out = weights.pop("bias_regress_out", None)
+        if dc.w_regress_out is None or dc.bias_regress_out is None:
+            dc._param["regress_out_feat"] = False
+
+        # overwrite feature weights
+        weights["feature_weights"] = weights["feature_weights_fit"]
+        # overwrite bias
+        weights["final_bias"] = weights["final_bias_fit"]
+
+        dc._set_var_res(weights)
 
         return dc
 

@@ -87,3 +87,24 @@ class TestConciseLoadPosBias(TestConciseLoad):
 
         # save to file
         cls.dc.save(cls.json_file_path)
+
+class TestConciseRegressOut(TestConciseLoad):
+    """
+    Same TestConciseLoad, but using 
+    """
+    @classmethod
+    def setup_class(cls):
+        cls.data = load_example_data()
+        cls.json_file_path = "/tmp/model_regress_out.json"
+
+        param, X_feat, X_seq, y, id_vec = cls.data
+        param["regress_out_feat"] = True
+        cls.dc = concise.Concise(n_epochs=1, n_splines=5)
+        cls.dc.train(X_feat, X_seq, y, X_feat, X_seq, y, n_cores=3)
+
+        cls.mydict = cls.dc.to_dict()
+        cls.y_old = cls.dc.predict(X_feat, X_seq)
+
+        # save to file
+        cls.dc.save(cls.json_file_path)
+
