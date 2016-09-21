@@ -29,7 +29,7 @@ class TestConciseNormalize(object):
         # test the nice print:
         param, X_feat, X_seq, y, id_vec = self.data
         param["regress_out_feat"] = True
-        dc = concise.Concise(n_epochs=50, **param)
+        dc = concise.Concise(n_epochs=5, **param)
         dc.train(X_feat, X_seq, y, X_feat, X_seq, y, n_cores=1)
 
         weights = dc.get_weights()
@@ -49,6 +49,6 @@ class TestConciseNormalize(object):
         print(mse_lm)
         print("mse_dc")
         print(mse_dc)
-        assert np.abs(mse_lm - mse_dc) < 0.005
 
+        assert mse_dc < mse_lm + 0.005
         assert mse(lm.predict(X_feat), y_pred) < 0.005

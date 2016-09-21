@@ -48,7 +48,7 @@ class Concise(object):
         nonlinearity (str): Activation function to use after the convolutional layer. Can be :code:`"relu"` or :code:`"exp"`
         batch_size (int): Batch size - number of training samples used in one parameter update iteration.
         n_epochs (int): Number of epochs - how many times should a single training sample be used in the parameter update iteration.
-        regress_out_feat (bool): If True, the features provided in :py:attr:`X_feat` will be regressed using a linear model. 
+        regress_out_feat (bool): If True, the features provided in :py:attr:`X_feat` will be regressed using a linear model. Prediction of the linear model will be used as a new :py:attr:`X_feat`.
         motif_length (int): Length of the trained motif (number), i.e. width of the convolutional filter.
         n_motifs (int): Number of motifs to train.
         step_size (float): Step size or learning rate. Size of the parameter update in the ADAM optimizer. Very important tuning parameter.
@@ -213,7 +213,7 @@ class Concise(object):
         # if self._param["init_feat_w_lm"]:
         #     lm = LinearRegression()
         #     lm.fit(X_feat_train, y_train)
-        #     feature_weights_init, final_bias_init = lm.coef_, lm.intercept_
+        #     feature_weights_init, final_bias_init = lm.coef_.reshape((-1)), lm.intercept_[0]
         # else:
         feature_weights_init, final_bias_init = (0, 0)
 
@@ -577,11 +577,11 @@ class Concise(object):
         if self._param["regress_out_feat"]:
             lm = LinearRegression()
             lm.fit(X_feat, y)
-            y_pred = lm.predict(X_feat)
-            self.bias_regress_out = lm.intercept_
-            self.w_regress_out = lm.coef_
+            self.bias_regress_out = lm.intercept_[0]
+            self.w_regress_out = lm.coef_.reshape((-1))
             # generate a new X_feat
-            X_feat = y_pred.reshape((-1, 1))
+            X_feat = lm.predict(X_feat).reshape((-1, 1))
+            X_feat_valid = lm.predict(X_feat_valid).reshape((-1, 1))
 
         # extract data specific parameters
         self._param["seq_length"] = X_seq.shape[2]
@@ -780,6 +780,7 @@ class Concise(object):
         # tranform X_feat to your form if necessary
         if self._param["regress_out_feat"]:
             X_feat = np.dot(X_feat, self.w_regress_out) + self.bias_regress_out
+            X_feat = X_feat.reshape((-1, 1))
 
         return self._get_other_var(X_feat, X_seq, variable="y_pred")
 
@@ -943,8 +944,8 @@ class Concise(object):
             return dc
 
         # regress out features
-        dc.w_regress_out = weights.pop("w_regress_out", None)
-        dc.bias_regress_out = weights.pop("bias_regress_out", None)
+        dc.w_regress_out = weights.get("w_regress_out", None)
+        dc.bias_regress_out = weights.get("bias_regress_out", None)
         if dc.w_regress_out is None or dc.bias_regress_out is None:
             dc._param["regress_out_feat"] = False
 
