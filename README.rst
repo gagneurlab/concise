@@ -87,6 +87,7 @@ Getting Started
    ######
    # Train CONCISE
    ######
+   import concise
    
    # initialize CONCISE
    co = concise.Concise(motif_length = 9, n_motifs = 2, 
