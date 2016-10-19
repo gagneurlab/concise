@@ -89,7 +89,8 @@ Getting Started
    ######
    
    # initialize CONCISE
-   co = concise.Concise(motif_length = 9, n_motifs = 2, init_motifs = ("TATTTAT", "TTAATGA"))
+   co = concise.Concise(motif_length = 9, n_motifs = 2, 
+                        init_motifs = ("TATTTAT", "TTAATGA"))
 
    # train:
    # - on a GPU if tensorflow is compiled with GPU support
