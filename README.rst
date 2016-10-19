@@ -112,7 +112,9 @@ Getting Started
    ######
 
    # intialize
-   co3 = concise.Concise(motif_length = 9, n_motifs = 2, init_motifs = ("TATTTAT", "TTAATGA"))
+   co3 = concise.Concise(motif_length = 9, n_motifs = 2, 
+                         init_motifs = ("TATTTAT", "TTAATGA"))
+                         
    cocv = concise.ConciseCV(concise_object = co3)
 
    # train
