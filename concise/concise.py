@@ -34,6 +34,9 @@ from sklearn.linear_model import LinearRegression
 
 # feed to train n_cores=4,...
 # TODO: add the possibility of random huber_loss function and other loss functions
+def asd():
+    pass
+
 class Concise(object):
     """**Initialize the Concise object.**
 
@@ -48,7 +51,8 @@ class Concise(object):
         nonlinearity (str): Activation function to use after the convolutional layer. Can be :code:`"relu"` or :code:`"exp"`
         batch_size (int): Batch size - number of training samples used in one parameter update iteration.
         n_epochs (int): Number of epochs - how many times should a single training sample be used in the parameter update iteration.
-        regress_out_feat (bool): If True, the features provided in :py:attr:`X_feat` will be regressed using a linear model. Prediction of the linear model will be used as a new :py:attr:`X_feat`.
+        n_iterations_checkpoint (int): Number of internal L-BFGS-B steps to perform at every step.
+_        regress_out_feat (bool): If True, the features provided in :py:attr:`X_feat` will be regressed using a linear model. Prediction of the linear model will be used as a new :py:attr:`X_feat`.
         motif_length (int): Length of the trained motif (number), i.e. width of the convolutional filter.
         n_motifs (int): Number of motifs to train.
         step_size (float): Step size or learning rate. Size of the parameter update in the ADAM optimizer. Very important tuning parameter.
@@ -80,6 +84,7 @@ class Concise(object):
         "pooling_layer": {str},
         "batch_size": {int, np.int64},
         "n_epochs": {int, np.int64},
+        "n_iterations_checkpoint": {int, np.int64},
         "motif_length": {int, np.int64},
         "n_motifs": {int, np.int64},
         "step_size": {float, np.float64, np.float},
@@ -110,6 +115,7 @@ class Concise(object):
                  nonlinearity="relu",  # relu or exp
                  batch_size=32,
                  n_epochs=3,
+                 n_iterations_checkpoint=20,
                  regress_out_feat=False,
                  # network details
                  motif_length=9,
@@ -375,7 +381,15 @@ class Concise(object):
             # - GradientDescentOptimizer
             # - AdamOptimizer
             tf_step_size = tf.placeholder(tf.float32, shape=[])
-            optimizer = tf.train.AdamOptimizer(tf_step_size).minimize(loss)
+            # optimizer = tf.train.AdamOptimizer(tf_step_size).minimize(loss)
+
+            # BFGS loss
+            # TODO - implement n_iterations_checkpoint
+            optimizer = tf.contrib.opt.ScipyOptimizerInterface(
+                loss, method='L-BFGS-B',
+                options={'maxiter': self._param["n_iterations_checkpoint"]})
+            #
+            # http://www.subsubroutine.com/sub-subroutine/2016/11/12/painting-like-van-gogh-with-convolutional-neural-networks
 
             init = tf.initialize_all_variables()
 
@@ -624,7 +638,7 @@ class Concise(object):
         # - add y_train_accuracy
         # - y_train
 
-        return
+        return True
 
     def _predict_in_session(self, sess, other_var, X_feat, X_seq, variable="y_pred"):
         """
@@ -662,11 +676,11 @@ class Concise(object):
         step_decay = self._param["step_decay"]
         step_epoch = self._param["step_epoch"]
         N_train = y_train.shape[0]
-        num_steps = N_train // batch_size
+        num_steps = n_epochs
 
         print('Number of epochs:', n_epochs)
-        print("Number of steps per epoch:", num_steps)
-        print("Number of total steps:", num_steps * n_epochs)
+        # print("Number of steps per epoch:", num_steps)
+        # print("Number of total steps:", num_steps * n_epochs)
 
         # move into the graph and start the model
         loss_history = []
@@ -681,31 +695,32 @@ class Concise(object):
 
             sess.run(other_var["init"])
 
-            print('Initialized')
             epoch_count = 0
-            for step in range(num_steps * n_epochs):
+
+            for step in range(n_epochs):
                 # where in the model are we
                 # get the batch data + batch labels
-                offset = (step * batch_size) % (N_train - batch_size)
-                X_seq_batch = X_seq_train[offset:(offset + batch_size), :, :, :]
-                X_feat_batch = X_feat_train[offset:(offset + batch_size), :]
-                y_batch = y_train[offset:(offset + batch_size), :]
+                # Use full batches
+                epoch = step
+                # offset = (step * batch_size) % (N_train - batch_size)
+                X_seq_batch = X_seq_train  #[offset:(offset + batch_size), :, :, :]
+                X_feat_batch = X_feat_train  #[offset:(offset + batch_size), :]
+                y_batch = y_train  #[offset:(offset + batch_size), :]
 
                 # run the model (sess.run)
                 # compute the optimizer, loss and train_prediction in the graph
                 # save the last two as l and predictions
-
-                epoch = step // num_steps
-                if epoch_count < epoch:
-                    step_size *= step_decay
-                    epoch_count += step_epoch
 
                 # put thet data into TF form:
                 feed_dict = {other_var["tf_X_seq"]: X_seq_batch, other_var["tf_y"]: y_batch,
                              other_var["tf_X_feat"]: X_feat_batch,
                              other_var["tf_step_size"]: step_size}
 
-                _, l = sess.run([other_var["optimizer"], other_var["loss"]], feed_dict=feed_dict)
+                
+                # run the optimizer
+                # https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/opt/python/training/external_optimizer.py#L115
+                other_var["optimizer"].minimize(sess, feed_dict=feed_dict)
+                l = sess.run(other_var["loss"], feed_dict=feed_dict)
                 loss_history.append(l)
                 # sometimes print the actual training prediction (l)
                 # also access the variables from graph:
@@ -720,8 +735,8 @@ class Concise(object):
                     train_acc_vec.append(train_accuracy)
                     valid_acc_vec.append(valid_accuracy)
                     step_history.append(step / num_steps)
-                    print('Step %4d (epoch %d): loss %f, train mse: %f, validation mse: %f' %
-                          (step, epoch, l, train_accuracy, valid_accuracy))
+                    print('Step %4d: loss %f, train mse: %f, validation mse: %f' %
+                          (step, l, train_accuracy, valid_accuracy))
 
             # get the test accuracies
             train_accuracy_final = self._accuracy_in_session(sess, other_var,
