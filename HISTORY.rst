@@ -23,3 +23,4 @@ History
 ------------------
 
 * Added L-BFGS optimizer in addition to Adam. Use optimizer="lbfgs" in Concise()
+

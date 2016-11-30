@@ -13,28 +13,24 @@ CONCISE
         :target: https://concise-bio.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-..
-   .. image:: https://pyup.io/repos/github/avsecz/concise/shield.svg
-	:target: https://pyup.io/repos/github/avsecz/concise/
-	:alt: Updates
-
-
 CONCISE (COnvolutional neural Network for CIS-regulatory Elements) is a model for predicting any quatitative outcome (say mRNA half-life) from cis-regulatory sequence using deep learning. 
 
 * Developed by the Gagneur Lab (computational biology):  http://www.gagneurlab.in.tum.de
 * Free software: MIT license
 * Documentation: https://concise-bio.readthedocs.io
 
-.. image:: concise-figure1.png
-   :width: 60%
-   :align: center
+.. image:: https://github.com/Avsecz/concise/blob/master/concise-figure1.png
+        :width: 60%
+        :align: center
     
 Features
 --------
 
 * Very simple API
 * Serializing the model to JSON
-  - allows to analyze the results in any langugage of choice
+
+  * allows to analyze the results in any langugage of choice
+
 * Helper function for hyper-parameter random search
 * CONCISE uses TensorFlow at its core and is hence able of using GPU computing
 
@@ -45,6 +41,7 @@ After installing the following prerequisites:
 
 1. Python (3.4 or 3.5) with pip (see `Python installation guide`_ and `pip documentation`_)
 2. TensorFlow python package (see `TensorFlow installation guide`_ or `Installing Tensorflow on AWS GPU-instance`_)
+
 
 install CONCISE using pip:
    
@@ -129,3 +126,4 @@ Where to go from here:
 
 * See the example file `<scripts/example-workflow.py>`_
 * Read the API Documenation https://concise-bio.readthedocs.io/en/latest/documentation.html
+
