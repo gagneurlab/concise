@@ -16,6 +16,7 @@ requirements = [
     "scikit-learn",
     "matplotlib",
     "tensorflow",
+    "glmnet",
 ]
 
 test_requirements = [
