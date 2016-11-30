@@ -7,3 +7,4 @@ __version__ = '0.3.4'
 from .concise import Concise, ConciseCV
 from .get_data import prepare_data
 from .args_sampler import sample_params
+from .kmer import best_kmers
