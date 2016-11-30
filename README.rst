@@ -25,18 +25,12 @@ CONCISE (COnvolutional neural Network for CIS-regulatory Elements) is a model fo
 * Free software: MIT license
 * Documentation: https://concise-bio.readthedocs.io
 
+.. image:: concise-figure1.png
+   :width: 60%
+   :align: center
+    
 Features
 --------
-
-* Architecture:
-  
-::
-
-      Sequence +-> Conv -> reLU -> average pool  +->   y   <-+ Additional linear features
-                                 ^
-                                 |
-          Positional bias  +-----+
-
 
 * Very simple API
 * Serializing the model to JSON
@@ -87,9 +81,10 @@ Getting Started
    ######
    # Train CONCISE
    ######
-   
+      
    # initialize CONCISE
-   co = concise.Concise(motif_length = 9, n_motifs = 2, init_motifs = ("TATTTAT", "TTAATGA"))
+   co = concise.Concise(motif_length = 9, n_motifs = 2, 
+                        init_motifs = ("TATTTAT", "TTAATGA"))
 
    # train:
    # - on a GPU if tensorflow is compiled with GPU support
@@ -111,7 +106,9 @@ Getting Started
    ######
 
    # intialize
-   co3 = concise.Concise(motif_length = 9, n_motifs = 2, init_motifs = ("TATTTAT", "TTAATGA"))
+   co3 = concise.Concise(motif_length = 9, n_motifs = 2, 
+                         init_motifs = ("TATTTAT", "TTAATGA"))
+                         
    cocv = concise.ConciseCV(concise_object = co3)
 
    # train
