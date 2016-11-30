@@ -24,7 +24,7 @@ test_requirements = [
 
 setup(
     name='concise',
-    version='0.3.3',
+    version='0.3.4',
     description="CONCISE (COnvolutional Neural for CIS-regulatory Elements) is a model for predicting PTR features like mRNA half-life from cis-regulatory elements using deep learning. ",
     long_description=readme + '\n\n' + history,
     author="Žiga Avsec",

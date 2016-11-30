@@ -2,7 +2,7 @@
 
 __author__ = 'Žiga Avsec'
 __email__ = 'avsec@in.tum.de'
-__version__ = '0.3.3'
+__version__ = '0.3.4'
 
 from .concise import Concise, ConciseCV
 from .get_data import prepare_data
