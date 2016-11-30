@@ -28,9 +28,7 @@ Features
 
 * Very simple API
 * Serializing the model to JSON
-
-  * allows to analyze the results in any langugage of choice
-
+  - allows to analyze the results in any langugage of choice
 * Helper function for hyper-parameter random search
 * CONCISE uses TensorFlow at its core and is hence able of using GPU computing
 
