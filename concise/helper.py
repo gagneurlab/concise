@@ -107,3 +107,5 @@ def numpy_dict_to_list(a):
         return None
     elif type(a) is np.ndarray:
         return list(a).list()
+
+    
