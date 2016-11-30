@@ -34,8 +34,6 @@ from sklearn.linear_model import LinearRegression
 
 # feed to train n_cores=4,...
 # TODO: add the possibility of random huber_loss function and other loss functions
-def asd():
-    pass
 
 class Concise(object):
     """**Initialize the Concise object.**
