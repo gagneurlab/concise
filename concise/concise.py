@@ -49,6 +49,7 @@ class Concise(object):
     Args:
         pooling_layer (str): Pooling layer to use. Can be :code:`"sum"` or :code:`"max"`.
         nonlinearity (str): Activation function to use after the convolutional layer. Can be :code:`"relu"` or :code:`"exp"`
+        optimizer (str): Which optimizer to use. Can be :code:`"adam"` or :code:`"lbfgs"`.
         batch_size (int): Batch size - number of training samples used in one parameter update iteration.
         n_epochs (int): Number of epochs - how many times should a single training sample be used in the parameter update iteration.
         n_iterations_checkpoint (int): Number of internal L-BFGS-B steps to perform at every step.
@@ -82,6 +83,7 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
     # correct types
     _correct_arg_types = {
         "pooling_layer": {str},
+        "optimizer": {str},
         "batch_size": {int, np.int64},
         "n_epochs": {int, np.int64},
         "n_iterations_checkpoint": {int, np.int64},
@@ -113,6 +115,7 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
     def __init__(self,
                  pooling_layer="sum",
                  nonlinearity="relu",  # relu or exp
+                 optimizer="adam",
                  batch_size=32,
                  n_epochs=3,
                  n_iterations_checkpoint=20,
@@ -381,13 +384,17 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
             # - GradientDescentOptimizer
             # - AdamOptimizer
             tf_step_size = tf.placeholder(tf.float32, shape=[])
-            # optimizer = tf.train.AdamOptimizer(tf_step_size).minimize(loss)
 
-            # BFGS loss
-            # TODO - implement n_iterations_checkpoint
-            optimizer = tf.contrib.opt.ScipyOptimizerInterface(
-                loss, method='L-BFGS-B',
-                options={'maxiter': self._param["n_iterations_checkpoint"]})
+            if self._param["optimizer"] == "adam":
+                optimizer = tf.train.AdamOptimizer(tf_step_size).minimize(loss)
+            elif self._param["optimizer"] == "lbfgs":
+                # BFGS loss
+                # TODO - implement n_iterations_checkpoint
+                optimizer = tf.contrib.opt.ScipyOptimizerInterface(
+                    loss, method='L-BFGS-B',
+                    options={'maxiter': self._param["n_iterations_checkpoint"]})
+            else:
+                raise Exception("Optimizer {} not implemented".format(self._param["optimizer"]))
             #
             # http://www.subsubroutine.com/sub-subroutine/2016/11/12/painting-like-van-gogh-with-convolutional-neural-networks
 
@@ -627,10 +634,18 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
 
         # finally train the model
         # - it saves the accuracy
-        self._var_res = self._train(X_feat, X_seq, y,
-                                    X_feat_valid, X_seq_valid, y_valid,
-                                    graph=self._graph, var=self._var, other_var=self._other_var,
-                                    n_cores=n_cores)
+
+        if self._param["optimizer"] == "adam":
+            _train = self._train_adam
+        elif self._param["optimizer"] == "lbfgs":
+            _train = self._train_lbfgs
+        else:
+            raise Exception("Optimizer {} not implemented".format(self._param["optimizer"]))
+        
+        self._var_res = _train(X_feat, X_seq, y,
+                               X_feat_valid, X_seq_valid, y_valid,
+                               graph=self._graph, var=self._var, other_var=self._other_var,
+                               n_cores=n_cores)
 
         self._model_fitted = True
 
@@ -658,10 +673,10 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
         y_pred = self._predict_in_session(sess, other_var, X_feat, X_seq)
         return math_helper.mse(y_pred, y)
 
-    def _train(self, X_feat_train, X_seq_train, y_train,
-               X_feat_valid, X_seq_valid, y_valid,
-               graph, var, other_var,
-               n_cores=3):
+    def _train_lbfgs(self, X_feat_train, X_seq_train, y_train,
+                     X_feat_valid, X_seq_valid, y_valid,
+                     graph, var, other_var,
+                     n_cores=3):
         """
         Train the model actual model
 
@@ -695,32 +710,145 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
 
             sess.run(other_var["init"])
 
-            epoch_count = 0
-
             for step in range(n_epochs):
+                # run the model (sess.run)
+                # compute the optimizer, loss and train_prediction in the graph
+                # save the last two as l and predictions
+
+                # put thet data into TF form:
+                feed_dict = {other_var["tf_X_seq"]: X_seq_train, other_var["tf_y"]: y_train,
+                             other_var["tf_X_feat"]: X_feat_train,
+                             other_var["tf_step_size"]: step_size}
+
+                # run the optimizer
+                # https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/opt/python/training/external_optimizer.py#L115
+                other_var["optimizer"].minimize(sess, feed_dict=feed_dict)
+                l = sess.run(other_var["loss"], feed_dict=feed_dict)
+                loss_history.append(l) # keep storing the full loss history
+
+                # sometimes print the actual training prediction (l)
+                if (step % print_every == 0):
+                    train_accuracy = self._accuracy_in_session(sess, other_var,
+                                                               X_feat_train, X_seq_train, y_train)
+                    valid_accuracy = self._accuracy_in_session(sess, other_var,
+                                                               X_feat_valid, X_seq_valid, y_valid)
+                    # append the prediction accuracies
+                    train_acc_vec.append(train_accuracy)
+                    valid_acc_vec.append(valid_accuracy)
+                    step_history.append(step / num_steps)
+                    print('Step %4d: loss %f, train mse: %f, validation mse: %f' %
+                          (step, l, train_accuracy, valid_accuracy))
+
+            # get the test accuracies
+            train_accuracy_final = self._accuracy_in_session(sess, other_var,
+                                                             X_feat_train, X_seq_train, y_train)
+            valid_accuracy_final = self._accuracy_in_session(sess, other_var,
+                                                             X_feat_valid, X_seq_valid, y_valid)
+            print('Validation accuracy final: %f' % valid_accuracy_final)
+
+            # store the fitted weights
+            var_res = self._get_var_res_sess(sess, var)
+
+            # store also the quasi splines fit
+
+            if self._param["n_splines"] is not None:
+                self._splines["quasi_X"] = [self._predict_in_session(sess, other_var,
+                                                                     X_feat_train[i:(i + 1)],
+                                                                     X_seq_train[i:(i + 1)],
+                                                                     variable="spline_quasi_X") \
+                                            for i in range(X_feat_train.shape[0])]
+                # transform into the appropriate form
+                self._splines["quasi_X"] = np.concatenate([x[0][np.newaxis] for x in self._splines["quasi_X"]])
+
+            accuracy = {
+                "loss_history": np.array(loss_history),
+                "step_history": np.array(step_history),
+                "train_acc_history": np.array(train_acc_vec),
+                "val_acc_history": np.array(valid_acc_vec),
+                "train_acc_final": train_accuracy_final,
+                "val_acc_final": valid_accuracy_final,
+                "test_acc_final": None,  # test_accuracy_final,
+                "y_test": None,  # y_test,
+                "y_test_prediction": None,  # test_prediction.eval(),
+                "id_vec_test": None  # id_vec_test
+            }
+            self._accuracy = accuracy
+
+        toc = time.time()
+        exec_time = toc - tic
+        self._exec_time = exec_time
+        print('That took %fs' % exec_time)
+        # weights = {"motif_base_weights": motif_base_weights,
+        #            "motif_weights": motif_weights,
+        #            "motif_bias": motif_bias,
+        #            "final_bias": final_bias,
+        #            "feature_weights": feature_weights,
+        #            "spline_pred": spline_pred
+        #            }
+        return var_res
+
+
+    def _train_adam(self, X_feat_train, X_seq_train, y_train,
+                    X_feat_valid, X_seq_valid, y_valid,
+                    graph, var, other_var,
+                    n_cores=3):
+        """
+        Train the model actual model
+        Updates weights / variables, computes and returns the training and validation accuracy
+        """
+        tic = time.time()
+        # take out the parameters for conveience
+        n_epochs = self._param["n_epochs"]
+        batch_size = self._param["batch_size"]
+        print_every = self._param["print_every"]
+        step_size = self._param["step_size"]
+        step_decay = self._param["step_decay"]
+        step_epoch = self._param["step_epoch"]
+        N_train = y_train.shape[0]
+        num_steps = N_train // batch_size
+
+        print('Number of epochs:', n_epochs)
+        print("Number of steps per epoch:", num_steps)
+        print("Number of total steps:", num_steps * n_epochs)
+
+        # move into the graph and start the model
+        loss_history = []
+        train_acc_vec = []
+        valid_acc_vec = []
+        step_history = []
+
+        with tf.Session(graph=graph, config=tf.ConfigProto(
+                use_per_session_threads=True,
+                inter_op_parallelism_threads=n_cores,
+                intra_op_parallelism_threads=n_cores)) as sess:
+
+            sess.run(other_var["init"])
+
+            print('Initialized')
+            epoch_count = 0
+            for step in range(num_steps * n_epochs):
                 # where in the model are we
                 # get the batch data + batch labels
-                # Use full batches
-                epoch = step
-                # offset = (step * batch_size) % (N_train - batch_size)
-                X_seq_batch = X_seq_train  #[offset:(offset + batch_size), :, :, :]
-                X_feat_batch = X_feat_train  #[offset:(offset + batch_size), :]
-                y_batch = y_train  #[offset:(offset + batch_size), :]
+                offset = (step * batch_size) % (N_train - batch_size)
+                X_seq_batch = X_seq_train[offset:(offset + batch_size), :, :, :]
+                X_feat_batch = X_feat_train[offset:(offset + batch_size), :]
+                y_batch = y_train[offset:(offset + batch_size), :]
 
                 # run the model (sess.run)
                 # compute the optimizer, loss and train_prediction in the graph
                 # save the last two as l and predictions
+
+                epoch = step // num_steps
+                if epoch_count < epoch:
+                    step_size *= step_decay
+                    epoch_count += step_epoch
 
                 # put thet data into TF form:
                 feed_dict = {other_var["tf_X_seq"]: X_seq_batch, other_var["tf_y"]: y_batch,
                              other_var["tf_X_feat"]: X_feat_batch,
                              other_var["tf_step_size"]: step_size}
 
-                
-                # run the optimizer
-                # https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/opt/python/training/external_optimizer.py#L115
-                other_var["optimizer"].minimize(sess, feed_dict=feed_dict)
-                l = sess.run(other_var["loss"], feed_dict=feed_dict)
+                _, l = sess.run([other_var["optimizer"], other_var["loss"]], feed_dict=feed_dict)
                 loss_history.append(l)
                 # sometimes print the actual training prediction (l)
                 # also access the variables from graph:
@@ -735,8 +863,8 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
                     train_acc_vec.append(train_accuracy)
                     valid_acc_vec.append(valid_accuracy)
                     step_history.append(step / num_steps)
-                    print('Step %4d: loss %f, train mse: %f, validation mse: %f' %
-                          (step, l, train_accuracy, valid_accuracy))
+                    print('Step %4d (epoch %d): loss %f, train mse: %f, validation mse: %f' %
+                          (step, epoch, l, train_accuracy, valid_accuracy))
 
             # get the test accuracies
             train_accuracy_final = self._accuracy_in_session(sess, other_var,
@@ -782,6 +910,7 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
         #            "spline_pred": spline_pred
         #            }
         return var_res
+
 
     def predict(self, X_feat, X_seq):
         """
