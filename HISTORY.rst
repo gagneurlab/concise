@@ -24,3 +24,8 @@ History
 
 * Added L-BFGS optimizer in addition to Adam. Use optimizer="lbfgs" in Concise()
 
+0.3.5 (2016-11-30)
+------------------
+
+* New function: :code:`best_kmers` for motif efficient initialization
+
