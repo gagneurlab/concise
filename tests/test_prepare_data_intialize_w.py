@@ -64,7 +64,6 @@ class TestInitialize(object):
         print("mse_dc")
         print(mse_dc)
         assert mse_dc < mse_lm + 0.005
-        assert mse(lm.predict(X_feat), y_pred) < 0.005
 
     def test_init_lm_false_lbfgs(self):
         # test the nice print:
@@ -94,7 +93,6 @@ class TestInitialize(object):
         print("mse_dc")
         print(mse_dc)
         assert mse_dc < mse_lm + 0.005
-        assert mse(lm.predict(X_feat), y_pred) < 0.005
 
     # def test_init_lm_true(self):
     #     # test the nice print:
