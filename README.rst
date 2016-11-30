@@ -15,11 +15,12 @@ CONCISE
 
 CONCISE (COnvolutional neural Network for CIS-regulatory Elements) is a model for predicting any quatitative outcome (say mRNA half-life) from cis-regulatory sequence using deep learning. 
 
-* Developed by the Gagneur Lab (computational biology):  http://www.gagneurlab.in.tum.de
+* Developed by the Gagneur Lab (computational biology):  https://www.gagneurlab.in.tum.de
 * Free software: MIT license
 * Documentation: https://concise-bio.readthedocs.io
 
 .. image:: https://github.com/Avsecz/concise/blob/master/concise-figure1.png
+	:target: https://github.com/Avsecz/concise/blob/master/concise-figure1.png
         :width: 60%
         :align: center
     
