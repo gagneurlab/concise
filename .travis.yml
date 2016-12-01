@@ -7,7 +7,7 @@ env:
 - TOXENV=py34
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y g77 gfortran
+  - sudo apt-get install -y gfortran
 install:
   - pip install -U tox
 script: tox -e ${TOXENV}
