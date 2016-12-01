@@ -639,7 +639,7 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
             _train = self._train_lbfgs
         else:
             raise Exception("Optimizer {} not implemented".format(self._param["optimizer"]))
-        
+
         self._var_res = _train(X_feat, X_seq, y,
                                X_feat_valid, X_seq_valid, y_valid,
                                graph=self._graph, var=self._var, other_var=self._other_var,
@@ -683,12 +683,8 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
         tic = time.time()
         # take out the parameters for conveience
         n_epochs = self._param["n_epochs"]
-        batch_size = self._param["batch_size"]
         print_every = self._param["print_every"]
         step_size = self._param["step_size"]
-        step_decay = self._param["step_decay"]
-        step_epoch = self._param["step_epoch"]
-        N_train = y_train.shape[0]
         num_steps = n_epochs
 
         print('Number of epochs:', n_epochs)
@@ -722,7 +718,7 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
                 # https://github.com/tensorflow/tensorflow/blob/master/tensorflow/contrib/opt/python/training/external_optimizer.py#L115
                 other_var["optimizer"].minimize(sess, feed_dict=feed_dict)
                 l = sess.run(other_var["loss"], feed_dict=feed_dict)
-                loss_history.append(l) # keep storing the full loss history
+                loss_history.append(l)  # keep storing the full loss history
 
                 # sometimes print the actual training prediction (l)
                 if (step % print_every == 0):
@@ -753,7 +749,7 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
                 self._splines["quasi_X"] = [self._predict_in_session(sess, other_var,
                                                                      X_feat_train[i:(i + 1)],
                                                                      X_seq_train[i:(i + 1)],
-                                                                     variable="spline_quasi_X") \
+                                                                     variable="spline_quasi_X")
                                             for i in range(X_feat_train.shape[0])]
                 # transform into the appropriate form
                 self._splines["quasi_X"] = np.concatenate([x[0][np.newaxis] for x in self._splines["quasi_X"]])
@@ -784,7 +780,6 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
         #            "spline_pred": spline_pred
         #            }
         return var_res
-
 
     def _train_adam(self, X_feat_train, X_seq_train, y_train,
                     X_feat_valid, X_seq_valid, y_valid,
@@ -908,7 +903,6 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
         #            "spline_pred": spline_pred
         #            }
         return var_res
-
 
     def predict(self, X_feat, X_seq):
         """
