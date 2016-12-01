@@ -4,3 +4,4 @@ pandas
 scipy
 scikit-learn
 matplotlib
+glmnet
