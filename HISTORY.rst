@@ -19,8 +19,13 @@ History
 * Introduced new feature: regress_out_feat
 * Major renaming of variables for concistency
 
-  0.3.0 (2016-11-30)
-------------------
+0.3.0 (2016-11-30)
+--------------------
 
 * Added L-BFGS optimizer in addition to Adam. Use optimizer="lbfgs" in Concise()
+
+0.3.5 (2016-11-30)
+------------------
+
+* New function: :code:`best_kmers` for motif efficient initialization
 

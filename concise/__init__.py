@@ -2,8 +2,9 @@
 
 __author__ = 'Žiga Avsec'
 __email__ = 'avsec@in.tum.de'
-__version__ = '0.3.3'
+__version__ = '0.3.5'
 
 from .concise import Concise, ConciseCV
 from .get_data import prepare_data
 from .args_sampler import sample_params
+from .kmer import best_kmers

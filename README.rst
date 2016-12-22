@@ -20,7 +20,7 @@ CONCISE (COnvolutional neural Network for CIS-regulatory Elements) is a model fo
 * Documentation: https://concise-bio.readthedocs.io
 
 .. image:: https://github.com/Avsecz/concise/blob/master/concise-figure1.png
-	:target: https://github.com/Avsecz/concise/blob/master/concise-figure1.png
+	:target: https://raw.githubusercontent.com/Avsecz/concise/master/concise-figure1.png
         :width: 60%
         :align: center
     
