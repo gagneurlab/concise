@@ -35,6 +35,7 @@ def get_knots(start=0, end=100, n_bases=10, spline_order=2):
     return knots.astype(np.float32)
 
 
+# TODO - use x = np.linspace(start, end, end - start + 1) as argument instead of start, end
 def get_X_spline(start=0, end=100, n_bases=10, spline_order=2, add_intercept=True):
     knots = get_knots(start, end, n_bases, spline_order)
     tck = [knots, np.zeros(n_bases), spline_order]
