@@ -29,3 +29,12 @@ History
 
 * New function: :code:`best_kmers` for motif efficient initialization
 
+0.3.6 - SNAPSHOT
+------------------
+
+* Removed regress_out feature
+
+
+
+
+

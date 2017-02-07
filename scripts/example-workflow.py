@@ -37,8 +37,6 @@ ARGS = {
     "step_size": [0.001, 0.015],  # Learning rate - Important hyper-parameter
     "step_epoch": 10,
     "step_decay": (0.9, 1),
-    "regress_out_feat": {True, False},  # if True, additional features in X_feat will be
-                                        # fitted independently using lm
 
     # regularization
     "lamb": [1e-7, 1e-3],

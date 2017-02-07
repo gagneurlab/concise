@@ -78,22 +78,3 @@ class TestConciseCV(object):
     def teardown_class(cls):
         # remove file
         os.remove(cls.json_file_path)
-
-
-class TestConciseCVRegressOut(TestConciseCV):
-
-    @classmethod
-    def setup_class(cls):
-        cls.data = load_example_data()
-        cls.json_file_path = "/tmp/cv_model_regress_out.json"
-
-        # fit the model
-        param, X_feat, X_seq, y, id_vec = cls.data
-        param["regress_out_feat"] = True
-        dc = concise.Concise(n_epochs=1)
-        cls.dcv = concise.ConciseCV(dc)
-        cls.dcv.train(X_feat, X_seq, y, id_vec, n_cores=1, n_folds=3)
-        cls.dcv_dict = cls.dcv.to_dict()
-
-        # save to file
-        cls.dcv.save(cls.json_file_path)

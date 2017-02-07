@@ -20,7 +20,6 @@ import inspect
 import copy
 import time
 from sklearn.cross_validation import KFold
-from sklearn.linear_model import LinearRegression
 
 # def train(param, X_feat_train, X_seq_train, y_train,
 #           X_seq_valid=None, X_feat_valid=None, y_valid=None,
@@ -51,7 +50,6 @@ class Concise(object):
         batch_size (int): Batch size - number of training samples used in one parameter update iteration.
         n_epochs (int): Number of epochs - how many times should a single training sample be used in the parameter update iteration.
         n_iterations_checkpoint (int): Number of internal L-BFGS-B steps to perform at every step.
-_        regress_out_feat (bool): If True, the features provided in :py:attr:`X_feat` will be regressed using a linear model. Prediction of the linear model will be used as a new :py:attr:`X_feat`.
         motif_length (int): Length of the trained motif (number), i.e. width of the convolutional filter.
         n_motifs (int): Number of motifs to train.
         step_size (float): Step size or learning rate. Size of the parameter update in the ADAM optimizer. Very important tuning parameter.
@@ -117,7 +115,6 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
                  batch_size=32,
                  n_epochs=3,
                  n_iterations_checkpoint=20,
-                 regress_out_feat=False,
                  # network details
                  motif_length=9,
                  n_motifs=6,
@@ -159,9 +156,6 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
         self._accuracy = None
 
         self.unused_param = kwargs
-
-        self.bias_regress_out = None
-        self.w_regress_out = None
 
         # setup splines
         self._splines = None
@@ -423,17 +417,9 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
 
         var_res = self._var_res
         weights = self._var_res_to_weights(var_res)
-        # add the regress out weights
-        weights["w_regress_out"] = self.w_regress_out
-        weights["bias_regress_out"] = self.bias_regress_out
         # save to the side
         weights["final_bias_fit"] = weights["final_bias"]
         weights["feature_weights_fit"] = weights["feature_weights"]
-
-        # act as if you had normal weights
-        if self.bias_regress_out is not None and self.w_regress_out is not None:
-            weights["final_bias"] = weights["final_bias"] + self.bias_regress_out
-            weights["feature_weights"] = weights["feature_weights"] * self.w_regress_out
 
         return weights
 
@@ -561,6 +547,7 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
         var_res = {key: sess.run(value) if value is not None else None for key, value in var.items()}
         return var_res
 
+    # TODO - update this function
     def train(self, X_feat, X_seq, y,
               X_feat_valid=None, X_seq_valid=None, y_valid=None,
               n_cores=3):
@@ -591,16 +578,6 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
         # input check
         assert X_seq.shape[0] == X_feat.shape[0] == y.shape[0]
         assert y.shape == (X_feat.shape[0], 1)
-
-        # regress out the features if necessary
-        if self._param["regress_out_feat"]:
-            lm = LinearRegression()
-            lm.fit(X_feat, y)
-            self.bias_regress_out = lm.intercept_[0]
-            self.w_regress_out = lm.coef_.reshape((-1))
-            # generate a new X_feat
-            X_feat = lm.predict(X_feat).reshape((-1, 1))
-            X_feat_valid = lm.predict(X_feat_valid).reshape((-1, 1))
 
         # extract data specific parameters
         self._param["seq_length"] = X_seq.shape[2]
@@ -913,11 +890,6 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
             X_seq:  Sequenc design matrix. Same format as  :py:attr:`X_seq` in :py:meth:`train`
         """
 
-        # tranform X_feat to your form if necessary
-        if self._param["regress_out_feat"]:
-            X_feat = np.dot(X_feat, self.w_regress_out) + self.bias_regress_out
-            X_feat = X_feat.reshape((-1, 1))
-
         return self._get_other_var(X_feat, X_seq, variable="y_pred")
 
     def _get_other_var(self, X_feat, X_seq, variable="y_pred"):
@@ -1073,24 +1045,8 @@ _        regress_out_feat (bool): If True, the features provided in :py:attr:`X_
 
         weights = obj_dict["output"]["weights"]
 
-        # skip to the next step
-        if weights is None:
-            dc.w_regress_out = None
-            dc.bias_regress_out = None
-            return dc
-
-        # regress out features
-        dc.w_regress_out = weights.get("w_regress_out", None)
-        dc.bias_regress_out = weights.get("bias_regress_out", None)
-        if dc.w_regress_out is None or dc.bias_regress_out is None:
-            dc._param["regress_out_feat"] = False
-
-        # overwrite feature weights
-        weights["feature_weights"] = weights["feature_weights_fit"]
-        # overwrite bias
-        weights["final_bias"] = weights["final_bias_fit"]
-
-        dc._set_var_res(weights)
+        if weights is not None:
+            dc._set_var_res(weights)
 
         return dc
 
