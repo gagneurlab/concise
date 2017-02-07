@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
+import sys
+
+if sys.version_info[0] != 3:
+    sys.exit("Only Python 3 is supported")
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
