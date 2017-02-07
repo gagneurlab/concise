@@ -11,7 +11,7 @@ import pytest
 
 from concise import concise
 from tests.setup_concise_load_data import load_example_data
-
+import numpy as np
 
 class TestConciseBasic(object):
 
@@ -57,4 +57,14 @@ class TestConciseBasic(object):
     @classmethod
     def teardown_class(cls):
         pass
+
+
+class TestMultiTaskLearning(TestConciseBasic):
+    """
+    Test multi-task learning
+    """
+
+    @classmethod
+    def setup_class(cls):
+        cls.data = load_example_data(num_tasks=3)
 

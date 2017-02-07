@@ -1,10 +1,11 @@
 import concise
 import pandas as pd
 from sklearn import preprocessing
+import numpy as np
 # import os
 # dir_root = os.path.dirname(os.path.realpath(__file__)) + "/../../../../"
 
-def load_example_data(trim_seq_len=200, standardize_features = False):
+def load_example_data(trim_seq_len=200, standardize_features = False, num_tasks = 1):
     param = {}
     # column names
     csv_file_path = "./data/pombe_half-life_UTR3.csv"
@@ -15,6 +16,7 @@ def load_example_data(trim_seq_len=200, standardize_features = False):
     response = "hlt"
     sequence = "seq"
     id_column = "ID"                # unique identifier
+    param["num_tasks"] = 1
     ############################################
     # read the csv + set the index appropriate column (transcript name)
     dt = pd.read_csv(csv_file_path)
@@ -25,6 +27,9 @@ def load_example_data(trim_seq_len=200, standardize_features = False):
                                                     seq_align=param['seq_align'],
                                                     trim_seq_len=param['trim_seq_len']
                                                     )
+    # copy for multi-task learning
+    y = np.repeat(y, param["num_tasks"], 1)
+
     if standardize_features:
         X_feat = preprocessing.scale(X_feat)
         

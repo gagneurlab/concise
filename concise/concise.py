@@ -5,6 +5,7 @@
 # - write additional method continue training
 # - train - starts training from scratch?
 # TODO: init_motifs input check - don't allow longer motifs than the motif_length
+# MAYBE TODO - implement more rich semantics on feature shareing accross conditions
 from . import analyze
 from . import get_data
 from . import splines
@@ -55,6 +56,7 @@ class Concise(object):
         step_size (float): Step size or learning rate. Size of the parameter update in the ADAM optimizer. Very important tuning parameter.
         step_epoch (int): After how many training epochs should is the :py:attr:`step_size` parameter decreased.
         step_decay (float): To what fraction is the :py:attr:`step_size` reduced after every :py:attr:`step_epoch`, i.e. :code:`step_size *= step_decay`
+        num_tasks (int): Number of tasks to perform i.e. number of columns in the response variable y.
         n_splines (int or None): Number of splines used for the positional bias. If :code:`None`, the positional bias is not used.
         share_splines (bool): If True, all the motifs share the same positional bias. If False, each motif has its own positional bias.
         spline_exp (bool): If True, the positional bias score is observed by: :code:`np.exp(spline_score)`, where :code:`spline_score` is the linear combination of B-spline basis functions. If False, :code:`np.exp(spline_score + 1)` is used.
@@ -121,6 +123,9 @@ class Concise(object):
                  step_size=0.01,
                  step_epoch=10,
                  step_decay=0.95,
+                 # - multi-task learning
+                 num_tasks=1,
+                 # - splines
                  n_splines=None,
                  share_splines=False,  # should the positional bias be shared across motifs
                  spline_exp=False,    # use the exponential function
@@ -148,7 +153,7 @@ class Concise(object):
         self._args_check()
         # self._input_param = self._param
         # general class variables
-        self._num_labels = 1
+        self._num_tasks = num_tasks
         self._num_channels = 4
         self._model_fitted = False
         self._exec_time = None
@@ -211,11 +216,6 @@ class Concise(object):
         else:
             self._param["init_motif_bias"] = 0
 
-        # if self._param["init_feat_w_lm"]:
-        #     lm = LinearRegression()
-        #     lm.fit(X_feat_train, y_train)
-        #     feature_weights_init, final_bias_init = lm.coef_.reshape((-1)), lm.intercept_[0]
-        # else:
         feature_weights_init, final_bias_init = (0, 0)
 
         # Finally, define the variables
@@ -250,14 +250,15 @@ class Concise(object):
             # --------------------------------------------
             # NN
             # motif weights
-            motif_weights = tf.Variable(tf.truncated_normal([self._param["n_motifs"], self._num_labels],
+            motif_weights = tf.Variable(tf.truncated_normal([self._param["n_motifs"], self._num_tasks],
                                                             mean=0.0,
                                                             stddev=self._param["init_sd_w"]),
                                         name="tf_motif_weights"
                                         )
 
             # feature weights
-            feature_weights = tf.Variable(tf.truncated_normal([self._param["n_add_features"], self._num_labels],
+            # TODO - check here if you are share-ing the weights of features
+            feature_weights = tf.Variable(tf.truncated_normal([self._param["n_add_features"], self._num_tasks],
                                                               mean=0,
                                                               stddev=self._param["init_sd_w"],
                                                               dtype=tf.float32),
@@ -265,7 +266,7 @@ class Concise(object):
             feature_weights = feature_weights + feature_weights_init
 
             final_bias = tf.Variable(tf.constant(final_bias_init,
-                                                 shape=[self._num_labels],
+                                                 shape=[self._num_tasks],
                                                  dtype=tf.float32),
                                      name="tf_final_bias")
             # --------------------------------------------
@@ -286,7 +287,7 @@ class Concise(object):
         with graph.as_default():
             tf_X_seq = tf.placeholder(tf.float32, shape=[None, 1, None, self._num_channels])
             tf_X_feat = tf.placeholder(tf.float32, shape=[None, None])
-            tf_y = tf.placeholder(tf.float32, shape=(None, self._num_labels))
+            tf_y = tf.placeholder(tf.float32, shape=(None, self._num_tasks))
 
             # spline initial variable
             if self._param["n_splines"] is not None:

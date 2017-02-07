@@ -24,17 +24,13 @@ History
 
 * Added L-BFGS optimizer in addition to Adam. Use optimizer="lbfgs" in Concise()
 
-0.3.5 (2016-11-30)
+0.3.1 (2016-11-30)
 ------------------
 
 * New function: :code:`best_kmers` for motif efficient initialization
 
-0.3.6 - SNAPSHOT
+0.4.0 (2017-02-07)
 ------------------
 
-* Removed regress_out feature
-
-
-
-
-
+* refactor: Removed regress_out feature
+* feature: multi-task learning
