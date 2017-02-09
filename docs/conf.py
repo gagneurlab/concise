@@ -27,7 +27,8 @@ cwd = os.getcwd()
 project_root = os.path.dirname(cwd)
 
 import sys
-from unittest.mock import MagicMock
+# from unittest.mock import MagicMock
+from mock import MagicMock
 
 class Mock(MagicMock):
     @classmethod
