@@ -35,14 +35,12 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
             return MagicMock()
 
-MOCK_MODULES = ['tensorflow',
-                'numpy',
-                'pandas',
-                'scipy',
-                'scikit-learn',
-                'matplotlib',
-                'glmnet',
-                ]
+MOCK_MODULES = [# 'tensorflow',
+    # 'numpy',
+    # 'pandas',
+    # 'scipy',
+    # 'scikit-learn',
+    'glmnet',]
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 

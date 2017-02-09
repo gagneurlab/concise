@@ -1,8 +1,8 @@
-# tensorflow
-# numpy
-# pandas
-# scipy
-# scikit-learn
-# matplotlib
+tensorflow
+numpy
+pandas
+scipy
+scikit-learn
+matplotlib
 # glmnet
 mock
