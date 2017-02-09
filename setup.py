@@ -39,6 +39,7 @@ setup(
     package_dir={'concise':
                  'concise'},
     include_package_data=True,
+    setup_requires=['numpy'],
     install_requires=requirements,
     license="MIT license",
     zip_safe=False,

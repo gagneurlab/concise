@@ -6,7 +6,10 @@ CONCISE
 .. image:: https://img.shields.io/pypi/v/concise.svg
         :target: https://pypi.python.org/pypi/concise
 
-.. image:: https://img.shields.io/travis/Avsecz/concise.svg
+.. image:: https://img.shields.io/pypi/pyversions/Concise.svg
+        :target: https://pypi.python.org/pypi/concise		 
+
+.. image:: https://api.travis-ci.org/Avsecz/concise.svg
         :target: https://travis-ci.org/Avsecz/concise
 
 .. image:: https://readthedocs.org/projects/concise-bio/badge/?version=latest
