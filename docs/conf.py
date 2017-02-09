@@ -26,6 +26,25 @@ import os
 cwd = os.getcwd()
 project_root = os.path.dirname(cwd)
 
+import sys
+from unittest.mock import MagicMock
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return MagicMock()
+
+MOCK_MODULES = ['tensorflow',
+                'numpy',
+                'pandas',
+                'scipy',
+                'scikit-learn',
+                'matplotlib',
+                'glmnet',
+                ]
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
+
 # Insert the project root dir as the first element in the PYTHONPATH.
 # This lets us ensure that the source package is imported, and that its
 # version is used.

@@ -1,7 +1,7 @@
-tensorflow
-numpy
-pandas
-scipy
-scikit-learn
-matplotlib
-glmnet
+# tensorflow
+# numpy
+# pandas
+# scipy
+# scikit-learn
+# matplotlib
+# glmnet
