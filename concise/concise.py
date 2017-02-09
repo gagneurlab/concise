@@ -50,6 +50,7 @@ class Concise(object):
         optimizer (str): Which optimizer to use. Can be :code:`"adam"` or :code:`"lbfgs"`.
         batch_size (int): Batch size - number of training samples used in one parameter update iteration.
         n_epochs (int): Number of epochs - how many times should a single training sample be used in the parameter update iteration.
+        early_stop_patience (int or None): Number of epochs with no improvement after which training will be stopped. If None, don't use early_stop.
         n_iterations_checkpoint (int): Number of internal L-BFGS-B steps to perform at every step.
         motif_length (int): Length of the trained motif (number), i.e. width of the convolutional filter.
         n_motifs (int): Number of motifs to train.
@@ -84,6 +85,7 @@ class Concise(object):
         "optimizer": {str},
         "batch_size": {int, np.int64},
         "n_epochs": {int, np.int64},
+        "early_stop_patience": {int, type(None)},
         "n_iterations_checkpoint": {int, np.int64},
         "motif_length": {int, np.int64},
         "n_motifs": {int, np.int64},
@@ -116,6 +118,7 @@ class Concise(object):
                  optimizer="adam",
                  batch_size=32,
                  n_epochs=3,
+                 early_stop_patience=None,
                  n_iterations_checkpoint=20,
                  # network details
                  motif_length=9,
@@ -621,6 +624,7 @@ class Concise(object):
         self._var_res = _train(X_feat, X_seq, y,
                                X_feat_valid, X_seq_valid, y_valid,
                                graph=self._graph, var=self._var, other_var=self._other_var,
+                               early_stop_patience=self._param["early_stop_patience"],
                                n_cores=n_cores)
 
         self._model_fitted = True
@@ -652,6 +656,7 @@ class Concise(object):
     def _train_lbfgs(self, X_feat_train, X_seq_train, y_train,
                      X_feat_valid, X_seq_valid, y_valid,
                      graph, var, other_var,
+                     early_stop_patience=None,
                      n_cores=3):
         """
         Train the model actual model
@@ -682,6 +687,8 @@ class Concise(object):
 
             sess.run(other_var["init"])
 
+            best_performance = None
+            best_performance_epoch = 0
             for step in range(n_epochs):
                 # run the model (sess.run)
                 # compute the optimizer, loss and train_prediction in the graph
@@ -710,6 +717,15 @@ class Concise(object):
                     step_history.append(step / num_steps)
                     print('Step %4d: loss %f, train mse: %f, validation mse: %f' %
                           (step, l, train_accuracy, valid_accuracy))
+                    # check if this is the best accuracy
+                    if best_performance is None or valid_accuracy <= best_performance:
+                        best_performance = valid_accuracy
+                        best_performance_epoch = step
+
+                if early_stop_patience is not None and step > best_performance_epoch + early_stop_patience:
+                    print("Early stopping. best_performance_epoch: %d, best_performance: %f" %
+                          (best_performance_epoch, best_performance))
+                    break
 
             # get the test accuracies
             train_accuracy_final = self._accuracy_in_session(sess, other_var,
@@ -762,6 +778,7 @@ class Concise(object):
     def _train_adam(self, X_feat_train, X_seq_train, y_train,
                     X_feat_valid, X_seq_valid, y_valid,
                     graph, var, other_var,
+                    early_stop_patience=None,
                     n_cores=3):
         """
         Train the model actual model
@@ -797,6 +814,8 @@ class Concise(object):
 
             print('Initialized')
             epoch_count = 0
+            best_performance = None
+            best_performance_epoch = 0
             for step in range(num_steps * n_epochs):
                 # where in the model are we
                 # get the batch data + batch labels
@@ -836,6 +855,16 @@ class Concise(object):
                     step_history.append(step / num_steps)
                     print('Step %4d (epoch %d): loss %f, train mse: %f, validation mse: %f' %
                           (step, epoch, l, train_accuracy, valid_accuracy))
+
+                    # check if this is the best accuracy
+                    if best_performance is None or valid_accuracy <= best_performance:
+                        best_performance = valid_accuracy
+                        best_performance_epoch = epoch
+
+                if early_stop_patience is not None and epoch > best_performance_epoch + early_stop_patience:
+                    print("Early stopping. best_performance_epoch: %d, best_performance: %f" %
+                          (best_performance_epoch, best_performance))
+                    break
 
             # get the test accuracies
             train_accuracy_final = self._accuracy_in_session(sess, other_var,

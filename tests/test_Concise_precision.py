@@ -24,6 +24,7 @@ class TestConcisePrediction(object):
         cls.data[0]["n_motifs"] = 1
         cls.data[0]["motif_length"] = 1
         cls.data[0]["step_size"] = 0.001
+        cls.data[0]["early_stop_patience"] = 3
 
     def test_non_std(self):
         # test the nice print:

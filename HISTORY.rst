@@ -39,3 +39,15 @@ History
 ------------------
 
 * bugfix: multi-task learning
+
+0.4.2 (2017-02-09)
+------------------
+
+* same as 0.4.1 (pypi upload failed for 0.4.1)
+  
+0.4.3 (2017-02-09)
+------------------
+
+* feat: added early_stop_patience argument
+
+  
