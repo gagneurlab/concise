@@ -34,3 +34,8 @@ History
 
 * refactor: Removed regress_out feature
 * feature: multi-task learning
+
+0.4.1 (2017-02-09)
+------------------
+
+* bugfix: multi-task learning

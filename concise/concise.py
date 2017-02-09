@@ -578,7 +578,7 @@ class Concise(object):
 
         # input check
         assert X_seq.shape[0] == X_feat.shape[0] == y.shape[0]
-        assert y.shape == (X_feat.shape[0], 1)
+        assert y.shape == (X_feat.shape[0], self._num_tasks)
 
         # extract data specific parameters
         self._param["seq_length"] = X_seq.shape[2]
@@ -1219,7 +1219,7 @@ class ConciseCV(object):
         # TODO: get it from the test_prediction ...
         # test_id, prediction
         # sort by test_id
-        predict_vec = np.zeros((self._n_rows, 1))
+        predict_vec = np.zeros((self._n_rows, self._concise_model._num_tasks))
         for fold, train, test in self._kf:
             acc = self._cv_model[fold].get_accuracy()
             predict_vec[test, :] = acc["y_test_prediction"]

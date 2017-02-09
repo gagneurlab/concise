@@ -99,7 +99,7 @@ class TestConciseLoadMultiClass(TestConciseLoad):
         cls.json_file_path = "/tmp/model_pos_bias_3_tasks.json"
 
         param, X_feat, X_seq, y, id_vec = cls.data
-        cls.dc = concise.Concise(n_epochs=1, n_splines=5)
+        cls.dc = concise.Concise(n_epochs=1, n_splines=5, num_tasks=param["num_tasks"])
         cls.dc.train(X_feat, X_seq, y, X_feat, X_seq, y, n_cores=3)
 
         cls.mydict = cls.dc.to_dict()

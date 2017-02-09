@@ -5,7 +5,7 @@ import numpy as np
 # import os
 # dir_root = os.path.dirname(os.path.realpath(__file__)) + "/../../../../"
 
-def load_example_data(trim_seq_len=200, standardize_features = False, num_tasks = 1):
+def load_example_data(trim_seq_len=200, standardize_features=False, num_tasks=1):
     param = {}
     # column names
     csv_file_path = "./data/pombe_half-life_UTR3.csv"
@@ -16,21 +16,21 @@ def load_example_data(trim_seq_len=200, standardize_features = False, num_tasks 
     response = "hlt"
     sequence = "seq"
     id_column = "ID"                # unique identifier
-    param["num_tasks"] = 1
+    param["num_tasks"] = num_tasks
     ############################################
     # read the csv + set the index appropriate column (transcript name)
     dt = pd.read_csv(csv_file_path)
-    X_feat, X_seq, y, id_vec = concise.prepare_data(dt,features=param['features'],
-                                                    response=response,
+
+    X_feat, X_seq, y, id_vec = concise.prepare_data(dt,
+                                                    features=param['features'],
+                                                    response=[response] * num_tasks,
                                                     sequence=sequence,
                                                     id_column=id_column,
                                                     seq_align=param['seq_align'],
                                                     trim_seq_len=param['trim_seq_len']
                                                     )
-    # copy for multi-task learning
-    y = np.repeat(y, param["num_tasks"], 1)
 
     if standardize_features:
         X_feat = preprocessing.scale(X_feat)
-        
+
     return param, X_feat, X_seq, y, id_vec

@@ -42,7 +42,7 @@ class TestConciseBasic(object):
     def test_no_error_pos_bias(self):
         param, X_feat, X_seq, y, id_vec = self.data
         # with positional bias
-        dc = concise.Concise(n_epochs=1, n_splines=10)
+        dc = concise.Concise(n_epochs=1, n_splines=10, num_tasks=param["num_tasks"])
         dc.train(X_feat, X_seq, y, X_feat, X_seq, y, n_cores=1)
 
         dc.get_weights()
@@ -67,4 +67,5 @@ class TestMultiTaskLearning(TestConciseBasic):
     @classmethod
     def setup_class(cls):
         cls.data = load_example_data(num_tasks=3)
+
 

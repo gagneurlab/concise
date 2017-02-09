@@ -100,7 +100,7 @@ def prepare_data(dt, features, response, sequence, id_column=None, seq_align="en
     Args:
         dt: A pandas DataFrame containing all the required data.
         features (List of strings): Column names of `dt` used to produce the features design matrix. These columns should be numeric.
-        response (str): Name of the column used as the reponse variable.
+        response (str or list of strings): Name(s) of column(s) used as a reponse variable.
         sequence (str): Name of the column storing the DNA/RNA sequences.
         id_column (str): Name of the column used as the row identifier.
         seq_align (str): one of ``{"start", "end"}``. To which end should we align sequences?
@@ -131,17 +131,17 @@ def prepare_data(dt, features, response, sequence, id_column=None, seq_align="en
                }
 
     """
+    if type(response) is str:
+        response = [response]
+
     X_feat = np.array(dt[features], dtype="float32")
-    y = np.array(dt[response], dtype="float32").reshape([-1, 1])
+    y = np.array(dt[response], dtype="float32")
     X_seq = dna_seq_array(seq_vec=dt[sequence],
                           seq_align=seq_align,
                           trim_seq_len=trim_seq_len)
     X_seq = np.array(X_seq, dtype="float32")
     id_vec = np.array(dt[id_column])
 
-    # if standardize_features:
-    #     X_feat = preprocessing.scale(X_feat)
-        
     return X_feat, X_seq, y, id_vec
 
 

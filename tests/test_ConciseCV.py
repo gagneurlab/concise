@@ -24,7 +24,7 @@ class TestConciseCV(object):
 
         # fit the model
         param, X_feat, X_seq, y, id_vec = cls.data
-        dc = concise.Concise(n_epochs=1)
+        dc = concise.Concise(n_epochs=1, num_tasks=param["num_tasks"])
         cls.dcv = concise.ConciseCV(dc)
         cls.dcv.train(X_feat, X_seq, y, id_vec, n_cores=1, n_folds=3)
         cls.dcv_dict = cls.dcv.to_dict()
@@ -93,7 +93,7 @@ class TestMultiTaskLearningCV(TestConciseCV):
 
         # fit the model
         param, X_feat, X_seq, y, id_vec = cls.data
-        dc = concise.Concise(n_epochs=1)
+        dc = concise.Concise(n_epochs=1, num_tasks=param["num_tasks"])
         cls.dcv = concise.ConciseCV(dc)
         cls.dcv.train(X_feat, X_seq, y, id_vec, n_cores=1, n_folds=3)
         cls.dcv_dict = cls.dcv.to_dict()
