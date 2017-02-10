@@ -51,3 +51,14 @@ History
 * feat: added early_stop_patience argument
 
   
+0.4.4 (2017-02-10)
+------------------
+
+* fix: When X_feat had 0 columns, loading its weights from file was failing.
+* feat: When training the global model in ConciseCV, use the average number of epochs yielding the best validation-set accuracy.
+
+0.4.5 SNAPSHOT 
+------------------
+
+* fix: Update tensorflow function (tf.op_scope -> tf.name_scope, initialize_all_variables -> tf.global_variables_initializer)
+  

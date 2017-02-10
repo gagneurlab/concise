@@ -394,7 +394,7 @@ class Concise(object):
             #
             # http://www.subsubroutine.com/sub-subroutine/2016/11/12/painting-like-van-gogh-with-convolutional-neural-networks
 
-            init = tf.initialize_all_variables()
+            init = tf.global_variables_initializer() #tf.initialize_all_variables()
 
             other_var = {
                 "tf_X_feat": tf_X_feat,

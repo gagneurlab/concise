@@ -14,7 +14,7 @@ def l1_loss(tensor, weight=1.0, scope=None):
     Returns:
       the L1 loss op.
     """
-    with tf.op_scope([tensor], scope, 'L1Loss'):
+    with tf.name_scope(scope, 'L1Loss', [tensor]):
         weight = tf.convert_to_tensor(weight,
                                       dtype=tensor.dtype.base_dtype,
                                       name='loss_weight')
@@ -37,7 +37,7 @@ def huber_loss(tensor, k=1, scope=None):
       the L1 loss op.
     """
     # assert k >= 0
-    with tf.op_scope([tensor], scope, 'L1Loss'):
+    with tf.name_scope(scope, 'L1Loss', [tensor]):
         loss = tf.reduce_mean(tf.select(tf.abs(tensor) < k,
                                         0.5 * tf.square(tensor),
                                         k * tf.abs(tensor) - 0.5 * k ^ 2)
