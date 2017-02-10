@@ -5,7 +5,7 @@ import numpy as np
 # import os
 # dir_root = os.path.dirname(os.path.realpath(__file__)) + "/../../../../"
 
-def load_example_data(trim_seq_len=200, standardize_features=False, num_tasks=1):
+def load_example_data(trim_seq_len=200, standardize_features=False, num_tasks=1, no_feat = False):
     param = {}
     # column names
     csv_file_path = "./data/pombe_half-life_UTR3.csv"
@@ -30,7 +30,10 @@ def load_example_data(trim_seq_len=200, standardize_features=False, num_tasks=1)
                                                     trim_seq_len=param['trim_seq_len']
                                                     )
 
-    if standardize_features:
+    if standardize_features and not no_feat:
         X_feat = preprocessing.scale(X_feat)
 
+    if no_feat:
+        X_feat = X_feat[:, 0:0]
+        
     return param, X_feat, X_seq, y, id_vec

@@ -54,6 +54,17 @@ class TestConciseBasic(object):
 
         dc.predict(X_feat, X_seq)
 
+        # # predict for shorter sequence
+        # dc.predict(X_feat, X_seq[:, :, 1:100, :])
+
+    def test_train_predict_no_X_feat(self):
+        # test the nice print:
+        param, X_feat, X_seq, y, id_vec = self.data
+        dc = concise.Concise(n_epochs=1, **param)
+        X_predict_empty = X_feat[:, 0:0]
+        dc.train(X_predict_empty, X_seq, y, X_predict_empty, X_seq, y, n_cores=1)
+        dc.predict(X_predict_empty, X_seq)
+        
     @classmethod
     def teardown_class(cls):
         pass

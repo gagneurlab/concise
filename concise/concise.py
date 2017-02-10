@@ -727,6 +727,7 @@ class Concise(object):
                           (best_performance_epoch, best_performance))
                     break
 
+            
             # get the test accuracies
             train_accuracy_final = self._accuracy_in_session(sess, other_var,
                                                              X_feat_train, X_seq_train, y_train)
@@ -755,6 +756,8 @@ class Concise(object):
                 "val_acc_history": np.array(valid_acc_vec),
                 "train_acc_final": train_accuracy_final,
                 "val_acc_final": valid_accuracy_final,
+                "best_val_acc": best_performance,
+                "best_val_acc_epoch": best_performance_epoch,
                 "test_acc_final": None,  # test_accuracy_final,
                 "y_test": None,  # y_test,
                 "y_test_prediction": None,  # test_prediction.eval(),
@@ -891,6 +894,8 @@ class Concise(object):
                 "val_acc_history": np.array(valid_acc_vec),
                 "train_acc_final": train_accuracy_final,
                 "val_acc_final": valid_accuracy_final,
+                "best_val_acc": best_performance,
+                "best_val_acc_epoch": best_performance_epoch,
                 "test_acc_final": None,  # test_accuracy_final,
                 "y_test": None,  # y_test,
                 "y_test_prediction": None,  # test_prediction.eval(),
@@ -932,7 +937,10 @@ class Concise(object):
 
         # input check:
         assert X_seq.shape[0] == X_feat.shape[0]
-        assert self._param["seq_length"] == X_seq.shape[2]
+
+        # TODO - check this
+        # sequence can be wider or thinner?
+        # assert self._param["seq_length"] == X_seq.shape[2]
         assert self._param["n_add_features"] == X_feat.shape[1]
 
         # setup graph and variables
@@ -1075,7 +1083,11 @@ class Concise(object):
 
         weights = obj_dict["output"]["weights"]
 
+
         if weights is not None:
+            # fix the dimentionality of X_feat in case it was 0 dimentional
+            if weights["feature_weights"].shape == (0,):
+                weights["feature_weights"].shape = (0 , obj_dict["param"]["num_tasks"])
             dc._set_var_res(weights)
 
         return dc
@@ -1208,6 +1220,8 @@ class ConciseCV(object):
 
         if id_vec is None:
             id_vec = np.arange(1, self._n_rows + 1)
+
+        best_val_acc_epoch_l = []
         for fold, train, test in self._kf:
             X_feat_train = X_feat[train]
             X_seq_train = X_seq[train]
@@ -1228,12 +1242,17 @@ class ConciseCV(object):
 
             dc._test(X_feat_test, X_seq_test, y_test, id_vec_test)
             cv_obj[fold] = dc
-
+            best_val_acc_epoch_l.append(dc.get_accuracy()["best_val_acc_epoch"])
         self._cv_model = cv_obj
 
         # additionaly train the global model
         if train_global_model:
             dc = copy.deepcopy(self._concise_model)
+
+            # overwrite n_epochs with the best average number of best epochs
+            dc._param["n_epochs"] = int(np.array(best_val_acc_epoch_l).mean())
+            print("tranining global model with n_epochs = " + str(dc._param["n_epochs"]))
+            
             dc.train(X_feat, X_seq, y,
                      n_cores=n_cores
                      )
