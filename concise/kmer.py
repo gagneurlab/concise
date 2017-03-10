@@ -21,7 +21,7 @@ def hamming_distance(s1, s2):
     return sum(el1 != el2 for el1, el2 in zip(s1, s2))
 
 def best_kmers(dt, response, sequence, k=6, consider_shift=True, n_cores=1,
-               seq_align="end", trim_seq_len=None):
+               seq_align="start", trim_seq_len=None):
     """
     Find best k-mers for CONCISE initialization.
 
@@ -59,6 +59,8 @@ def best_kmers(dt, response, sequence, k=6, consider_shift=True, n_cores=1,
     nonzero_kmers = dt_kmer.columns.values[en.coef_ != 0].tolist()
 
     # perform stepwise selection
+    #
+    # TODO - how do we deal with the intercept?
 
     # largest number of motifs where they don't differ by more than 1 k-mer
     def find_next_best(dt_kmer, y, selected_kmers, to_be_selected_kmers, consider_shift=True):
