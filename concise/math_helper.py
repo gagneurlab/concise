@@ -2,8 +2,11 @@
 # mean-squared error
 import numpy as np
 
+# ignore NA-values
 def mse(x, y):
-    return ((x - y) ** 2).mean(axis=None)
+    # equivalent to TF representation
+    y_diff = np.where(np.isnan(y) | np.isnan(x), 0, x - y)
+    return ((y_diff) ** 2).mean(axis=None)
 
 # exponentiated root-mean-squared error
 def ermse(x, y):

@@ -285,7 +285,6 @@ class Concise(object):
 
         return var
 
-    # DONE
     def _build_graph(self, graph, var):
         with graph.as_default():
             tf_X_seq = tf.placeholder(tf.float32, shape=[None, 1, None, self._num_channels])
@@ -348,7 +347,16 @@ class Concise(object):
             y_pred = model(tf_X_seq, tf_X_feat, var)
             # TODO: enable other loss functions like softmax, huber loss etc
             #   - how to include loss-paramteres like k in the case of huber_loss
-            loss = tf.reduce_mean(tf.square(y_pred - tf_y))
+
+            # allow for NA's in Y
+            # - use tf.is_nan(tf_y) - https://www.tensorflow.org/api_docs/python/tf/is_nan
+            # - sum only those values that are none NA
+            #    - https://www.tensorflow.org/api_docs/python/tf/where
+            y_diff = tf.where(tf.is_nan(tf_y),
+                              x=tf.zeros_like(y_pred),
+                              y=tf_y - y_pred,
+                              name="y_diff")
+            loss = tf.reduce_mean(tf.square(y_diff))
 
             # add regularization
             # regularization = motif_lamb * tf.nn.l2_loss(motif_base_weights) +
@@ -394,7 +402,7 @@ class Concise(object):
             #
             # http://www.subsubroutine.com/sub-subroutine/2016/11/12/painting-like-van-gogh-with-convolutional-neural-networks
 
-            init = tf.global_variables_initializer() #tf.initialize_all_variables()
+            init = tf.global_variables_initializer()  # tf.initialize_all_variables()
 
             other_var = {
                 "tf_X_feat": tf_X_feat,
@@ -727,7 +735,6 @@ class Concise(object):
                           (best_performance_epoch, best_performance))
                     break
 
-            
             # get the test accuracies
             train_accuracy_final = self._accuracy_in_session(sess, other_var,
                                                              X_feat_train, X_seq_train, y_train)
@@ -1083,11 +1090,10 @@ class Concise(object):
 
         weights = obj_dict["output"]["weights"]
 
-
         if weights is not None:
             # fix the dimentionality of X_feat in case it was 0 dimentional
             if weights["feature_weights"].shape == (0,):
-                weights["feature_weights"].shape = (0 , obj_dict["param"]["num_tasks"])
+                weights["feature_weights"].shape = (0, obj_dict["param"]["num_tasks"])
             dc._set_var_res(weights)
 
         return dc
@@ -1252,7 +1258,7 @@ class ConciseCV(object):
             # overwrite n_epochs with the best average number of best epochs
             dc._param["n_epochs"] = int(np.array(best_val_acc_epoch_l).mean())
             print("tranining global model with n_epochs = " + str(dc._param["n_epochs"]))
-            
+
             dc.train(X_feat, X_seq, y,
                      n_cores=n_cores
                      )
