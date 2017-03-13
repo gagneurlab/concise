@@ -61,4 +61,5 @@ History
 ------------------
 
 * fix: Update tensorflow function (tf.op_scope -> tf.name_scope, initialize_all_variables -> tf.global_variables_initializer)
-  
+* fix: tf.mul -> tf.multiply
+* feat: allow NaN's in y_train
