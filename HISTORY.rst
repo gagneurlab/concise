@@ -59,7 +59,10 @@ History
 
 0.4.5 (2017-03-13)
 ------------------
+* Upload to pypi wasunsuccessful. Version Skipped.
 
+0.4.6 (2017-03-13)
+------------------
 * fix: Update tensorflow function (tf.op_scope -> tf.name_scope, initialize_all_variables -> tf.global_variables_initializer)
 * fix: tf.mul -> tf.multiply
 * feat: allow NaN's in y_train
