@@ -5,7 +5,11 @@ from sklearn.feature_selection import f_regression
 from sklearn.linear_model import LinearRegression
 from scipy.sparse import csc_matrix
 from concise.get_data import seq_pad_and_trim
-# TODO - get feature selection working
+
+# TODO - don't directly require glmnet in the pacakge but rather only when calling the model
+#        - see with keras how to do this
+
+
 # csv_file_path = "data/pombe_half-life_UTR3.csv"
 # dt = pd.read_csv(csv_file_path)
 # response = 'hlt'

@@ -50,15 +50,24 @@ def test_pwm_change_length():
 
 
 def test_pwm_list2array():
+    # shape: (kernel_size, 4, filters)
     pwm_list = [PWM(np.array([[1, 2, 3, 4], [2, 4, 4, 5]])),
                 PWM(np.array([[1, 2, 1, 4], [2, 10, 4, 5]]))]
-    assert pwm_list2array(pwm_list, shape=(10, 3)).shape == (10, 3, 4)
 
-    assert pwm_list2array(pwm_list, shape=(2, 3)).shape == (2, 3, 4)
-    assert pwm_list2array(pwm_list, shape=(1, 3)).shape == (1, 3, 4)
+    # good defaults
+    assert np.array_equal(pwm_list2array(pwm_list), np.stack([pwm.pwm for pwm in pwm_list], axis=-1))
 
-    # change type
-    pwma = pwm_list2array(pwm_list, shape=(1, 3), dtype="float32")
+    # smaller number of pwm's
+    assert np.array_equal(pwm_list2array(pwm_list, (None, 4, 1)), pwm_list[0].pwm.reshape([-1, 4, 1]))
+
+    # correct shapes
+    assert pwm_list2array(pwm_list, shape=(10, 4, 3)).shape == (10, 4, 3)
+    assert pwm_list2array(pwm_list, shape=(2, 4, 50)).shape == (2, 4, 50)
+    assert pwm_list2array(pwm_list, shape=(1, 4, 5)).shape == (1, 4, 5)
+    assert pwm_list2array(pwm_list, shape=(11, 4, 128)).shape == (11, 4, 128)
+
+    # correct type
+    pwma = pwm_list2array(pwm_list, shape=(2, 4, 50), dtype="float32")
     assert pwma.dtype == np.dtype("float32")
 
 ############################################

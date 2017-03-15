@@ -1,13 +1,11 @@
 import numpy as np
 
 DEFAULT_LETTER_TO_INDEX = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
+DEFAULT_INDEX_TO_LETTER = dict((DEFAULT_LETTER_TO_INDEX[x], x) for x in DEFAULT_LETTER_TO_INDEX)
 
-
-# PWM class
 class PWM(object):
     letterToIndex = DEFAULT_LETTER_TO_INDEX
-    indexToLetter = dict((letterToIndex[x], x) for x in letterToIndex)
-    # can we have two different motifs?
+    indexToLetter = DEFAULT_INDEX_TO_LETTER
 
     def __init__(self, pwm, name=None):
         """PWM matrix
@@ -85,7 +83,6 @@ class PWM(object):
         if (len_diff > 0):
             add_start = len_diff // 2 + len_diff % 2
             add_end = len_diff // 2
-            print("add_start: {0}".format(add_start))
             # concatenate two arrays
             pwm_start = self._background_pwm(add_start)
             pwm_end = self._background_pwm(add_end)
@@ -99,12 +96,24 @@ class PWM(object):
 
     # TODO - load motif from file
 
-# TODO - fix the shape to be compatible with keras conv-filters
-def pwm_list2array(pwm_list, shape, dtype=None):
+
+def pwm_list2array(pwm_list, shape=(None, 4, None), dtype=None):
+    if shape[1] is not 4:
+        raise ValueError("shape[1] has to be 4")
+
     n_motifs = len(pwm_list)
 
-    required_n_motifs = shape[0]
-    required_motif_len = shape[1]
+    # set the default values
+    shape = list(shape)
+    if shape[0] is None:
+        # max pwm length
+        shape[0] = max([pwm.pwm.shape[0] for pwm in pwm_list])
+    if shape[2] is None:
+        shape[2] = n_motifs
+
+    # (kernel_size, 4, filters)
+    required_motif_len = shape[0]
+    required_n_motifs = shape[2]
 
     # fix n_motifs
     if required_n_motifs > n_motifs:
@@ -118,7 +127,9 @@ def pwm_list2array(pwm_list, shape, dtype=None):
     # fix motif_len
     pwm_list = [pwm._change_length(required_motif_len) for pwm in pwm_list]
 
-    pwm_array = np.stack([pwm.pwm for pwm in pwm_list])
+    # stack the matrices along the last axis
+    pwm_array = np.stack([pwm.pwm for pwm in pwm_list], axis=-1)
     pwm_array = pwm_array.astype(dtype)
 
+    # change the axis order
     return pwm_array
