@@ -21,6 +21,14 @@ def _check_pwm_list(pwm_list):
     return True
 
 
+# TODO - add custom_objects to keras when loading concise
+# ADD: PWMBiasInitializer
+
+# TODO - have from_config and to_config for PWM
+# TODO - update PWM*Initializer's from_config
+# TODO - how it the serialization working on python - level? primitive objects can be serialized?
+
+# TODO - generic class PWMInitializerAbs?
 class PWMBiasInitializer(Initializer):
 
     def __init__(self, pwm_list=[], mean_max_scale=0.):
@@ -32,6 +40,10 @@ class PWMBiasInitializer(Initializer):
                                     mean pwm match (mean_max_scale = 0.) and
                                     max pwm match (mean_max_scale = 1.)
         """
+        # handle pwm_list as a dictionary
+        if isinstance(pwm_list[0], dict):
+            pwm_list = [PWM.from_config(pwm) for pwm in pwm_list]
+
         self.pwm_list = pwm_list
         self.mean_max_scale = mean_max_scale
         _check_pwm_list(pwm_list)
@@ -54,10 +66,11 @@ class PWMBiasInitializer(Initializer):
 
     def get_config(self):
         return {
-            "pwm_list": self.pwm_list,
-            "mean_max_scale": self.mean_max_scale
+            "pwm_list": [pwm.get_config() for pwm in self.pwm_list],
+            "mean_max_scale": self.mean_max_scale,
         }
 
+# TODO test serialization
 
 class PWMKernelInitializer(Initializer):
     """truncated normal distribution shifted by a PWM
@@ -70,6 +83,9 @@ class PWMKernelInitializer(Initializer):
     """
 
     def __init__(self, pwm_list=[], stddev=0.05, seed=None):
+        if isinstance(pwm_list, dict):
+            pwm_list = [PWM.from_config(pwm) for pwm in pwm_list]
+
         self.stddev = stddev
         self.seed = seed
         self.pwm_list = pwm_list
@@ -81,10 +97,9 @@ class PWMKernelInitializer(Initializer):
                                   stddev=self.stddev,
                                   dtype=dtype, seed=self.seed)
 
-    # TODO - how do I serialize PWM list?
     def get_config(self):
         return {
+            'pwm_list': [pwm.get_config() for pwm in self.pwm_list],
             'stddev': self.stddev,
             'seed': self.seed,
-            'pwm_list': self.pwm_list
         }
