@@ -4,13 +4,17 @@ from keras.initializers import Initializer
 from keras import backend as K
 import concise
 from concise.utils import PWM, pwm_list2array
+from keras.utils.generic_utils import get_custom_objects
 
 import numpy as np
-# Arguments:
+# Old Concise arguments:
 # - init_motifs=["TATTTAT", ..., "ACTAAT"]
 # - init_motifs_scale=1
 # - init_motif_bias=0
 # - init_sd_motif=1e-2
+
+# TODO - REFACTOR - generic class PWMInitializerAbs?
+
 
 def _check_pwm_list(pwm_list):
     """Check the input validity
@@ -21,21 +25,15 @@ def _check_pwm_list(pwm_list):
     return True
 
 
-# TODO - add custom_objects to keras when loading concise
-# ADD: PWMBiasInitializer
-
-# TODO - have from_config and to_config for PWM
-# TODO - update PWM*Initializer's from_config
-# TODO - how it the serialization working on python - level? primitive objects can be serialized?
-
-# TODO - generic class PWMInitializerAbs?
 class PWMBiasInitializer(Initializer):
+    # TODO - automatically determined kernel_size
 
-    def __init__(self, pwm_list=[], mean_max_scale=0.):
+    def __init__(self, pwm_list=[], kernel_size=None, mean_max_scale=0.):
         """Bias initializer
 
         # Arguments
             pwm_list: list of PWM's
+            kernel_size: Has to be the same as kernel_size in kl.Conv1D
             mean_max_scale: float; factor for convex conbination between
                                     mean pwm match (mean_max_scale = 0.) and
                                     max pwm match (mean_max_scale = 1.)
@@ -44,14 +42,19 @@ class PWMBiasInitializer(Initializer):
         if isinstance(pwm_list[0], dict):
             pwm_list = [PWM.from_config(pwm) for pwm in pwm_list]
 
+        if kernel_size is None:
+            kernel_size = len(pwm_list)
+
         self.pwm_list = pwm_list
+        self.kernel_size = kernel_size
         self.mean_max_scale = mean_max_scale
         _check_pwm_list(pwm_list)
 
     def __call__(self, shape, dtype=None):
         # pwm_array
+        # print("PWMBiasInitializer shape: ", shape)
         pwma = pwm_list2array(self.pwm_list,
-                              shape=(None, 4, shape[0]),
+                              shape=(self.kernel_size, 4, shape[0]),
                               dtype=dtype)
 
         # maximum sequence match
@@ -67,6 +70,7 @@ class PWMBiasInitializer(Initializer):
     def get_config(self):
         return {
             "pwm_list": [pwm.get_config() for pwm in self.pwm_list],
+            "kernel_size": self.kernel_size,
             "mean_max_scale": self.mean_max_scale,
         }
 
@@ -83,7 +87,7 @@ class PWMKernelInitializer(Initializer):
     """
 
     def __init__(self, pwm_list=[], stddev=0.05, seed=None):
-        if isinstance(pwm_list, dict):
+        if isinstance(pwm_list[0], dict):
             pwm_list = [PWM.from_config(pwm) for pwm in pwm_list]
 
         self.stddev = stddev
@@ -92,6 +96,7 @@ class PWMKernelInitializer(Initializer):
         _check_pwm_list(pwm_list)
 
     def __call__(self, shape, dtype=None):
+        # print("PWMKernelInitializer shape: ", shape)
         return K.truncated_normal(shape,
                                   mean=pwm_list2array(self.pwm_list, shape, dtype),
                                   stddev=self.stddev,

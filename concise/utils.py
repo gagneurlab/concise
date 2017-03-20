@@ -109,8 +109,9 @@ class PWM(object):
 
 
 def pwm_list2array(pwm_list, shape=(None, 4, None), dtype=None):
+    # print("shape: ", shape)
     if shape[1] is not 4:
-        raise ValueError("shape[1] has to be 4")
+        raise ValueError("shape[1] has to be 4 and not {0}".format(shape[1]))
 
     # copy pwm_list
     pwm_list = copy.deepcopy(pwm_list)

@@ -18,7 +18,7 @@ def l1_loss(tensor, weight=1.0, scope=None):
         weight = tf.convert_to_tensor(weight,
                                       dtype=tensor.dtype.base_dtype,
                                       name='loss_weight')
-        loss = tf.mul(weight, tf.reduce_sum(tf.abs(tensor)), name='value')
+        loss = tf.multiply(weight, tf.reduce_sum(tf.abs(tensor)), name='value')
         return loss
 
 def huber_loss(tensor, k=1, scope=None):

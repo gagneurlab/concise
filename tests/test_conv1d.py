@@ -4,22 +4,20 @@ from keras import layers as kl
 from concise.initializers import PWMBiasInitializer, PWMKernelInitializer
 from concise.utils import PWM
 import numpy as np
-
-
-from keras.utils.generic_utils import deserialize_keras_object, serialize_keras_object
-
-from keras.layers import deserialize as deserialize_layer
+from keras.utils.generic_utils import deserialize_keras_object, serialize_keras_object, get_custom_objects
+from keras.models import Sequential, model_from_json
 
 def test_correct_initialization():
     pwm_list = [PWM(np.array([[1, 2, 3, 4], [2, 4, 4, 5]])),
                 PWM(np.array([[1, 2, 1, 4], [2, 10, 4, 5]]))]
 
+    # add no noise
     conv_l = kl.Conv1D(filters=128, kernel_size=11,
                        kernel_regularizer=L1L2(l1=1, l2=1),  # Regularization
                        padding="valid",
                        activation="relu",
-                       kernel_initializer=PWMKernelInitializer(pwm_list, stddev=0.1),  # TODO
-                       bias_initializer=PWMBiasInitializer(pwm_list)
+                       kernel_initializer=PWMKernelInitializer(pwm_list, stddev=0.1),
+                       bias_initializer=PWMBiasInitializer(pwm_list, kernel_size=11),
                        )
 
     seq_length = 100
@@ -44,45 +42,47 @@ def test_correct_initialization():
     assert mean_larger_zero < .7
 
 
-def test_init_serialization(self):
+def test_init_serialization():
     pwm_list = [PWM([[1, 2, 3, 4],
                      [2, 4, 4, 5]]),
                 PWM([[1, 2, 1, 4],
                      [2, 10, 4, 5]])]
 
-    conv_l = kl.Conv1D(filters=4, kernel_size=11,
-                       kernel_regularizer=L1L2(l1=1, l2=1),  # Regularization
-                       padding="valid",
-                       activation="relu",
-                       kernel_initializer=PWMKernelInitializer(pwm_list, stddev=0.1),  # TODO
-                       bias_initializer=PWMBiasInitializer(pwm_list)
-                       )
+    # should work out of the box
+    # get_custom_objects()['PWMKernelInitializer'] = PWMKernelInitializer
+    # get_custom_objects()['PWMBiasInitializer'] = PWMBiasInitializer
 
     seq_length = 100
     input_shape = (None, seq_length, 4)  # (batch_size, steps, input_dim)
+    # input_shape = (seq_length, 4)  # (batch_size, steps, input_dim)
+
+    conv_l = kl.Conv1D(filters=15, kernel_size=11,
+                       kernel_regularizer=L1L2(l1=1, l2=1),  # Regularization
+                       padding="valid",
+                       activation="relu",
+                       kernel_initializer=PWMKernelInitializer(pwm_list, stddev=0.1),
+                       bias_initializer=PWMBiasInitializer(pwm_list, kernel_size=11),
+                       batch_input_shape=input_shape,
+                       )
+
     # output_shape: (batch_size, new_steps, filters)
     # (new_)steps = length along the sequence, might changed due to padding
+    model = Sequential()
+    model.add(conv_l)
+    model.compile(optimizer="adam", loss="mse", metrics=["mse"])
+    js = model.to_json()
+    js
+    # a = model_from_json(js, custom_objects={"Conv1D": kl.Conv1D})
+    a = model_from_json(js)
+    assert np.all(a.layers[0].kernel_initializer.pwm_list[0].pwm == pwm_list[0].pwm)
 
+    # check just layer serialization:
     conv_l.build(input_shape)
-
-    # TODO - serialize the layer
-    # TODO - de-serialize the layer
-
-    c = conv_l.get_config()
-    # TODO - add other things to
     s = serialize_keras_object(conv_l)
 
-    # TODO - why is this not working
-    deserialize_keras_object(s, custom_objects={"PWMKernelInitializer": PWMKernelInitializer,
-                                                "PWMBiasInitializer": PWMBiasInitializer,
-                                                "Conv1D": kl.Conv1D
-                                                })
+    a = deserialize_keras_object(s, custom_objects={"Conv1D": kl.Conv1D})
 
-    # Improper config?
+    conv_l.get_config()
 
-    # TODO - why are there so many pwm_list elements?
-    pass
-
-
-# TODO - save the layer
-# TODO - load the layer
+    # serialization was successfull
+    assert np.all(a.kernel_initializer.pwm_list[0].pwm == pwm_list[0].pwm)
