@@ -394,7 +394,7 @@ class Concise(object):
             #
             # http://www.subsubroutine.com/sub-subroutine/2016/11/12/painting-like-van-gogh-with-convolutional-neural-networks
 
-            init = tf.global_variables_initializer() #tf.initialize_all_variables()
+            init = tf.global_variables_initializer()  # tf.initialize_all_variables()
 
             other_var = {
                 "tf_X_feat": tf_X_feat,
@@ -454,7 +454,7 @@ class Concise(object):
         if self._param["n_splines"] is not None:
             spline_pred = self._splines["X_spline"].dot(var_res["spline_weights"])
 
-            if self._param["spline_exp"] == True:
+            if self._param["spline_exp"] is True:
                 spline_pred = np.exp(spline_pred)
             else:
                 spline_pred = (spline_pred + 1)
@@ -727,7 +727,6 @@ class Concise(object):
                           (best_performance_epoch, best_performance))
                     break
 
-            
             # get the test accuracies
             train_accuracy_final = self._accuracy_in_session(sess, other_var,
                                                              X_feat_train, X_seq_train, y_train)
@@ -1083,11 +1082,10 @@ class Concise(object):
 
         weights = obj_dict["output"]["weights"]
 
-
         if weights is not None:
             # fix the dimentionality of X_feat in case it was 0 dimentional
             if weights["feature_weights"].shape == (0,):
-                weights["feature_weights"].shape = (0 , obj_dict["param"]["num_tasks"])
+                weights["feature_weights"].shape = (0, obj_dict["param"]["num_tasks"])
             dc._set_var_res(weights)
 
         return dc
@@ -1252,7 +1250,7 @@ class ConciseCV(object):
             # overwrite n_epochs with the best average number of best epochs
             dc._param["n_epochs"] = int(np.array(best_val_acc_epoch_l).mean())
             print("tranining global model with n_epochs = " + str(dc._param["n_epochs"]))
-            
+
             dc.train(X_feat, X_seq, y,
                      n_cores=n_cores
                      )

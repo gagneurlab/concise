@@ -2,6 +2,11 @@
 import numpy as np
 import scipy.interpolate as si
 
+# TODO - BSpline.predict() -> allow x to be of any shape. return.shape = in.shape + (n_bases)
+
+# Future TODO - implement si.splev using keras.backend.
+#               - That way you don't have to hash the X_spline in memory.
+
 
 class BSpline():
     def __init__(self, start=0, end=101, n_bases=10, spline_order=2):
@@ -47,7 +52,7 @@ class BSpline():
         """For some x, predict the bn(x) for each base
 
         Arguments:
-            x: np.array; Vector of dimention 1
+            x: np.array; Vector of dimension 1
             add_intercept: bool; should we add the intercept to the final array
 
         Returns:
@@ -126,6 +131,12 @@ def get_X_spline(x, knots, n_bases=10, spline_order=2, add_intercept=True):
     """
     Returns:
         np.array of shape [len(x), n_bases + (add_intercept)]
+
+    # BSpline formula
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.BSpline.html#scipy.interpolate.BSpline
+
+    Fortran code:
+    https://github.com/scipy/scipy/blob/v0.19.0/scipy/interpolate/fitpack/splev.f
     """
     if len(x.shape) is not 1:
         raise ValueError("x has to be 1 dimentional")
