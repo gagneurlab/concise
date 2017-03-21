@@ -6,140 +6,127 @@ import numpy as np
 from concise.splines import BSpline
 
 
-# TODO - implement other functionality as in dense:
-# https://github.com/fchollet/keras/blob/master/keras/layers/core.py#L728
+# TODO - implement a general case of smoothing - given a positions vector
+#        1. Use pre-processing for GAM's to generate multiple features for each position
+#          - check how deepcpg and dragonn handle pre-processing and its parameter storing
+#            - easy way to store the parameters to model json?
+#        2. Use conv1d to combine them and wrap a new layer
+#          - kernel_size = 1
+#          - no activation or padding
+#          - GAM regularization
+#        3. Check that GAMSmooth and your own positons vector yield the same thing
+#
+# TODO - write unit-tests
 
-# TODO - use pre-processing for GAM's
+############################################
+
 
 class GAMSmooth(Layer):
     def __name__(self):
         return "GAMSmooth"
 
-    # TODO - is output_dim the same as filters?
     def __init__(self,
-                 x,
-                 filters,
                  # spline type
                  n_bases=10,
                  spline_order=3,
                  share_splines=False,
                  # regularization
-                 lamb=1e-5,
-                 param_lamb=1e-5,
-                 use_bias=True,
+                 l2_smooth=1e-5,
+                 l2=1e-5,
+                 use_bias=False,
                  bias_initializer='zeros',
                  **kwargs):
         """
 
-        Arguments
-            x: np.array of dimension = 1; all the possible values for the input
+        Arguments:
+            n_splines int: Number of splines used for the positional bias.
+            spline_exp (bool): If True, the positional bias score is observed by: :code:`np.exp(spline_score)`, where :code:`spline_score` is the linear combination of B-spline basis functions. If False, :code:`np.exp(spline_score + 1)` is used.
+            l2 (float): L2 regularization strength for the second order differences in positional bias' smooth splines. (GAM smoothing regularization)
+            l2_smooth (float): L2 regularization strength for the spline base coefficients.
+            use_bias: boolean; should we add a bias to the transition
+            bias_initializer; bias initializer - from keras.initailizers
         """
-        if isinstance(x, list):
-            x = np.asarray(x)
-
-        self.x = np.unique(x)
-        # self.output_dim = output_dim
-        self.filters = filters
         self.n_bases = n_bases
         self.spline_order = spline_order
         self.share_splines = share_splines
-        self.lamb = lamb
-        self.param_lamb = param_lamb
+        self.l2 = l2
+        self.l2_smooth = l2_smooth
         self.use_bias = use_bias
         self.bias_initializer = initializers.get(bias_initializer)
 
+        super(GAMSmooth, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        # input_shape = (None, steps, filters)
+
+        start = 0
+        end = input_shape[1]
+        filters = input_shape[2]
+
+        if self.share_splines:
+            n_spline_tracks = 1
+        else:
+            n_spline_tracks = filters
+
         # setup the bspline object
-        self.bs = BSpline(start=self.x.min(), end=self.x.max(),
+        self.bs = BSpline(start, end,
                           n_bases=self.n_bases,
                           spline_order=self.spline_order
                           )
 
-        # create X_spline
-        self.X_spline = self.bs.predict(self.x, add_intercept=False)
+        # create X_spline, convert to the right precision
+        self.X_spline = K.cast_to_floatx(
+            self.bs.predict(np.arange(end), add_intercept=False)  # shape = (end, self.n_bases)
+        )
 
-        super(GAMSmooth, self).__init__(**kwargs)
-
-    # TODO - update here - consider multiple channels for the position?
-    def build(self, input_shape):
-
-        # TODO - restrict the input only to a 2d input
-
-        # input_shape: (batch_size, seq_length)
-        # num_channels = input_shape[-1]  # channels_last
-
-        # Create a trainable weight variable for this layer.
-        self.kernel = self.add_weight(shape=(self.n_bases, self.filters),
+        # add weights
+        self.kernel = self.add_weight(shape=(self.n_bases, n_spline_tracks),
                                       initializer='ones',
                                       name='kernel',
                                       regularizer=GAMRegularizer(self.n_bases, self.spline_order,
-                                                                 self.lamb, self.param_lamb),
+                                                                 self.l2_smooth, self.l2),
                                       trainable=True)
 
         if self.use_bias:
-            self.bias = self.add_weight((self.filters, ),
+            self.bias = self.add_weight((n_spline_tracks, ),
                                         initializer=self.bias_initializer,
                                         name='bias',
                                         regularizer=None)
 
-        # save the input_shape
-        self.input_shape = input_shape
-
         super(GAMSmooth, self).build(input_shape)  # Be sure to call this somewhere!
 
     def call(self, x):
-        # 1. do I have to take care about the batch dimention?
-        # TODO - write the transformation function
 
-        # 1. all x have to exactly match the x's
-
-        # TODO - create the hash function
-        x_long = x.reshape((-1))
-
-        np.where(x_long == a2)
-
-        K.unique(x)
-        # TODO - there is no unique function in keras...
-        x_uniq = np.unique(x)  # 1d version
-
-        # gather(self.X_spline, indices)
-
-        output_shrunken = K.dot(self.X_spline[hash(which_uniq), :], self.kernel)  # (x_uniq, filters)
-
-        # expand the dimensions
-        output = output_shrunken[hash(x, key=x_uniq), :]
-
-        # TODO - X_spline long should have the shape: (n_batch, seq_length, n_bases)
-        #
-        # K.dot(X_spline_x, self.kernel).shape = (n_batch, seq_length, filters)
+        spline_track = K.dot(self.X_spline, self.kernel)
 
         if self.use_bias:
-            output = K.bias_add(output, self.bias)
+            spline_track = K.bias_add(spline_track, self.bias)
+
+        if self.spline_exp:
+            spline_track = K.exp(spline_track)
+        else:
+            spline_track = spline_track + 1
+
+        # multiply together the two coefficients
+        output = spline_track * x
 
         return output
 
-    # TODO - check the dimentions
     def compute_output_shape(self, input_shape):
-        assert input_shape and len(input_shape) >= 2
-        assert input_shape[-1]
-        output_shape = list(input_shape)
-        output_shape[-1] = self.filters
-        return tuple(output_shape)
+        return input_shape
 
     def get_config(self):
-        # TODO - save X
         config = {
-            'x': self.x.tolist(),
-            # 'output_dim': self.output_dim,
-            'filters': self.filters,
             'n_bases': self.n_bases,
             'spline_order': self.spline_order,
             'share_splines': self.share_splines,
-            'lambd': self.lambd,
-            'param_lamb': self.param_lamb,
+            'l2_smooth': self.l2_smooth,
+            'l2': self.l2,
             'use_bias': self.use_bias,
             'bias_initializer': initializers.serialize(self.bias_initializer),
         }
         base_config = super(GAMSmooth, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
+
 
 

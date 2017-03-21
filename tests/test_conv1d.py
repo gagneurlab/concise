@@ -56,6 +56,8 @@ def test_init_serialization():
     input_shape = (None, seq_length, 4)  # (batch_size, steps, input_dim)
     # input_shape = (seq_length, 4)  # (batch_size, steps, input_dim)
 
+    # output_shape = (None, steps, filters)
+
     conv_l = kl.Conv1D(filters=15, kernel_size=11,
                        kernel_regularizer=L1L2(l1=1, l2=1),  # Regularization
                        padding="valid",
