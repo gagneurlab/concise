@@ -20,7 +20,6 @@ from concise.splines import BSpline
 
 ############################################
 
-
 class GAMSmooth(Layer):
     def __name__(self):
         return "GAMSmooth"
@@ -30,6 +29,7 @@ class GAMSmooth(Layer):
                  n_bases=10,
                  spline_order=3,
                  share_splines=False,
+                 spline_exp=False,
                  # regularization
                  l2_smooth=1e-5,
                  l2=1e-5,
@@ -49,6 +49,7 @@ class GAMSmooth(Layer):
         self.n_bases = n_bases
         self.spline_order = spline_order
         self.share_splines = share_splines
+        self.spline_exp = spline_exp
         self.l2 = l2
         self.l2_smooth = l2_smooth
         self.use_bias = use_bias
@@ -75,9 +76,10 @@ class GAMSmooth(Layer):
                           )
 
         # create X_spline, convert to the right precision
-        self.X_spline = K.cast_to_floatx(
-            self.bs.predict(np.arange(end), add_intercept=False)  # shape = (end, self.n_bases)
-        )
+        self.X_spline = K.constant(
+            K.cast_to_floatx(
+                self.bs.predict(np.arange(end), add_intercept=False)  # shape = (end, self.n_bases)
+            ))
 
         # add weights
         self.kernel = self.add_weight(shape=(self.n_bases, n_spline_tracks),
@@ -120,6 +122,7 @@ class GAMSmooth(Layer):
             'n_bases': self.n_bases,
             'spline_order': self.spline_order,
             'share_splines': self.share_splines,
+            'spline_exp': self.spline_exp,
             'l2_smooth': self.l2_smooth,
             'l2': self.l2,
             'use_bias': self.use_bias,

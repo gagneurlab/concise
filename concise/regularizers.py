@@ -16,18 +16,19 @@ class GAMRegularizer(Regularizer):
         # convert S to numpy-array if it's a list
 
         self.n_bases = n_bases
-        self.spline_order = self.spline_order
+        self.spline_order = spline_order
         self.l2_smooth = K.cast_to_floatx(l2_smooth)
         self.l2 = K.cast_to_floatx(l2)
 
-        self.S = K.cast_to_floatx(
-            get_S(n_bases, spline_order, add_intercept=False)
-        )
+        # convert to K.constant
+        self.S = K.constant(
+            K.cast_to_floatx(
+                get_S(n_bases, spline_order, add_intercept=False)
+            ))
 
     def __call__(self, x):
-        print("x.shape = ", x.shape)
         # x.shape = (n_bases, n_spline_tracks)
-        n_spline_tracks = x.shape[1]
+        n_spline_tracks = K.cast_to_floatx(K.int_shape(x)[1])
 
         regularization = 0.
 
@@ -37,7 +38,7 @@ class GAMRegularizer(Regularizer):
         if self.l2_smooth:
             # https://keras.io/backend/#batch_dot
             # equivalent to mean( diag(x' * S * x) )
-            regularization += self.l2_smooth * K.mean(K.batch_dot(x, K.transpose(K.dot(self.S, x))))
+            regularization += self.l2_smooth * K.mean(K.batch_dot(x, K.dot(self.S, x), axes=1))
 
         return regularization
 
