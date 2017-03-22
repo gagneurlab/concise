@@ -24,6 +24,7 @@ def hamming_distance(s1, s2):
         raise ValueError("Undefined for sequences of unequal length")
     return sum(el1 != el2 for el1, el2 in zip(s1, s2))
 
+
 def best_kmers(dt, response, sequence, k=6, consider_shift=True, n_cores=1,
                seq_align="start", trim_seq_len=None):
     """

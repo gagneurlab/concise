@@ -13,13 +13,13 @@ from .kmer import best_kmers
 
 from keras.utils.generic_utils import get_custom_objects
 from .initializers import PWMKernelInitializer, PWMBiasInitializer
-from .layers import GAMSmooth
+from .layers import GAMSmooth, GlobalSumPooling1D
 from .regularizers import GAMRegularizer
-
+from .activations import exponential
 
 get_custom_objects()['PWMKernelInitializer'] = PWMKernelInitializer
 get_custom_objects()['PWMBiasInitializer'] = PWMBiasInitializer
 get_custom_objects()['GAMSmooth'] = GAMSmooth
 get_custom_objects()['GAMRegularizer'] = GAMRegularizer
-
-
+get_custom_objects()['GlobalSumPooling1D'] = GlobalSumPooling1D
+get_custom_objects()['exponential'] = exponential

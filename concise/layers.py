@@ -4,7 +4,7 @@ from keras import initializers
 from concise.regularizers import GAMRegularizer
 import numpy as np
 from concise.splines import BSpline
-
+from keras.layers.pooling import _GlobalPooling1D
 
 # TODO - implement a general case of smoothing - given a positions vector
 #        1. Use pre-processing for GAM's to generate multiple features for each position
@@ -40,7 +40,8 @@ class GAMSmooth(Layer):
 
         Arguments:
             n_splines int: Number of splines used for the positional bias.
-            spline_exp (bool): If True, the positional bias score is observed by: :code:`np.exp(spline_score)`, where :code:`spline_score` is the linear combination of B-spline basis functions. If False, :code:`np.exp(spline_score + 1)` is used.
+            spline_exp (bool): If True, the positional bias score is observed by: :code:`np.exp(spline_score)`,
+                  where :code:`spline_score` is the linear combination of B-spline basis functions. If False, :code:`np.exp(spline_score + 1)` is used.
             l2 (float): L2 regularization strength for the second order differences in positional bias' smooth splines. (GAM smoothing regularization)
             l2_smooth (float): L2 regularization strength for the spline base coefficients.
             use_bias: boolean; should we add a bias to the transition
@@ -132,4 +133,14 @@ class GAMSmooth(Layer):
         return dict(list(base_config.items()) + list(config.items()))
 
 
+class GlobalSumPooling1D(_GlobalPooling1D):
+    """Global average pooling operation for temporal data.
+    # Input shape
+        3D tensor with shape: `(batch_size, steps, features)`.
+    # Output shape
+        2D tensor with shape:
+        `(batch_size, channels)`
+    """
 
+    def call(self, inputs):
+        return K.sum(inputs, axis=1)
