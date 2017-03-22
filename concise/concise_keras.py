@@ -1,4 +1,4 @@
-from keras.models import Sequential
+from keras.models import Model
 from keras.layers.core import (Activation, Dense)
 from keras.optimizers import Adam
 
@@ -84,52 +84,49 @@ def concise_model(pooling_layer="sum",  # 'sum', 'max' or 'mean'
 
     # define the model
     # ----------------
-    model = Sequential()
+    inputs = []
+    seq_input = kl.Input((seq_length, 4))
+    inputs.append(seq_input)
     # convolution
-    model.add(kl.Conv1D(filters=n_motifs, kernel_size=motif_length,
-                        kernel_regularizer=kr.l1(l=motif_lamb),  # Regularization
-                        activation=activation,
-                        kernel_initializer=kernel_initializer,
-                        bias_initializer=bias_initializer,
-                        batch_input_shape=(None, seq_length, 4),
-                        )
-              )
+    xseq = kl.Conv1D(filters=n_motifs, kernel_size=motif_length,
+                     kernel_regularizer=kr.l1(l=motif_lamb),  # Regularization
+                     activation=activation,
+                     kernel_initializer=kernel_initializer,
+                     bias_initializer=bias_initializer
+                     )(seq_input)
     # optional positional effect
     if n_splines:
-        model.add(cl.GAMSmooth(n_bases=n_splines,
-                               share_splines=share_splines,
-                               spline_exp=spline_exp,
-                               l2_smooth=spline_lamb,
-                               l2=spline_param_lamb,
-                               )
-                  )
+        xseq = cl.GAMSmooth(n_bases=n_splines,
+                            share_splines=share_splines,
+                            spline_exp=spline_exp,
+                            l2_smooth=spline_lamb,
+                            l2=spline_param_lamb,
+                            )(xseq)
     # pooling layer
     if pooling_layer is "max":
-        model.add(kl.pooling.GlobalMaxPooling1D())
+        xseq = kl.pooling.GlobalMaxPooling1D()(xseq)
     elif pooling_layer is "mean":
-        model.add(kl.pooling.GlobalAveragePooling1D())
+        xseq = kl.pooling.GlobalAveragePooling1D()(xseq)
     elif pooling_layer is "sum":
-        model.add(cl.GlobalSumPooling1D())
+        xseq = cl.GlobalSumPooling1D()(xseq)
     else:
         raise ValueError("pooling_layer can only be 'sum', 'mean' or 'max'.")
-
     # -----
     # add covariates
     if n_covariates:
-        linear_model = Sequential()
-        linear_model.add(Activation("linear", input_shape=(n_covariates, )))
-        merged = kl.Merge([model, linear_model], mode='concat')
-
-        final_model = Sequential()
-        final_model.add(merged)
+        cov_input = kl.Input((n_covariates, ))
+        inputs.append(cov_input)
+        x = kl.concatenate([xseq, cov_input])
     else:
-        final_model = model
+        x = xseq
     # -----
 
-    final_model.add(Dense(units=num_tasks,
-                          kernel_regularizer=kr.l1(lamb),
-                          kernel_initializer=ki.RandomNormal(stddev=init_sd_w)
-                          ))
+    predictions = Dense(units=num_tasks,
+                        kernel_regularizer=kr.l1(lamb),
+                        kernel_initializer=ki.RandomNormal(stddev=init_sd_w)
+                        )(x)
+
+    model = Model(inputs=inputs, outputs=predictions)
 
     model.compile(optimizer=Adam(lr=step_size), loss="mse", metrics=["mse"])
 
