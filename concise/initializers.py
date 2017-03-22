@@ -74,7 +74,6 @@ class PWMBiasInitializer(Initializer):
             "mean_max_scale": self.mean_max_scale,
         }
 
-# TODO test serialization
 
 class PWMKernelInitializer(Initializer):
     """truncated normal distribution shifted by a PWM

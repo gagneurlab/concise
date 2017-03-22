@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 # concise end-user interface
 
+# TODO - update process data function & Concise -
+#        squeeze 2nd dimension (None, 1, seq_len, 4) -> (None, seq_len, 4)
+#
+
+# OLD:
 # TODO: write the train method Concise more roboustly, when retraining
 # - write additional method continue training
 # - train - starts training from scratch?
@@ -63,12 +68,7 @@ from sklearn.cross_validation import KFold
 # _get_folds
 # get_folds
 # train
-#
 
-# def ConciseFitCV.load()
-
-# feed to train n_cores=4,...
-# TODO: add the possibility of random huber_loss function and other loss functions
 
 class Concise(object):
     """**Initialize the Concise object.**

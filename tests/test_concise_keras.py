@@ -29,6 +29,7 @@ def test_serialization_disk(tmpdir):
     dc = concise_model(**param,
                        pooling_layer="sum",
                        init_motifs=["TGCGAT", "TATTTAT"],
+                       n_splines=10,
                        n_covariates=X_feat.shape[1],
                        seq_length=X_seq.shape[1])
     dc.fit([X_seq, X_feat], y, epochs=1,

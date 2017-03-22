@@ -4,11 +4,12 @@ import scipy.interpolate as si
 
 # TODO - BSpline.predict() -> allow x to be of any shape. return.shape = in.shape + (n_bases)
 
-# Future TODO - implement si.splev using keras.backend.
+# MAYBE TODO - implement si.splev using keras.backend.
 #               - That way you don't have to hash the X_spline in memory.
 
 
 class BSpline():
+
     def __init__(self, start=0, end=101, n_bases=10, spline_order=2):
         """Class for predicting BSpline functionality
 

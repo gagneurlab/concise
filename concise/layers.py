@@ -16,11 +16,12 @@ from keras.layers.pooling import _GlobalPooling1D
 #          - GAM regularization
 #        3. Check that GAMSmooth and your own positons vector yield the same thing
 #
-# TODO - write unit-tests
+# TODO - write unit-tests - use synthetic dataset from motifp
 
 ############################################
 
 class GAMSmooth(Layer):
+
     def __name__(self):
         return "GAMSmooth"
 

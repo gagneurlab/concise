@@ -68,7 +68,7 @@ def concise_model(pooling_layer="sum",  # 'sum', 'max' or 'mean'
 
     # initialize conv kernels to known motif pwm's
     if init_motifs:
-        # TODO - initialization is not the same as for Concise class
+        # WARNING - initialization is not the same as for Concise class
         pwm_list = [PWM.from_consensus(motif) for motif in init_motifs]
         kernel_initializer = ci.PWMKernelInitializer(pwm_list, stddev=init_sd_motif)
         bias_initializer = ci.PWMBiasInitializer(pwm_list, kernel_size=motif_length)
@@ -132,9 +132,3 @@ def concise_model(pooling_layer="sum",  # 'sum', 'max' or 'mean'
 
     return model
 
-# See
-    # TODO - callback?
-    # keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=early_stop_patience, verbose=0, mode='auto')
-    # keras.callbacks.LearningRateScheduler(schedule)
-
-# TODO - test that the exponential layer is serialized successfully
