@@ -1,0 +1,1 @@
+from .dna import encodeDNA

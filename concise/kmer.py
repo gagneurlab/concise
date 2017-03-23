@@ -4,7 +4,7 @@ from glmnet import ElasticNet
 from sklearn.feature_selection import f_regression
 from sklearn.linear_model import LinearRegression
 from scipy.sparse import csc_matrix
-from concise.get_data import seq_pad_and_trim
+from concise.preprocessing.dna import seq_pad_and_trim
 
 # TODO - don't directly require glmnet in the pacakge but rather only when calling the model
 #        - see with keras how to do this

@@ -10,16 +10,26 @@ from .args_sampler import sample_params
 from .kmer import best_kmers
 
 # Add all the custom objects to keras
-
+# TODO - include them automatically? - you are overriging
 from keras.utils.generic_utils import get_custom_objects
-from .initializers import PWMKernelInitializer, PWMBiasInitializer
-from .layers import GAMSmooth, GlobalSumPooling1D
-from .regularizers import GAMRegularizer
-from .activations import exponential
+from . import initializers, regularizers, layers, activations
 
-get_custom_objects()['PWMKernelInitializer'] = PWMKernelInitializer
-get_custom_objects()['PWMBiasInitializer'] = PWMBiasInitializer
-get_custom_objects()['GAMSmooth'] = GAMSmooth
-get_custom_objects()['GAMRegularizer'] = GAMRegularizer
-get_custom_objects()['GlobalSumPooling1D'] = GlobalSumPooling1D
-get_custom_objects()['exponential'] = exponential
+# initializers
+get_custom_objects()['PWMKernelInitializer'] = initializers.PWMKernelInitializer
+get_custom_objects()['PWMBiasInitializer'] = initializers.PWMBiasInitializer
+
+# regularizers
+get_custom_objects()['GAMRegularizer'] = regularizers.GAMRegularizer
+
+# layers
+get_custom_objects()['GAMSmooth'] = layers.GAMSmooth
+get_custom_objects()['GlobalSumPooling1D'] = layers.GlobalSumPooling1D
+get_custom_objects()['ConvDNA'] = layers.ConvDNA
+get_custom_objects()['InputDNA'] = layers.InputDNA
+get_custom_objects()['InputDNAQuantity'] = layers.InputDNAQuantity
+get_custom_objects()['InputDNAPosition'] = layers.InputDNAPosition
+
+# activations
+get_custom_objects()['exponential'] = activations.exponential
+
+
