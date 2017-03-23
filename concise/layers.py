@@ -7,17 +7,9 @@ from keras.layers import Conv1D, Input
 from concise.regularizers import GAMRegularizer
 from concise.splines import BSpline
 
-# TODO - implement a general case of smoothing - given a positions vector
-#        1. Use pre-processing for GAM's to generate multiple features for each position
-#          - check how deepcpg and dragonn handle pre-processing and its parameter storing
-#            - easy way to store the parameters to model json?
-#        2. Use conv1d to combine them and wrap a new layer
-#          - kernel_size = 1
-#          - no activation or padding
-#          - GAM regularization
-#        3. Check that GAMSmooth and your own positons vector yield the same thing
-#
-# TODO - write unit-tests - use synthetic dataset from motifp
+# TODO - improve the naming
+# TODO - unit-tests for the general case of smoothing: encodeSplines
+# TODO - write unit-tests - use synthetic dataset from motifp - check both cases encodeSplines
 
 ############################################
 
@@ -74,7 +66,7 @@ class GAMSmooth(Layer):
             n_spline_tracks = filters
 
         # setup the bspline object
-        self.bs = BSpline(start, end,
+        self.bs = BSpline(start, end - 1,
                           n_bases=self.n_bases,
                           spline_order=self.spline_order
                           )
@@ -149,6 +141,73 @@ class GlobalSumPooling1D(_GlobalPooling1D):
         return K.sum(inputs, axis=1)
 
 
+class ConvDNAQuantitySplines(Conv1D):
+    """
+    Convenience wrapper over keras.layers.Conv1D with 2 changes:
+    - additional argument seq_length specifying input_shape (as in ConvDNA)
+    - restriction in kernel_regularizer - needs to be of class GAMRegularizer
+    - hard-coded values:
+       - kernel_size=1,
+       - strides=1,
+       - padding='valid',
+       - dilation_rate=1,
+    """
+
+    def __init__(self, filters,
+                 activation=None,
+                 use_bias=True,
+                 kernel_initializer='glorot_uniform',
+                 bias_initializer='zeros',
+                 kernel_regularizer=GAMRegularizer(),
+                 bias_regularizer=None,
+                 kernel_constraint=None,
+                 bias_constraint=None,
+                 activity_regularizer=None,
+                 seq_length=None,
+                 **kwargs):
+
+        # override input shape
+        if seq_length:
+            kwargs["input_shape"] = (seq_length, 4)
+            kwargs["batch_input_shape"] = None
+
+        # require GAMRegularizer
+        if not isinstance(kernel_regularizer, GAMRegularizer):
+            raise ValueError("Regularizer has to be of type concise.regularizers.GAMRegularizer")
+
+        super(ConvDNAQuantitySplines, self).__init__(
+            filters=filters,
+            kernel_size=1,
+            strides=1,
+            padding='valid',
+            dilation_rate=1,
+            activation=activation,
+            use_bias=use_bias,
+            kernel_initializer=kernel_initializer,
+            bias_initializer=bias_initializer,
+            kernel_regularizer=kernel_regularizer,
+            bias_regularizer=bias_regularizer,
+            activity_regularizer=activity_regularizer,
+            kernel_constraint=kernel_constraint,
+            bias_constraint=bias_constraint,
+            **kwargs)
+
+    def build(self, input_shape):
+        # update the regularizer
+        self.kernel_regularizer.n_bases = input_shape[2]
+
+        return super(ConvDNAQuantitySplines, self).build(input_shape)
+
+    def get_config(self):
+        config = super(ConvDNAQuantitySplines, self).get_config()
+        config.pop('kernel_size')
+        config.pop('strides')
+        config.pop('padding')
+        config.pop('dilation_rate')
+        config["seq_length"] = self.seq_length
+        return config
+
+
 class ConvDNA(Conv1D):
     """
     Convenience wrapper over keras.layers.Conv1D with 2 changes:
@@ -202,7 +261,6 @@ class ConvDNA(Conv1D):
 
     def get_config(self):
         config = super(ConvDNA, self).get_config()
-        # config.pop('rank')
         config["seq_length"] = self.seq_length
         return config
 
@@ -223,25 +281,9 @@ def InputDNAQuantity(seq_length, n_features=1, name=None, **kwargs):
     return Input((seq_length, n_features), name=name, **kwargs)
 
 
-# TODO - implement a pre-processor with fit - to infer the min and max position
-# Afterwards, the Conv1D can be run directly. Restrictions:
-# - stride = 1
-# - special regularizer
-# -
-# -
-#
-# Arguments:
-# n_bases=10,
-# spline_order=3,
-# # regularization
-# l2_smooth=1e-5,
-# l2=1e-5,
-# use_bias=False,
-# bias_initializer='zeros',
-def InputDNASmoothPosition(seq_length, n_bases, name="DNASmoothPosition", **kwargs):
+def InputDNAQuantitySplines(seq_length, n_bases, name="DNASmoothPosition", **kwargs):
     """Convenience wrapper around keras.layers.Input:
 
     Input((seq_length, n_bases), name=name, **kwargs)
     """
     return Input((seq_length, n_bases), name=name, **kwargs)
-

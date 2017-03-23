@@ -1,11 +1,19 @@
 import pytest
-from keras import layers as kl
-from concise.layers import GAMSmooth
 import numpy as np
+import keras.backend as K
+from keras import layers as kl
 from keras.utils.generic_utils import deserialize_keras_object, serialize_keras_object
 from keras.models import Sequential, model_from_json
+import concise.layers as cl
+import concise.regularizers as cr
+from concise.preprocessing import encodeSplines
 
-# TODO - compare with Concise
+
+# TODO - compare GAMSmooth with Concise on simulated data
+# TODO - compare GAMSmooth with encodeSplines + ConvDNAQuantitySplines:
+#          smooth_input = cl.InputDNAQuantitySplines(seq_length, n_bases)
+#          x = cl.ConvDNAQuantitySplines(filters=3)(smooth_input)
+#          x = kl.Lambda(lambda x: x + 1)(x)
 
 
 def test_serialization():
@@ -26,7 +34,7 @@ def test_serialization():
     # (new_)steps = length along the sequence, might changed due to padding
     model = Sequential()
     model.add(conv_l)
-    model.add(GAMSmooth())
+    model.add(cl.GAMSmooth())
     model.compile(optimizer="adam", loss="mse", metrics=["mse"])
     js = model.to_json()
     js
@@ -36,7 +44,7 @@ def test_serialization():
 
     # check just layer serialization:
     conv_l.build(input_shape)
-    s = serialize_keras_object(GAMSmooth())
+    s = serialize_keras_object(cl.GAMSmooth())
 
     a = deserialize_keras_object(s, custom_objects={"Conv1D": kl.Conv1D})
     a.get_config()
@@ -45,3 +53,35 @@ def test_serialization():
     assert isinstance(a.get_config(), dict)
 
 
+def test_encodeSplines():
+
+    # check that encodeSplines + conv1d do the same thing as GAMSmooth layer
+    start = 0
+    end = 100
+    seq_length = end
+    n_bases = 10
+    pos = np.arange(start, end)
+    n_features = 1
+
+    posx = np.broadcast_to(pos, (n_features, end - start))
+    posx = pos.reshape((1, -1))
+
+    x_spline = encodeSplines(posx, n_bases=n_bases)
+
+    assert x_spline.shape == (n_features, end, n_bases)
+    # display the blocks
+    x_spline[0, :40]
+    x_spline[0, -40:]
+    # edges are 0
+    assert x_spline[0, 0, -1] == 0.0
+    assert x_spline[0, -1, 0] == 0.0
+
+    sm_l = cl.GAMSmooth(n_bases=n_bases)
+    sm_l.build(input_shape=(None, end, n_features))
+
+    X_spline = K.eval(sm_l.X_spline)
+
+    assert np.allclose(x_spline[0].sum(axis=1), 1)
+    assert np.allclose(X_spline.sum(axis=1), 1)
+    assert np.allclose(X_spline, x_spline[0])
+    # X_splines are the same

@@ -26,12 +26,10 @@ def encodeSplines(x, n_bases=10, spline_order=3):
     n_cols = x.shape[1]
 
     x_long = x.reshape((-1,))
+
     x_feat = bs.predict(x_long, add_intercept=False)  # shape = (n_rows * n_cols, n_bases)
 
     x_final = x_feat.reshape((n_rows, n_cols, n_bases))
     return x_final
 
 # TODO - write unit-tests - compare to GAMSmooth
-
-
-

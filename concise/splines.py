@@ -10,7 +10,7 @@ import scipy.interpolate as si
 
 class BSpline():
 
-    def __init__(self, start=0, end=101, n_bases=10, spline_order=2):
+    def __init__(self, start=0, end=101, n_bases=10, spline_order=3):
         """Class for predicting BSpline functionality
 
         Arguments:

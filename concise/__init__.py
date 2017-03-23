@@ -12,7 +12,7 @@ from .kmer import best_kmers
 # Add all the custom objects to keras
 # TODO - include them automatically? - you are overriging
 from keras.utils.generic_utils import get_custom_objects
-from . import initializers, regularizers, layers, activations
+from . import initializers, regularizers, layers, activations, splines
 
 # initializers
 get_custom_objects()['PWMKernelInitializer'] = initializers.PWMKernelInitializer
@@ -25,11 +25,14 @@ get_custom_objects()['GAMRegularizer'] = regularizers.GAMRegularizer
 get_custom_objects()['GAMSmooth'] = layers.GAMSmooth
 get_custom_objects()['GlobalSumPooling1D'] = layers.GlobalSumPooling1D
 get_custom_objects()['ConvDNA'] = layers.ConvDNA
+get_custom_objects()['ConvDNAQuantitySplines'] = layers.ConvDNAQuantitySplines
 get_custom_objects()['InputDNA'] = layers.InputDNA
 get_custom_objects()['InputDNAQuantity'] = layers.InputDNAQuantity
-get_custom_objects()['InputDNAPosition'] = layers.InputDNAPosition
+get_custom_objects()['InputDNAQuantitySplines'] = layers.InputDNAQuantitySplines
 
 # activations
 get_custom_objects()['exponential'] = activations.exponential
 
 
+# remove variables from the scope
+del get_custom_objects
