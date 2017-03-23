@@ -14,6 +14,105 @@ from concise.splines import BSpline
 ############################################
 
 
+def InputDNA(seq_length, name=None, **kwargs):
+    """Convenience wrapper around keras.layers.Input:
+
+    Input((seq_length, 4), name=name, **kwargs)
+    """
+    return Input((seq_length, 4), name=name, **kwargs)
+
+
+def InputDNAQuantity(seq_length, n_features=1, name=None, **kwargs):
+    """Convenience wrapper around keras.layers.Input:
+
+    Input((seq_length, n_features), name=name, **kwargs)
+    """
+    return Input((seq_length, n_features), name=name, **kwargs)
+
+
+def InputDNAQuantitySplines(seq_length, n_bases, name="DNASmoothPosition", **kwargs):
+    """Convenience wrapper around keras.layers.Input:
+
+    Input((seq_length, n_bases), name=name, **kwargs)
+    """
+    return Input((seq_length, n_bases), name=name, **kwargs)
+
+
+class GlobalSumPooling1D(_GlobalPooling1D):
+    """Global average pooling operation for temporal data.
+    # Input shape
+        3D tensor with shape: `(batch_size, steps, features)`.
+    # Output shape
+        2D tensor with shape:
+        `(batch_size, channels)`
+    """
+
+    def call(self, inputs):
+        return K.sum(inputs, axis=1)
+
+
+class ConvDNA(Conv1D):
+    """
+    Convenience wrapper over keras.layers.Conv1D with 2 changes:
+    - additional argument seq_length specifying input_shape
+    - restriction in build method: input_shape[-1] needs to be 4
+    """
+
+    def __init__(self, filters,
+                 kernel_size,
+                 strides=1,
+                 padding='valid',
+                 dilation_rate=1,
+                 activation=None,
+                 use_bias=True,
+                 kernel_initializer='glorot_uniform',
+                 bias_initializer='zeros',
+                 kernel_regularizer=None,
+                 bias_regularizer=None,
+                 activity_regularizer=None,
+                 kernel_constraint=None,
+                 bias_constraint=None,
+                 seq_length=None,
+                 **kwargs):
+
+        # override input shape
+        if seq_length:
+            kwargs["input_shape"] = (seq_length, 4)
+            kwargs["batch_input_shape"] = None
+
+        super(ConvDNA, self).__init__(
+            filters=filters,
+            kernel_size=kernel_size,
+            strides=strides,
+            padding=padding,
+            dilation_rate=dilation_rate,
+            activation=activation,
+            use_bias=use_bias,
+            kernel_initializer=kernel_initializer,
+            bias_initializer=bias_initializer,
+            kernel_regularizer=kernel_regularizer,
+            bias_regularizer=bias_regularizer,
+            activity_regularizer=activity_regularizer,
+            kernel_constraint=kernel_constraint,
+            bias_constraint=bias_constraint,
+            **kwargs)
+
+    def build(self, input_shape):
+        if input_shape[-1] is not 4:
+            raise ValueError("ConvDNA requires input_shape[-1] == 4")
+        return super(ConvDNA, self).build(input_shape)
+
+    def get_config(self):
+        config = super(ConvDNA, self).get_config()
+        config["seq_length"] = self.seq_length
+        return config
+
+    # TODO - define the plotting function for motifs
+
+############################################
+# Smoothing layers
+
+
 class GAMSmooth(Layer):
 
     def __name__(self):
@@ -127,18 +226,7 @@ class GAMSmooth(Layer):
         base_config = super(GAMSmooth, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
-
-class GlobalSumPooling1D(_GlobalPooling1D):
-    """Global average pooling operation for temporal data.
-    # Input shape
-        3D tensor with shape: `(batch_size, steps, features)`.
-    # Output shape
-        2D tensor with shape:
-        `(batch_size, channels)`
-    """
-
-    def call(self, inputs):
-        return K.sum(inputs, axis=1)
+    # TODO - define a plotting function - plot f(x)
 
 
 class ConvDNAQuantitySplines(Conv1D):
@@ -206,84 +294,3 @@ class ConvDNAQuantitySplines(Conv1D):
         config.pop('dilation_rate')
         config["seq_length"] = self.seq_length
         return config
-
-
-class ConvDNA(Conv1D):
-    """
-    Convenience wrapper over keras.layers.Conv1D with 2 changes:
-    - additional argument seq_length specifying input_shape
-    - restriction in build method: input_shape[-1] needs to be 4
-    """
-
-    def __init__(self, filters,
-                 kernel_size,
-                 strides=1,
-                 padding='valid',
-                 dilation_rate=1,
-                 activation=None,
-                 use_bias=True,
-                 kernel_initializer='glorot_uniform',
-                 bias_initializer='zeros',
-                 kernel_regularizer=None,
-                 bias_regularizer=None,
-                 activity_regularizer=None,
-                 kernel_constraint=None,
-                 bias_constraint=None,
-                 seq_length=None,
-                 **kwargs):
-
-        # override input shape
-        if seq_length:
-            kwargs["input_shape"] = (seq_length, 4)
-            kwargs["batch_input_shape"] = None
-
-        super(ConvDNA, self).__init__(
-            filters=filters,
-            kernel_size=kernel_size,
-            strides=strides,
-            padding=padding,
-            dilation_rate=dilation_rate,
-            activation=activation,
-            use_bias=use_bias,
-            kernel_initializer=kernel_initializer,
-            bias_initializer=bias_initializer,
-            kernel_regularizer=kernel_regularizer,
-            bias_regularizer=bias_regularizer,
-            activity_regularizer=activity_regularizer,
-            kernel_constraint=kernel_constraint,
-            bias_constraint=bias_constraint,
-            **kwargs)
-
-    def build(self, input_shape):
-        if input_shape[-1] is not 4:
-            raise ValueError("ConvDNA requires input_shape[-1] == 4")
-        return super(ConvDNA, self).build(input_shape)
-
-    def get_config(self):
-        config = super(ConvDNA, self).get_config()
-        config["seq_length"] = self.seq_length
-        return config
-
-
-def InputDNA(seq_length, name=None, **kwargs):
-    """Convenience wrapper around keras.layers.Input:
-
-    Input((seq_length, 4), name=name, **kwargs)
-    """
-    return Input((seq_length, 4), name=name, **kwargs)
-
-
-def InputDNAQuantity(seq_length, n_features=1, name=None, **kwargs):
-    """Convenience wrapper around keras.layers.Input:
-
-    Input((seq_length, n_features), name=name, **kwargs)
-    """
-    return Input((seq_length, n_features), name=name, **kwargs)
-
-
-def InputDNAQuantitySplines(seq_length, n_bases, name="DNASmoothPosition", **kwargs):
-    """Convenience wrapper around keras.layers.Input:
-
-    Input((seq_length, n_bases), name=name, **kwargs)
-    """
-    return Input((seq_length, n_bases), name=name, **kwargs)
