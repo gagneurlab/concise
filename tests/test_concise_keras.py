@@ -104,11 +104,11 @@ class TestConcisePrediction(object):
         # test the nice print:
         param, X_feat, X_seq, y, id_vec = self.data
 
-        dc = concise_model(**param,
-                           pooling_layer="max",
+        dc = concise_model(pooling_layer="max",
                            n_covariates=X_feat.shape[1],
                            lambd=0,
-                           seq_length=X_seq.shape[1])
+                           seq_length=X_seq.shape[1],
+                           **param)
 
         callback = keras.callbacks.EarlyStopping(patience=param["early_stop_patience"])
         dc.fit([X_seq, X_feat], y, epochs=50,
