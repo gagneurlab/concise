@@ -26,12 +26,13 @@ def test_serialization():
 
 def test_serialization_disk(tmpdir):
     param, X_feat, X_seq, y, id_vec = load_example_data(use_keras=True)
-    dc = concise_model(**param,
-                       pooling_layer="sum",
+    dc = concise_model(pooling_layer="sum",
                        init_motifs=["TGCGAT", "TATTTAT"],
                        n_splines=10,
                        n_covariates=X_feat.shape[1],
-                       seq_length=X_seq.shape[1])
+                       seq_length=X_seq.shape[1],
+                       **param)
+
     dc.fit([X_seq, X_feat], y, epochs=1,
            validation_data=([X_seq, X_feat], y))
 
@@ -52,10 +53,10 @@ class TestKerasConciseBasic(object):
     def test_no_error(self):
         # test the nice print:
         param, X_feat, X_seq, y, id_vec = self.data
-        dc = concise_model(**param,
-                           pooling_layer="max",
+        dc = concise_model(pooling_layer="max",
                            n_covariates=X_feat.shape[1],
-                           seq_length=X_seq.shape[1])
+                           seq_length=X_seq.shape[1],
+                           **param)
         dc.fit([X_seq, X_feat], y, epochs=1,
                validation_data=([X_seq, X_feat], y))
 
@@ -65,10 +66,10 @@ class TestKerasConciseBasic(object):
     def test_train_predict_no_X_feat(self):
         # test the nice print:
         param, X_feat, X_seq, y, id_vec = self.data
-        dc = concise_model(**param,
-                           pooling_layer="max",
+        dc = concise_model(pooling_layer="max",
                            n_covariates=0,
-                           seq_length=X_seq.shape[1])
+                           seq_length=X_seq.shape[1],
+                           **param)
         dc.fit(X_seq, y, epochs=1,
                validation_data=(X_seq, y))
 
