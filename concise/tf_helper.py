@@ -1,9 +1,10 @@
 # helper functions for tensorflow
 
-
 # copied from
 # https://github.com/tensorflow/models/blob/master/inception/inception/slim/losses.py
 import tensorflow as tf
+
+# TODO - use the one from tensorflow directly?
 
 def l1_loss(tensor, weight=1.0, scope=None):
     """Define a L1Loss, useful for regularize, i.e. lasso.
@@ -20,6 +21,7 @@ def l1_loss(tensor, weight=1.0, scope=None):
                                       name='loss_weight')
         loss = tf.multiply(weight, tf.reduce_sum(tf.abs(tensor)), name='value')
         return loss
+
 
 def huber_loss(tensor, k=1, scope=None):
     """Define a huber loss  https://en.wikipedia.org/wiki/Huber_loss 

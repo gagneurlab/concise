@@ -21,6 +21,7 @@ requirements = [
     "matplotlib",
     "tensorflow",
     "glmnet",
+    "keras>=2.0.1",
 ]
 
 test_requirements = [

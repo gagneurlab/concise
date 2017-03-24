@@ -4,8 +4,12 @@ from glmnet import ElasticNet
 from sklearn.feature_selection import f_regression
 from sklearn.linear_model import LinearRegression
 from scipy.sparse import csc_matrix
-from concise.get_data import seq_pad_and_trim
-# TODO - get feature selection working
+from concise.preprocessing.dna import seq_pad_and_trim
+
+# TODO - don't directly require glmnet in the pacakge but rather only when calling the model
+#        - see with keras how to do this
+
+
 # csv_file_path = "data/pombe_half-life_UTR3.csv"
 # dt = pd.read_csv(csv_file_path)
 # response = 'hlt'
@@ -19,6 +23,7 @@ def hamming_distance(s1, s2):
     if len(s1) != len(s2):
         raise ValueError("Undefined for sequences of unequal length")
     return sum(el1 != el2 for el1, el2 in zip(s1, s2))
+
 
 def best_kmers(dt, response, sequence, k=6, consider_shift=True, n_cores=1,
                seq_align="start", trim_seq_len=None):

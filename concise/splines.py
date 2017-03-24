@@ -2,13 +2,101 @@
 import numpy as np
 import scipy.interpolate as si
 
+# TODO - BSpline.predict() -> allow x to be of any shape. return.shape = in.shape + (n_bases)
+
+# MAYBE TODO - implement si.splev using keras.backend.
+#               - That way you don't have to hash the X_spline in memory.
+
+
+class BSpline():
+
+    def __init__(self, start=0, end=101, n_bases=10, spline_order=3):
+        """Class for predicting BSpline functionality
+
+        Arguments:
+            start: float or int; start of the region
+            end: float or int; end of the region
+            n_bases: int; number of spline bases
+            spline_order: int; spline order
+        """
+
+        self.start = start
+        self.end = end
+        self.n_bases = n_bases
+        self.spline_order = spline_order
+
+        self.knots = get_knots(self.start, self.end, self.n_bases, self.spline_order)
+
+        self.S = get_S(self.n_bases, self.spline_order, add_intercept=False)
+
+    def __repr__(self):
+        return "BSpline(start={0}, end={1}, n_bases={2}, spline_order={3})".\
+            format(self.start, self.end, self.n_bases, self.spline_order)
+
+    def getS(self, add_intercept=False):
+        """Get the penalty matrix S
+
+        Returns
+            np.array, of shape (n_bases + add_intercept, n_bases + add_intercept)
+        """
+        S = self.S
+        if add_intercept is True:
+            # S <- cbind(0, rbind(0, S)) # in R
+            zeros = np.zeros_like(S[:1, :])
+            S = np.vstack([zeros, S])
+
+            zeros = np.zeros_like(S[:, :1])
+            S = np.hstack([zeros, S])
+        return S
+
+    def predict(self, x, add_intercept=False):
+        """For some x, predict the bn(x) for each base
+
+        Arguments:
+            x: np.array; Vector of dimension 1
+            add_intercept: bool; should we add the intercept to the final array
+
+        Returns:
+            np.array, of shape (len(x), n_bases + (add_intercept))
+        """
+        # sanity check
+        if x.min() < self.start:
+            raise Warning("x.min() < self.start")
+        if x.max() > self.end:
+            raise Warning("x.max() > self.end")
+
+        return get_X_spline(x=x,
+                            knots=self.knots,
+                            n_bases=self.n_bases,
+                            spline_order=self.spline_order,
+                            add_intercept=add_intercept)
+
+    def get_config(self):
+        return {"start": self.start,
+                "end": self.end,
+                "n_bases": self.n_bases,
+                "spline_order": self.spline_order
+                }
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+############################################
+# core functions
+
+
 def get_gam_splines(start=0, end=100, n_bases=10, spline_order=2, add_intercept=True):
+    """Main function required by (TF)Concise class
+    """
     # make sure n_bases is an int
     assert type(n_bases) == int
 
+    x = np.arange(start, end + 1)
+
     knots = get_knots(start, end, n_bases, spline_order)
-    X_splines = get_X_spline(start, end, n_bases, spline_order, add_intercept)
-    S = get_S(start, end, n_bases, spline_order, add_intercept)
+    X_splines = get_X_spline(x, knots, n_bases, spline_order, add_intercept)
+    S = get_S(n_bases, spline_order, add_intercept)
     # Get the same knot positions as with mgcv
     # https://github.com/cran/mgcv/blob/master/R/smooth.r#L1560
 
@@ -19,7 +107,11 @@ def get_gam_splines(start=0, end=100, n_bases=10, spline_order=2, add_intercept=
 # helper functions
 # main resource:
 # https://github.com/cran/mgcv/blob/master/R/smooth.r#L1560
-def get_knots(start=0, end=100, n_bases=10, spline_order=2):
+def get_knots(start, end, n_bases=10, spline_order=2):
+    """
+    Arguments:
+        x; np.array of dim 1
+    """
     x_range = end - start
     start = start - x_range * 0.001
     end = end + x_range * 0.001
@@ -35,13 +127,24 @@ def get_knots(start=0, end=100, n_bases=10, spline_order=2):
     return knots.astype(np.float32)
 
 
-# TODO - use x = np.linspace(start, end, end - start + 1) as argument instead of start, end
-def get_X_spline(start=0, end=100, n_bases=10, spline_order=2, add_intercept=True):
-    knots = get_knots(start, end, n_bases, spline_order)
-    tck = [knots, np.zeros(n_bases), spline_order]
-    x = np.linspace(start, end, end - start + 1)
+# - get knots as arguments
+def get_X_spline(x, knots, n_bases=10, spline_order=2, add_intercept=True):
+    """
+    Returns:
+        np.array of shape [len(x), n_bases + (add_intercept)]
 
-    X = np.zeros([end - start + 1, n_bases])
+    # BSpline formula
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.BSpline.html#scipy.interpolate.BSpline
+
+    Fortran code:
+    https://github.com/scipy/scipy/blob/v0.19.0/scipy/interpolate/fitpack/splev.f
+    """
+    if len(x.shape) is not 1:
+        raise ValueError("x has to be 1 dimentional")
+
+    tck = [knots, np.zeros(n_bases), spline_order]
+
+    X = np.zeros([len(x), n_bases])
 
     for i in range(n_bases):
         vec = np.zeros(n_bases)
@@ -54,14 +157,10 @@ def get_X_spline(start=0, end=100, n_bases=10, spline_order=2, add_intercept=Tru
         ones = np.ones_like(X[:, :1])
         X = np.hstack([ones, X])
 
-# if (add_intercept == TRUE) {
-#     X <- cbind(1, X)
-#     ## don't penalize the intercept term
-#     S <- cbind(0, rbind(0, S))
-#   }
     return X.astype(np.float32)
 
-def get_S(start=0, end=100, n_bases=10, spline_order=2, add_intercept=True):
+
+def get_S(n_bases=10, spline_order=2, add_intercept=True):
     # mvcv R-code
     # S<-diag(object$bs.dim);
     # if (m[2]) for (i in 1:m[2]) S <- diff(S)

@@ -5,7 +5,7 @@ import numpy as np
 # import os
 # dir_root = os.path.dirname(os.path.realpath(__file__)) + "/../../../../"
 
-def load_example_data(trim_seq_len=200, standardize_features=False, num_tasks=1, no_feat = False):
+def load_example_data(trim_seq_len=200, standardize_features=False, num_tasks=1, no_feat=False, use_keras=False):
     param = {}
     # column names
     csv_file_path = "./data/pombe_half-life_UTR3.csv"
@@ -35,5 +35,8 @@ def load_example_data(trim_seq_len=200, standardize_features=False, num_tasks=1,
 
     if no_feat:
         X_feat = X_feat[:, 0:0]
-        
+
+    if use_keras:
+        X_seq = np.squeeze(X_seq, 1)
+
     return param, X_feat, X_seq, y, id_vec

@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 # concise end-user interface
 
+# TODO - update process data function & Concise -
+#        squeeze 2nd dimension (None, 1, seq_len, 4) -> (None, seq_len, 4)
+#
+
+# OLD:
 # TODO: write the train method Concise more roboustly, when retraining
 # - write additional method continue training
 # - train - starts training from scratch?
@@ -29,11 +34,41 @@ from sklearn.cross_validation import KFold
 
 # read-only concise class
 
+# get_unused_param
+# get_var_initialization
+# _build_graph
+# get_weights
+# get_init_weights
+# _var_res_to_weights
+# get_execution_time
+# get_accuracy
+# is_trained
+# _convert_to_var
+# _get_var_res_sess
+# train
+# _predict_in_session
+# _accuracy_in_session
+# _train_lbfgs
+# _train_adam
+# predict
+# _get_other_var
+# _test
+# print_weights
+# plot_accuracy
+# plot_pos_bias
+# to_dict
+# save
+# _set_var_res
+# from_dict
+# load
 
-# def ConciseFitCV.load()
+# ConciseCV
+# get_param
+# get_unused_param
+# _get_folds
+# get_folds
+# train
 
-# feed to train n_cores=4,...
-# TODO: add the possibility of random huber_loss function and other loss functions
 
 class Concise(object):
     """**Initialize the Concise object.**
@@ -75,7 +110,6 @@ class Concise(object):
         print_every (int): Number of iteration steps after the training information is printed.
         **kwargs (any): Additional unused parameters that get stored in the model file. Useful to store say the pre-processing information.
     """
-#        init_feat_w_lm (bool): If True, model is initialized by fitting a linear model to the response using :py:attr:`X_feat` as features.
 
     # TODO: __repr__
     # TODO: change all N_ uppercase to lowercase for consistency
@@ -145,7 +179,6 @@ class Concise(object):
                  init_motif_bias=0,
                  init_sd_motif=1e-2,
                  init_sd_w=1e-3,         # initial weight scale of feature w or motif w
-                 # init_feat_w_lm=False,    # initalize features with a linear model
                  # outuput detail
                  print_every=100,
                  **kwargs):
@@ -462,7 +495,7 @@ class Concise(object):
         if self._param["n_splines"] is not None:
             spline_pred = self._splines["X_spline"].dot(var_res["spline_weights"])
 
-            if self._param["spline_exp"] == True:
+            if self._param["spline_exp"] is True:
                 spline_pred = np.exp(spline_pred)
             else:
                 spline_pred = (spline_pred + 1)
