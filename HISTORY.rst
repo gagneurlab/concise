@@ -66,3 +66,7 @@ History
 * fix: Update tensorflow function (tf.op_scope -> tf.name_scope, initialize_all_variables -> tf.global_variables_initializer)
 * fix: tf.mul -> tf.multiply
 * feat: allow NaN's in y_train
+
+0.5.0 (2017-03-13)
+------------------
+* feat: Implemented Concise as keras layers
