@@ -6,6 +6,8 @@ from keras.layers.pooling import _GlobalPooling1D
 from keras.layers import Conv1D, Input
 from concise.regularizers import GAMRegularizer
 from concise.splines import BSpline
+import matplotlib.pyplot as plt
+
 
 # TODO - improve the naming
 # TODO - unit-tests for the general case of smoothing: encodeSplines
@@ -97,6 +99,8 @@ class ConvDNA(Conv1D):
             bias_constraint=bias_constraint,
             **kwargs)
 
+        self.seq_length = seq_length
+
     def build(self, input_shape):
         if input_shape[-1] is not 4:
             raise ValueError("ConvDNA requires input_shape[-1] == 4")
@@ -112,7 +116,7 @@ class ConvDNA(Conv1D):
 ############################################
 # Smoothing layers
 
-
+# TODO - add X_spline as non-trainable weights
 class GAMSmooth(Layer):
 
     def __name__(self):
@@ -170,11 +174,12 @@ class GAMSmooth(Layer):
                           spline_order=self.spline_order
                           )
 
-        # create X_spline, convert to the right precision
-        self.X_spline = K.constant(
-            K.cast_to_floatx(
-                self.bs.predict(np.arange(end), add_intercept=False)  # shape = (end, self.n_bases)
-            ))
+        # create X_spline,
+        self.positions = np.arange(end)
+        self.X_spline = self.bs.predict(self.positions, add_intercept=False)  # shape = (end, self.n_bases)
+
+        # convert to the right precision and K.constant
+        self.X_spline_K = K.constant(K.cast_to_floatx(self.X_spline))
 
         # add weights
         self.kernel = self.add_weight(shape=(self.n_bases, n_spline_tracks),
@@ -194,7 +199,7 @@ class GAMSmooth(Layer):
 
     def call(self, x):
 
-        spline_track = K.dot(self.X_spline, self.kernel)
+        spline_track = K.dot(self.X_spline_K, self.kernel)
 
         if self.use_bias:
             spline_track = K.bias_add(spline_track, self.bias)
@@ -226,7 +231,18 @@ class GAMSmooth(Layer):
         base_config = super(GAMSmooth, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
-    # TODO - define a plotting function - plot f(x)
+    def positional_effect(self):
+        w = self.get_weights()[0]
+        pos_effect = np.dot(self.X_spline, w)
+        return {"positional_effect": pos_effect, "positions": self.positions}
+
+    def plot(self, *args, **kwargs):
+        pe = self.positional_effect()
+        plt.plot(pe["positions"], pe["positional_effect"], *args, **kwargs)
+        plt.xlabel("Position")
+        plt.ylabel("Positional effect")
+
+        # TODO - define a plotting function - plot f(x)
 
 
 class ConvDNAQuantitySplines(Conv1D):
@@ -279,6 +295,8 @@ class ConvDNAQuantitySplines(Conv1D):
             kernel_constraint=kernel_constraint,
             bias_constraint=bias_constraint,
             **kwargs)
+
+        self.seq_length = seq_length
 
     def build(self, input_shape):
         # update the regularizer

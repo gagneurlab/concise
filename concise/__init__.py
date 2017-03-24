@@ -12,7 +12,7 @@ from .kmer import best_kmers
 # Add all the custom objects to keras
 # TODO - include them automatically? - you are overriging
 from keras.utils.generic_utils import get_custom_objects
-from . import initializers, regularizers, layers, activations, splines
+from . import initializers, regularizers, layers, activations, metrics
 
 # initializers
 get_custom_objects()['PWMKernelInitializer'] = initializers.PWMKernelInitializer
@@ -32,6 +32,9 @@ get_custom_objects()['InputDNAQuantitySplines'] = layers.InputDNAQuantitySplines
 
 # activations
 get_custom_objects()['exponential'] = activations.exponential
+
+# metrics
+get_custom_objects()['var_explained'] = metrics.var_explained
 
 
 # remove variables from the scope

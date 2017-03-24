@@ -79,7 +79,7 @@ def test_encodeSplines():
     sm_l = cl.GAMSmooth(n_bases=n_bases)
     sm_l.build(input_shape=(None, end, n_features))
 
-    X_spline = K.eval(sm_l.X_spline)
+    X_spline = sm_l.X_spline
 
     assert np.allclose(x_spline[0].sum(axis=1), 1)
     assert np.allclose(X_spline.sum(axis=1), 1)
