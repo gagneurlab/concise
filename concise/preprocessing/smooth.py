@@ -1,7 +1,7 @@
 """
 Pre-processor for smooth tracks
 """
-from concise.splines import BSpline
+from ..splines import BSpline
 
 
 def encodeSplines(x, n_bases=10, spline_order=3):

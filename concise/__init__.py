@@ -4,15 +4,25 @@ __author__ = 'Žiga Avsec'
 __email__ = 'avsec@in.tum.de'
 __version__ = '0.5.0'
 
+from . import activations
+from . import layers
+from . import preprocessing
+from . import utils
+from . import initializers
+from . import metrics
+from . import models
+from . import regularizers
+
+
 from .concise import Concise, ConciseCV
 from .get_data import prepare_data
 from .args_sampler import sample_params
 from .kmer import best_kmers
 
+
 # Add all the custom objects to keras
 # TODO - include them automatically? - you are overriging
 from keras.utils.generic_utils import get_custom_objects
-from . import initializers, regularizers, layers, activations, metrics
 
 # initializers
 get_custom_objects()['PWMKernelInitializer'] = initializers.PWMKernelInitializer

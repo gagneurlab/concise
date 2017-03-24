@@ -36,9 +36,10 @@ setup(
     author="Žiga Avsec",
     author_email='avsec@in.tum.de',
     url='https://github.com/avsecz/concise',
-    packages=["concise"],
-    package_dir={'concise':
-                 'concise'},
+    packages=find_packages(),
+    # packages=["concise"],
+    # package_dir={'concise':
+    #              'concise'},
     include_package_data=True,
     setup_requires=['numpy'],
     install_requires=requirements,
