@@ -6,6 +6,7 @@ from concise.utils import PWM
 import numpy as np
 from keras.utils.generic_utils import deserialize_keras_object, serialize_keras_object, get_custom_objects
 from keras.models import Sequential, model_from_json
+import matplotlib.pyplot as plt
 
 def test_correct_initialization():
     pwm_list = [PWM(np.array([[1, 2, 3, 4], [2, 4, 4, 5]])),
@@ -88,3 +89,37 @@ def test_init_serialization():
 
     # serialization was successfull
     assert np.all(a.kernel_initializer.pwm_list[0].pwm == pwm_list[0].pwm)
+
+
+def test_plot(tmpdir):
+    pwm_list = [PWM([[1, 2, 3, 4],
+                     [2, 4, 4, 5]]),
+                PWM([[1, 2, 1, 4],
+                     [2, 10, 4, 5]])]
+
+    # should work out of the box
+    # get_custom_objects()['PWMKernelInitializer'] = PWMKernelInitializer
+    # get_custom_objects()['PWMBiasInitializer'] = PWMBiasInitializer
+
+    seq_length = 100
+    input_shape = (None, seq_length, 4)  # (batch_size, steps, input_dim)
+    # input_shape = (seq_length, 4)  # (batch_size, steps, input_dim)
+
+    # output_shape = (None, steps, filters)
+    from concise.layers import ConvDNA
+    conv_l = ConvDNA(filters=15, kernel_size=11,
+                     kernel_regularizer=L1L2(l1=1, l2=1),  # Regularization
+                     activation="relu",
+                     kernel_initializer=PWMKernelInitializer(pwm_list, stddev=0.1),
+                     bias_initializer=PWMBiasInitializer(pwm_list, kernel_size=11),
+                     seq_length=seq_length
+                     )
+
+    conv_l.build(input_shape)
+
+    # plt.savefig('data.png')
+    # conv_l.plotMotif(0)
+    # plt.close()
+
+    # TODO
+

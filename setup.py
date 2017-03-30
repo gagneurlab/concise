@@ -22,6 +22,11 @@ requirements = [
     "tensorflow",
     "glmnet",
     "keras>=2.0.1",
+    'deeplift>=0.4',
+]
+
+dependency_links = [
+    "https://github.com/kundajelab/deeplift/tarball/v0.4.0-alpha#egg=deeplift-0.4"
 ]
 
 test_requirements = [
@@ -43,6 +48,7 @@ setup(
     include_package_data=True,
     setup_requires=['numpy'],
     install_requires=requirements,
+    dependency_links=dependency_links,
     license="MIT license",
     zip_safe=False,
     keywords=["computational biology", "bioinformatics", "genomics",

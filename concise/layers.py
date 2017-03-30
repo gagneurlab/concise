@@ -4,9 +4,11 @@ from keras.engine.topology import Layer
 from keras import initializers
 from keras.layers.pooling import _GlobalPooling1D
 from keras.layers import Conv1D, Input
+from deeplift.visualization import viz_sequence
+import matplotlib.pyplot as plt
+
 from concise.regularizers import GAMRegularizer
 from concise.splines import BSpline
-import matplotlib.pyplot as plt
 
 
 # TODO - improve the naming
@@ -80,7 +82,7 @@ class ConvDNA(Conv1D):
         # override input shape
         if seq_length:
             kwargs["input_shape"] = (seq_length, 4)
-            kwargs["batch_input_shape"] = None
+            kwargs.pop("batch_input_shape", None)
 
         super(ConvDNA, self).__init__(
             filters=filters,
@@ -111,7 +113,41 @@ class ConvDNA(Conv1D):
         config["seq_length"] = self.seq_length
         return config
 
-    # TODO - define the plotting function for motifs
+    # def plotWeights(self):
+    #     """Plot weights as matrices
+    #     """
+    #     pass
+
+    def plotMotif(self, index, figsize=(10, 2)):
+        """
+
+        Arguments:
+            index: Which motif to plot
+        """
+
+        W = self.get_weights()[0]
+
+        assert isinstance(index, int)
+        assert index >= 0
+        assert index < W.shape[2]
+        viz_sequence.plot_weights(W[:, :, index], figsize=figsize)
+
+    def plotMotifs(self, figsize=(10, 2)):
+        """
+
+        Arguments:
+            indices: Index list which ones to choose
+        """
+
+        W = self.get_weights()[0]
+
+        for index in range(W.shape[2]):
+            print("filter index: {0}".format(index))
+            viz_sequence.plot_weights(W[:, :, index], figsize=figsize)
+
+    # TODO - improve the plotting functions for motifs - refactor the viz_sequence
+    #        - mutliple panels with titles
+    #        - save to file if needed
 
 ############################################
 # Smoothing layers
