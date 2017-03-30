@@ -4,8 +4,10 @@
 from setuptools import setup, find_packages
 import sys
 
+# add back later
 if sys.version_info[0] != 3:
-    sys.exit("Only Python 3 is supported")
+    # sys.exit("Only Python 3 is supported")
+    print("WARNING: Only Python 3 is supported")
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
@@ -44,7 +46,7 @@ setup(
     url='https://github.com/avsecz/concise',
     packages=find_packages(),
     include_package_data=True,
-    setup_requires=['numpy'],
+    #setup_requires=['numpy'],
     install_requires=requirements,
     dependency_links=dependency_links,
     license="MIT license",

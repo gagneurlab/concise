@@ -11,7 +11,8 @@ py.test:
     - master
     - /^devel.*$/
   before_script:
-    - apt-get install -y gfortran
+    #- apt-get -y update
+    #- apt-get install -y gfortran
     - python --version
     - pip install -U tox
     - tox --version
