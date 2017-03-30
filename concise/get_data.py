@@ -57,4 +57,3 @@ def prepare_data(dt, features, response, sequence, id_column=None, seq_align="en
     id_vec = np.array(dt[id_column])
 
     return X_feat, X_seq, y, id_vec
-

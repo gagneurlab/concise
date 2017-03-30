@@ -21,6 +21,7 @@ before_install:
   - sudo apt-get install -y gfortran
 install:
   - pip install -U tox
+  - pip install -U pip
 script: tox -e ${TOXENV}
 deploy:
   provider: pypi

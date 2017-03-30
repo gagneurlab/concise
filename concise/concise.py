@@ -14,9 +14,9 @@
 from . import analyze
 from . import get_data
 from . import splines
-from . import math_helper
 from . import helper
 from . import tf_helper
+from . import evaluation as ce
 import numpy as np
 import tensorflow as tf
 import pprint
@@ -25,7 +25,7 @@ import os
 import inspect
 import copy
 import time
-from sklearn.cross_validation import KFold
+from sklearn.model_selection import KFold
 
 # def train(param, X_feat_train, X_seq_train, y_train,
 #           X_seq_valid=None, X_feat_valid=None, y_valid=None,
@@ -609,11 +609,16 @@ class Concise(object):
             y: :py:attr:`y` used for model validation.
             n_cores (int): Number of CPU cores used for training. If available, GPU is used for training and this argument is ignored.
         """
+
         if X_feat_valid is None and X_seq_valid is None and y_valid is None:
             X_feat_valid = X_feat
             X_seq_valid = X_seq
             y_valid = y
             print("Using training samples also for validation ")
+
+        # insert one dimension - backcompatiblity
+        X_seq = np.expand_dims(X_seq, axis=1)
+        X_seq_valid = np.expand_dims(X_seq_valid, axis=1)
 
         # TODO: implement the re-training feature
         if self.is_trained() is True:
@@ -692,7 +697,7 @@ class Concise(object):
         Compute the accuracy from inside the tf session
         """
         y_pred = self._predict_in_session(sess, other_var, X_feat, X_seq)
-        return math_helper.mse(y_pred, y)
+        return ce.mse(y_pred, y)
 
     def _train_lbfgs(self, X_feat_train, X_seq_train, y_train,
                      X_feat_valid, X_seq_valid, y_valid,
@@ -965,6 +970,9 @@ class Concise(object):
             X_seq:  Sequenc design matrix. Same format as  :py:attr:`X_seq` in :py:meth:`train`
         """
 
+        # insert one dimension - backcompatiblity
+        X_seq = np.expand_dims(X_seq, axis=1)
+
         return self._get_other_var(X_feat, X_seq, variable="y_pred")
 
     def _get_other_var(self, X_feat, X_seq, variable="y_pred"):
@@ -1000,7 +1008,7 @@ class Concise(object):
         """
         y_pred = self.predict(X_feat_test, X_seq_test)
 
-        test_acc_final = math_helper.mse(y_pred, y_test)
+        test_acc_final = ce.mse(y_pred, y_test)
 
         self._accuracy["test_acc_final"] = test_acc_final
         self._accuracy["y_test"] = y_test
@@ -1124,7 +1132,7 @@ class Concise(object):
         weights = obj_dict["output"]["weights"]
 
         if weights is not None:
-            # fix the dimentionality of X_feat in case it was 0 dimentional
+            # fix the dimensionality of X_feat in case it was 0 dimensional
             if weights["feature_weights"].shape == (0,):
                 weights["feature_weights"].shape = (0, obj_dict["param"]["num_tasks"])
             dc._set_var_res(weights)
@@ -1202,7 +1210,7 @@ class ConciseCV(object):
 
             kf = [(np.array(train), np.array(test)) for (train, test) in json_data['folds']]
         else:
-            kf = KFold(n_rows, n_folds=n_folds)
+            kf = KFold(n_splits=n_folds).split(np.zeros((n_rows, 1)))
 
         # store in a list
         i = 1
@@ -1238,7 +1246,7 @@ class ConciseCV(object):
             n_cores (int): Number of CPU cores used for training. If available, GPU is used for training and this argument is ignored.
             train_global_model (bool): In addition to training the model in cross-validation, should the global model be fitted (using all the samples from :code:`(X_feat, X_seq, y)`). 
         """
-        # TODO: input check - dimentions
+        # TODO: input check - dimensions
         self._use_stored_folds = use_stored_folds
         self._n_folds = n_folds
         self._n_rows = X_feat.shape[0]

@@ -12,6 +12,7 @@ from . import initializers
 from . import metrics
 from . import models
 from . import regularizers
+from . import evaluation
 
 
 from .concise import Concise, ConciseCV

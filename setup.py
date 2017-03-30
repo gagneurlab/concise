@@ -17,16 +17,17 @@ requirements = [
     "numpy",
     "pandas",
     "scipy",
-    "scikit-learn",
+    "scikit-learn>=0.18",
     "matplotlib",
     "tensorflow",
     "glmnet",
     "keras>=2.0.1",
     'deeplift>=0.4',
+    'deepcpg'
 ]
 
 dependency_links = [
-    "https://github.com/kundajelab/deeplift/tarball/v0.4.0-alpha#egg=deeplift-0.4"
+    "https://github.com/kundajelab/deeplift/tarball/v0.4.0-alpha#egg=deeplift-0.4",
 ]
 
 test_requirements = [
@@ -42,9 +43,6 @@ setup(
     author_email='avsec@in.tum.de',
     url='https://github.com/avsecz/concise',
     packages=find_packages(),
-    # packages=["concise"],
-    # package_dir={'concise':
-    #              'concise'},
     include_package_data=True,
     setup_requires=['numpy'],
     install_requires=requirements,

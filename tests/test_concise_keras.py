@@ -25,7 +25,7 @@ def test_serialization():
 
 
 def test_serialization_disk(tmpdir):
-    param, X_feat, X_seq, y, id_vec = load_example_data(use_keras=True)
+    param, X_feat, X_seq, y, id_vec = load_example_data()
     dc = concise_model(pooling_layer="sum",
                        init_motifs=["TGCGAT", "TATTTAT"],
                        n_splines=10,
@@ -47,7 +47,7 @@ class TestKerasConciseBasic(object):
 
     @classmethod
     def setup_class(cls):
-        cls.data = load_example_data(use_keras=True)
+        cls.data = load_example_data()
         # pass
 
     def test_no_error(self):
@@ -88,13 +88,13 @@ class TestMultiTaskLearning(TestKerasConciseBasic):
 
     @classmethod
     def setup_class(cls):
-        cls.data = load_example_data(num_tasks=3, use_keras=True)
+        cls.data = load_example_data(num_tasks=3)
 
 class TestConcisePrediction(object):
 
     @classmethod
     def setup_class(cls):
-        cls.data = load_example_data(trim_seq_len=1, standardize_features=False, use_keras=True)
+        cls.data = load_example_data(trim_seq_len=1, standardize_features=False)
         cls.data[0]["n_motifs"] = 1
         cls.data[0]["motif_length"] = 1
         cls.data[0]["step_size"] = 0.001

@@ -4,7 +4,7 @@ import numpy as np
 # TODO - make use_keras a default choice, adopt concise
 
 
-def encodeDNA(seq_vec, trim_seq_len=None, seq_align="start", use_keras=False):
+def encodeDNA(seq_vec, trim_seq_len=None, seq_align="start"):
     """
     Convert the DNA sequence to 1-hot-encoding numpy array
 
@@ -54,9 +54,6 @@ def encodeDNA(seq_vec, trim_seq_len=None, seq_align="start", use_keras=False):
     """
     seq_vec = seq_pad_and_trim(seq_vec, seq_align=seq_align, trim_seq_len=trim_seq_len)
     x = seq2numpy(seq_vec)
-
-    if use_keras:
-        x = np.squeeze(x, 1)
     return x
 
 
@@ -89,7 +86,7 @@ def seq2numpy(sequence_vec):
 
     seq_tensor = []
     for seq in sequence_vec:
-        seq_tensor.append(dna_seq_to_1hot(seq)[np.newaxis])
+        seq_tensor.append(dna_seq_to_1hot(seq))
 
     return np.stack(seq_tensor)
 
