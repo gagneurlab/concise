@@ -3,6 +3,9 @@ from keras.optimizers import SGD, Adam
 import tensorflow as tf
 
 # from https://github.com/openai/weightnorm/blob/master/keras/weightnorm.py
+# Paper:
+# "Weight Normalization: A Simple Reparameterization to Accelerate Training of
+# Deep Neural Networks, by Tim Salimans, and Diederik P. Kingma."
 
 
 # adapted from keras.optimizers.SGD
