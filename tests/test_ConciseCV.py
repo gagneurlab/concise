@@ -11,8 +11,8 @@ import os
 import numpy as np
 
 from concise import concise
-from concise import math_helper
-from concise import helper
+import concise.evaluation as ce
+from concise.utils import helper
 from tests.setup_concise_load_data import load_example_data
 
 class TestConciseCV(object):
@@ -40,7 +40,7 @@ class TestConciseCV(object):
     def test_get_CV_prediction(self):
         # these two should be within 5%
         y = self.data[3]
-        mse1 = math_helper.mse(self.dcv.get_CV_prediction(), y)
+        mse1 = ce.mse(self.dcv.get_CV_prediction(), y)
         mse2 = np.array(list((self.dcv.get_CV_accuracy().values()))).mean()
         assert (mse1 - mse2) / mse1 < 0.05
 
@@ -78,7 +78,6 @@ class TestConciseCV(object):
     def teardown_class(cls):
         # remove file
         os.remove(cls.json_file_path)
-
 
 
 class TestMultiTaskLearningCV(TestConciseCV):

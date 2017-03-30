@@ -9,8 +9,6 @@ import os
 import numpy as np
 
 from concise import concise
-from concise import math_helper
-from concise import helper
 from tests.setup_concise_load_data import load_example_data
 
 # replace some Y values with NA

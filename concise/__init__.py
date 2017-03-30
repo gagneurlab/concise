@@ -16,9 +16,8 @@ from . import evaluation
 
 
 from .concise import Concise, ConciseCV
-from .get_data import prepare_data
+from .legacy.get_data import prepare_data
 from .args_sampler import sample_params
-from .kmer import best_kmers
 
 
 # Add all the custom objects to keras

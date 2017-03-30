@@ -13,7 +13,7 @@ from sklearn.linear_model import LinearRegression
 
 from concise import concise
 from tests.setup_concise_load_data import load_example_data
-from concise.math_helper import mse
+from concise.evaluation import mse
 
 class TestConcisePrediction(object):
 

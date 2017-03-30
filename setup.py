@@ -20,7 +20,7 @@ requirements = [
     "scikit-learn>=0.18",
     "matplotlib",
     "tensorflow",
-    "glmnet",
+    # "glmnet",
     "keras>=2.0.1",
     'deeplift>=0.4',
     'deepcpg'

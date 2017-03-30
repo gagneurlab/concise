@@ -12,10 +12,10 @@
 # TODO: init_motifs input check - don't allow longer motifs than the motif_length
 # MAYBE TODO - implement more rich semantics on feature shareing accross conditions
 from . import analyze
-from . import get_data
+from .legacy import get_data
 from . import splines
-from . import helper
-from . import tf_helper
+from .utils import helper
+from .utils import tf_helper
 from . import evaluation as ce
 import numpy as np
 import tensorflow as tf
@@ -26,48 +26,6 @@ import inspect
 import copy
 import time
 from sklearn.model_selection import KFold
-
-# def train(param, X_feat_train, X_seq_train, y_train,
-#           X_seq_valid=None, X_feat_valid=None, y_valid=None,
-#           n_cores=4, print_every=10):
-#     pass
-
-# read-only concise class
-
-# get_unused_param
-# get_var_initialization
-# _build_graph
-# get_weights
-# get_init_weights
-# _var_res_to_weights
-# get_execution_time
-# get_accuracy
-# is_trained
-# _convert_to_var
-# _get_var_res_sess
-# train
-# _predict_in_session
-# _accuracy_in_session
-# _train_lbfgs
-# _train_adam
-# predict
-# _get_other_var
-# _test
-# print_weights
-# plot_accuracy
-# plot_pos_bias
-# to_dict
-# save
-# _set_var_res
-# from_dict
-# load
-
-# ConciseCV
-# get_param
-# get_unused_param
-# _get_folds
-# get_folds
-# train
 
 
 class Concise(object):

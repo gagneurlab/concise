@@ -5,7 +5,6 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../../")
 from functions.tests import concise_load_data as ld
 from functions import concise
 from functions import get_data
-from functions import math_helper
 import pandas as pd
 import numpy as np
 from imp import reload

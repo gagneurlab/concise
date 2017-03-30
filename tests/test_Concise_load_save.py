@@ -12,7 +12,7 @@ import os
 import numpy as np
 
 from concise import concise
-from concise import helper
+from concise.utils import helper
 from tests.setup_concise_load_data import load_example_data
 
 class TestConciseLoad(object):
@@ -115,7 +115,7 @@ class TestConciseLoadMultiClassNoXfeat(TestConciseLoad):
     """
     @classmethod
     def setup_class(cls):
-        cls.data = load_example_data(num_tasks=3, no_feat = True)  # X_feat has 0 columns
+        cls.data = load_example_data(num_tasks=3, no_feat=True)  # X_feat has 0 columns
         cls.json_file_path = "/tmp/model_pos_bias_3_tasks.json"
 
         param, X_feat, X_seq, y, id_vec = cls.data
@@ -129,4 +129,4 @@ class TestConciseLoadMultiClassNoXfeat(TestConciseLoad):
 
         # save to file
         cls.dc.save(cls.json_file_path)
-        
+

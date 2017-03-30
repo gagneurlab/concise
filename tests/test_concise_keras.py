@@ -7,7 +7,7 @@ Tests for `concise_keras` module
 import keras
 from keras.models import model_from_json
 from concise.concise_keras import concise_model
-from concise.math_helper import mse
+from concise.evaluation import mse
 from sklearn.linear_model import LinearRegression
 
 import pytest
