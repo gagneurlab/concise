@@ -7,6 +7,7 @@ from keras.layers import Conv1D, Input
 from deeplift.visualization import viz_sequence
 import matplotlib.pyplot as plt
 
+from concise.utils.pwm import DEFAULT_BASE_BACKGROUND, pssm_array2pwm_array
 from concise.regularizers import GAMRegularizer
 from concise.splines import BSpline
 
@@ -77,6 +78,7 @@ class ConvDNA(Conv1D):
                  kernel_constraint=None,
                  bias_constraint=None,
                  seq_length=None,
+                 background_probs=None,
                  **kwargs):
 
         # override input shape
@@ -103,6 +105,10 @@ class ConvDNA(Conv1D):
 
         self.seq_length = seq_length
 
+        if background_probs is None:
+            background_probs = DEFAULT_BASE_BACKGROUND
+        self.background_probs = background_probs
+
     def build(self, input_shape):
         if input_shape[-1] is not 4:
             raise ValueError("ConvDNA requires input_shape[-1] == 4")
@@ -111,6 +117,7 @@ class ConvDNA(Conv1D):
     def get_config(self):
         config = super(ConvDNA, self).get_config()
         config["seq_length"] = self.seq_length
+        config["background_probs"] = self.background_probs
         return config
 
     # def plotWeights(self):
@@ -118,7 +125,20 @@ class ConvDNA(Conv1D):
     #     """
     #     pass
 
+    # TODO - implement plotting in bits
     def plotMotif(self, index, figsize=(10, 2)):
+
+        W = self.get_weights()[0]
+
+        assert isinstance(index, int)
+        assert index >= 0
+        assert index < W.shape[2]
+
+        pwm = pssm_array2pwm_array(W, self.background_probs)
+
+        return viz_sequence.plot_weights(pwm[:, :, index], figsize=figsize)
+
+    def plotFilter(self, index, figsize=(10, 2)):
         """
 
         Arguments:
@@ -130,9 +150,9 @@ class ConvDNA(Conv1D):
         assert isinstance(index, int)
         assert index >= 0
         assert index < W.shape[2]
-        viz_sequence.plot_weights(W[:, :, index], figsize=figsize)
+        return viz_sequence.plot_weights(W[:, :, index], figsize=figsize)
 
-    def plotMotifs(self, figsize=(10, 2)):
+    def plotFilters(self, figsize=(10, 2)):
         """
 
         Arguments:

@@ -27,6 +27,8 @@ from keras.utils.generic_utils import get_custom_objects
 # initializers
 get_custom_objects()['PWMKernelInitializer'] = initializers.PWMKernelInitializer
 get_custom_objects()['PWMBiasInitializer'] = initializers.PWMBiasInitializer
+get_custom_objects()['PSSMKernelInitializer'] = initializers.PSSMKernelInitializer
+get_custom_objects()['PSSMBiasInitializer'] = initializers.PSSMBiasInitializer
 
 # regularizers
 get_custom_objects()['GAMRegularizer'] = regularizers.GAMRegularizer

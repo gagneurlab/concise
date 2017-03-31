@@ -3,7 +3,7 @@ from keras import regularizers as kr
 from keras.initializers import Initializer
 from keras import backend as K
 import concise
-from concise.utils import PWM, pwm_list2array
+from concise.utils.pwm import PWM, pwm_list2pwm_array, pwm_array2pssm_array, DEFAULT_BASE_BACKGROUND
 from keras.utils.generic_utils import get_custom_objects
 
 import numpy as np
@@ -23,6 +23,105 @@ def _check_pwm_list(pwm_list):
         if not isinstance(pwm, PWM):
             raise TypeError("element {0} of pwm_list is not of type PWM".format(pwm))
     return True
+
+
+class PSSMBiasInitializer(Initializer):
+
+    def __init__(self, pwm_list=[], kernel_size=None, mean_max_scale=0., background_probs=DEFAULT_BASE_BACKGROUND):
+        """Bias initializer
+
+        By defult, it will initialize all weights to 0.
+
+        # Arguments
+            pwm_list: list of PWM's
+            kernel_size: Has to be the same as kernel_size in kl.Conv1D
+            mean_max_scale: float; factor for convex conbination between
+                                    mean pwm match (mean_max_scale = 0.) and
+                                    max pwm match (mean_max_scale = 1.)
+            background_probs: A dictionary of background probabilities. Default: `{'A': .25, 'C': .25, 'G': .25, 'T': .25}`
+        """
+
+        # handle pwm_list as a dictionary
+        if isinstance(pwm_list[0], dict):
+            pwm_list = [PWM.from_config(pwm) for pwm in pwm_list]
+
+        if kernel_size is None:
+            kernel_size = len(pwm_list)
+
+        _check_pwm_list(pwm_list)
+        self.pwm_list = pwm_list
+        self.kernel_size = kernel_size
+        self.mean_max_scale = mean_max_scale
+        self.background_probs = background_probs
+
+    def __call__(self, shape, dtype=None):
+        # pwm_array
+        # print("PWMBiasInitializer shape: ", shape)
+        pwm = pwm_list2pwm_array(self.pwm_list,
+                                 shape=(self.kernel_size, 4, shape[0]),
+                                 background_probs=self.background_probs,
+                                 dtype=dtype)
+
+        pssm = pwm_array2pssm_array(pwm, background_probs=self.background_probs)
+
+        # maximum sequence match
+        max_scores = np.sum(np.amax(pssm, axis=1), axis=0)
+        mean_scores = 0  # np.sum(np.mean(pssm, axis=1), axis=0)
+
+        biases = - (mean_scores + self.mean_max_scale * (max_scores - mean_scores))
+
+        # ret = - (biases - 1.5 * self.init_motifs_scale)
+        return biases.astype(dtype)
+
+    def get_config(self):
+        return {
+            "pwm_list": [pwm.get_config() for pwm in self.pwm_list],
+            "kernel_size": self.kernel_size,
+            "mean_max_scale": self.mean_max_scale,
+            "background_probs": self.background_probs,
+        }
+
+
+class PSSMKernelInitializer(Initializer):
+    """truncated normal distribution shifted by a PSSM
+
+    # Arguments
+        pwm_list: a list of PWM's or motifs
+        stddev: a python scalar or a scalar tensor. Standard deviation of the
+          random values to generate.
+        seed: A Python integer. Used to seed the random generator.
+        background_probs: A dictionary of background probabilities. Default: `{'A': .25, 'C': .25, 'G': .25, 'T': .25}`
+    """
+
+    def __init__(self, pwm_list=[], stddev=0.05, seed=None, background_probs=DEFAULT_BASE_BACKGROUND):
+        if isinstance(pwm_list[0], dict):
+            pwm_list = [PWM.from_config(pwm) for pwm in pwm_list]
+
+        self.pwm_list = pwm_list
+        _check_pwm_list(pwm_list)
+        self.stddev = stddev
+        self.seed = seed
+        self.background_probs = background_probs
+
+    def __call__(self, shape, dtype=None):
+        # print("PWMKernelInitializer shape: ", shape)
+
+        pwm = pwm_list2pwm_array(self.pwm_list, shape, dtype, self.background_probs)
+
+        pssm = pwm_array2pssm_array(pwm, background_probs=self.background_probs)
+
+        return K.truncated_normal(shape,
+                                  mean=pssm,
+                                  stddev=self.stddev,
+                                  dtype=dtype, seed=self.seed)
+
+    def get_config(self):
+        return {
+            'pwm_list': [pwm.get_config() for pwm in self.pwm_list],
+            'stddev': self.stddev,
+            'seed': self.seed,
+            'background_probs': self.background_probs,
+        }
 
 
 class PWMBiasInitializer(Initializer):
@@ -53,9 +152,9 @@ class PWMBiasInitializer(Initializer):
     def __call__(self, shape, dtype=None):
         # pwm_array
         # print("PWMBiasInitializer shape: ", shape)
-        pwma = pwm_list2array(self.pwm_list,
-                              shape=(self.kernel_size, 4, shape[0]),
-                              dtype=dtype)
+        pwma = pwm_list2pwm_array(self.pwm_list,
+                                  shape=(self.kernel_size, 4, shape[0]),
+                                  dtype=dtype)
 
         # maximum sequence match
         max_scores = np.sum(np.amax(pwma, axis=1), axis=0)
@@ -97,7 +196,7 @@ class PWMKernelInitializer(Initializer):
     def __call__(self, shape, dtype=None):
         # print("PWMKernelInitializer shape: ", shape)
         return K.truncated_normal(shape,
-                                  mean=pwm_list2array(self.pwm_list, shape, dtype),
+                                  mean=pwm_list2pwm_array(self.pwm_list, shape, dtype),
                                   stddev=self.stddev,
                                   dtype=dtype, seed=self.seed)
 

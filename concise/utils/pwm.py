@@ -61,8 +61,9 @@ class PWM(object):
 
     @classmethod
     def _background_pwm(cls, length=9, probs=DEFAULT_BASE_BACKGROUND):
-        pwm = np.array([[probs[cls.indexToLetter[i]] for i in range(4)]
-                        for i in range(length)])
+        barr = background_probs2array(probs, indexToLetter=cls.indexToLetter)
+
+        pwm = np.array([barr for i in range(length)])
         if length == 0:
             pwm = pwm.reshape([0, 4])
 
@@ -86,8 +87,8 @@ class PWM(object):
             add_start = len_diff // 2 + len_diff % 2
             add_end = len_diff // 2
             # concatenate two arrays
-            pwm_start = self._background_pwm(add_start)
-            pwm_end = self._background_pwm(add_end)
+            pwm_start = self._background_pwm(add_start, probs=probs)
+            pwm_end = self._background_pwm(add_end, probs=probs)
             self.pwm = np.concatenate([pwm_start, self.pwm, pwm_end], axis=0)
 
             self.normalize()
@@ -108,7 +109,16 @@ class PWM(object):
     # TODO - load motif from file
 
 
-def pwm_list2array(pwm_list, shape=(None, 4, None), dtype=None):
+def _check_background_probs(background_probs):
+    assert isinstance(background_probs, list)
+    assert sum(background_probs) == 1.0
+    assert len(background_probs) == 4
+    for b in background_probs:
+        assert b >= 0
+        assert b <= 1
+
+
+def pwm_list2pwm_array(pwm_list, shape=(None, 4, None), dtype=None, background_probs=DEFAULT_BASE_BACKGROUND):
     # print("shape: ", shape)
     if shape[1] is not 4:
         raise ValueError("shape[1] has to be 4 and not {0}".format(shape[1]))
@@ -133,14 +143,14 @@ def pwm_list2array(pwm_list, shape=(None, 4, None), dtype=None):
     # fix n_motifs
     if required_n_motifs > n_motifs:
         add_n_pwm = required_n_motifs - n_motifs
-        pwm_list += [PWM.from_background(length=required_motif_len)] * add_n_pwm
+        pwm_list += [PWM.from_background(length=required_motif_len, probs=background_probs)] * add_n_pwm
 
     if required_n_motifs < n_motifs:
         print("Removing {0} pwm's from pwm_list".format(n_motifs - required_n_motifs))
         pwm_list = pwm_list[:required_n_motifs]
 
     # fix motif_len
-    pwm_list = [pwm._change_length(required_motif_len) for pwm in pwm_list]
+    pwm_list = [pwm._change_length(required_motif_len, probs=background_probs) for pwm in pwm_list]
 
     # stack the matrices along the last axis
     pwm_array = np.stack([pwm.pwm for pwm in pwm_list], axis=-1)
@@ -148,3 +158,25 @@ def pwm_list2array(pwm_list, shape=(None, 4, None), dtype=None):
 
     # change the axis order
     return pwm_array
+
+
+def background_probs2array(background_probs, indexToLetter=DEFAULT_INDEX_TO_LETTER):
+    barr = [background_probs[indexToLetter[i]] for i in range(4)]
+    _check_background_probs(barr)
+    return np.asarray(barr)
+
+
+def pwm_array2pssm_array(arr, background_probs=DEFAULT_BASE_BACKGROUND):
+    """Convert pwm array to pssm array
+    """
+    b = background_probs2array(background_probs)
+    b = b.reshape([1, 4, 1])
+    return np.log(arr / b).astype(arr.dtype)
+
+
+def pssm_array2pwm_array(arr, background_probs=DEFAULT_BASE_BACKGROUND):
+    """Convert pssm array to pwm array
+    """
+    b = background_probs2array(background_probs)
+    b = b.reshape([1, 4, 1])
+    return (np.exp(arr) * b).astype(arr.dtype)
