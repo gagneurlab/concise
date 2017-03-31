@@ -1,11 +1,8 @@
-# Docker image
-
-# all python environments
+# Docker image with all python environments
 # https://github.com/themattrix/docker-tox
 image: themattrix/tox
 # image: python:3.5
 
-# run tests
 py.test:
   only:
     - master
