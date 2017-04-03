@@ -71,4 +71,12 @@ def test_pwm_list2pwm_array():
     pwma = pwm_list2pwm_array(pwm_list, shape=(2, 4, 50), dtype="float32")
     assert pwma.dtype == np.dtype("float32")
 
+
+def test_pwm_pssm():
+    pwm_list = [PWM(np.array([[1, 2, 3, 4], [2, 4, 4, 5]])),
+                PWM(np.array([[1, 2, 1, 4], [2, 10, 4, 5]]))]
+
+    pssm_list = [pwm.get_pssm() for pwm in pwm_list]
+    assert isinstance(pssm_list[0], np.ndarray)
+    assert pssm_list[0].shape == pwm_list[0].pwm.shape
 ############################################

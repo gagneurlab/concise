@@ -122,7 +122,7 @@ class PWM(object):
 
     def get_pssm(self, background_probs=DEFAULT_BASE_BACKGROUND):
         b = background_probs2array(background_probs)
-        b = b.reshape([4, 1])
+        b = b.reshape([1, 4])
         return np.log(self.pwm / b).astype(self.pwm.dtype)
 
     def plotPSSM(self, background_probs=DEFAULT_BASE_BACKGROUND, figsize=(10, 2)):
