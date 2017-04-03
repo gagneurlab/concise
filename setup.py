@@ -25,11 +25,13 @@ requirements = [
     # "glmnet",
     "keras>=2.0.1",
     'deeplift>=0.4',
+    'simdna==0.2',
     'deepcpg'
 ]
 
 dependency_links = [
     "https://github.com/kundajelab/deeplift/tarball/v0.4.0-alpha#egg=deeplift-0.4",
+    "https://github.com/kundajelab/simdna/tarball/0.2#egg=simdna-0.2",
 ]
 
 test_requirements = [

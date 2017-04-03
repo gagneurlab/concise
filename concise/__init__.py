@@ -8,6 +8,7 @@ from . import activations
 from . import layers
 from . import preprocessing
 from . import utils
+from . import data
 from . import initializers
 from . import metrics
 from . import models
