@@ -1,5 +1,6 @@
 import numpy as np
 import copy
+from deeplift.visualization import viz_sequence
 
 DEFAULT_LETTER_TO_INDEX = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
 DEFAULT_INDEX_TO_LETTER = dict((DEFAULT_LETTER_TO_INDEX[x], x) for x in DEFAULT_LETTER_TO_INDEX)
@@ -104,9 +105,29 @@ class PWM(object):
     def from_config(cls, pwm_dict):
         return cls(**pwm_dict)
 
-    # TODO - plot motif
+    def plotPWM(self, figsize=(10, 2)):
 
-    # TODO - load motif from file
+        pwm = self.pwm
+
+        return viz_sequence.plot_weights(pwm, figsize=figsize)
+
+    def plotPWMInfo(self, figsize=(10, 2)):
+        pwm = self.pwm
+
+        H = - np.sum(pwm * np.log2(pwm), axis=1)
+        R = np.log2(4) - H
+        info = pwm * R.reshape([-1, 1])
+        # TODO add ylab
+        return viz_sequence.plot_weights(info, figsize=figsize)
+
+    def get_pssm(self, background_probs=DEFAULT_BASE_BACKGROUND):
+        b = background_probs2array(background_probs)
+        b = b.reshape([4, 1])
+        return np.log(self.pwm / b).astype(self.pwm.dtype)
+
+    def plotPSSM(self, background_probs=DEFAULT_BASE_BACKGROUND, figsize=(10, 2)):
+        pssm = self.get_pssm()
+        return viz_sequence.plot_weights(pssm, figsize=figsize)
 
 
 def _check_background_probs(background_probs):
