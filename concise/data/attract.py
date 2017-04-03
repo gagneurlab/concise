@@ -7,8 +7,9 @@ from simdna import util
 from concise.utils.pwm import PWM
 import pandas as pd
 
-ATTRACT_METADTA = "concise/resources/attract_metadata.txt"
-ATTRACT_PWM = "concise/resources/attract_pwm.txt"
+from pkg_resources import resource_filename
+ATTRACT_METADTA = resource_filename('concise', 'resources/attract_metadata.txt')
+ATTRACT_PWM = resource_filename('concise', 'resources/attract_pwm.txt')
 
 
 class LoadedAttractMotifs(AbstractLoadedMotifsFromFile):
