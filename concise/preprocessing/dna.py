@@ -52,6 +52,9 @@ def encodeDNA(seq_vec, trim_seq_len=None, seq_align="start"):
        [ 0.  0.  0.  1.]
        [ 1.  0.  0.  0.]]]]
     """
+    if isinstance(seq_vec, str):
+        raise ValueError("seq_vec should be an iterable returning " +
+                         "strings not a string itself")
     seq_vec = seq_pad_and_trim(seq_vec, seq_align=seq_align, trim_seq_len=trim_seq_len)
     x = seq2numpy(seq_vec)
     return x
@@ -127,7 +130,8 @@ def seq_pad_and_trim(sequence_vec, seq_align="end", trim_seq_len=None):
         trim_seq_len = int(trim_seq_len)
 
     if max_seq_len < trim_seq_len:
-        raise Warning("Maximum sequence length (%s) is less than trim_seq_len (%s)" % (max_seq_len, trim_seq_len))
+        print("WARNING: Maximum sequence length (%s) is less than trim_seq_len (%s)" % (max_seq_len, trim_seq_len))
+        max_seq_len = trim_seq_len
 
         # pad and subset
     if seq_align == "end":
