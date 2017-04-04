@@ -1,5 +1,5 @@
 import numpy as np
-from .dna import seq2numpy
+from .sequence import seq2numpy
 
 
 def adjust_motifs(motifs, filter_width, n_motifs):

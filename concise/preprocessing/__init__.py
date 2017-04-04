@@ -1,5 +1,5 @@
-from . import dna
+from . import sequence
 from . import smooth
 
-from .dna import encodeDNA
+from .sequence import encodeDNA
 from .smooth import encodeSplines
