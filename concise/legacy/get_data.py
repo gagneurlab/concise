@@ -51,7 +51,7 @@ def prepare_data(dt, features, response, sequence, id_column=None, seq_align="en
     X_feat = np.array(dt[features], dtype="float32")
     y = np.array(dt[response], dtype="float32")
     X_seq = encodeDNA(seq_vec=dt[sequence],
-                      trim_seq_len=trim_seq_len,
+                      maxlen=trim_seq_len,
                       seq_align=seq_align)
     X_seq = np.array(X_seq, dtype="float32")
     id_vec = np.array(dt[id_column])

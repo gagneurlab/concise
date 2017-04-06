@@ -1,9 +1,11 @@
 import numpy as np
 import copy
+from concise.preprocessing.sequence import DNA, _get_vocab_dict
 from deeplift.visualization import viz_sequence
 
-DEFAULT_LETTER_TO_INDEX = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
-DEFAULT_INDEX_TO_LETTER = dict((DEFAULT_LETTER_TO_INDEX[x], x) for x in DEFAULT_LETTER_TO_INDEX)
+DEFAULT_LETTER_TO_INDEX = _get_vocab_dict(DNA)
+DEFAULT_INDEX_TO_LETTER = dict((DEFAULT_LETTER_TO_INDEX[x], x)
+                               for x in DEFAULT_LETTER_TO_INDEX)
 DEFAULT_BASE_BACKGROUND = {"A": .25, "C": .25, "G": .25, "T": .25}
 
 

@@ -1,7 +1,81 @@
+import sklearn.preprocessing
 import numpy as np
 
+# vocabularies:
+DNA = ["A", "C", "G", "T"]
+RNA = ["A", "C", "G", "U"]
+AMINO_ACIDS = ["A", "R", "N", "D", "B", "C", "E", "Q", "Z", "G", "H",
+               "I", "L", "K", "M", "F", "P", "S", "T", "W", "Y", "V"]
+CODONS = ["AAA", "AAC", "AAG", "AAT", "ACA", "ACC", "ACG", "ACT", "AGA",
+          "AGC", "AGG", "AGT", "ATA", "ATC", "ATG", "ATT", "CAA", "CAC",
+          "CAG", "CAT", "CCA", "CCC", "CCG", "CCT", "CGA", "CGC", "CGG",
+          "CGT", "CTA", "CTC", "CTG", "CTT", "GAA", "GAC", "GAG", "GAT",
+          "GCA", "GCC", "GCG", "GCT", "GGA", "GGC", "GGG", "GGT", "GTA",
+          "GTC", "GTG", "GTT", "TAC", "TAT", "TCA", "TCC", "TCG", "TCT",
+          "TGC", "TGG", "TGT", "TTA", "TTC", "TTG", "TTT"]
+STOP_CODONS = ["TAG", "TAA", "TGA"]
 
-def encodeDNA(seq_vec, trim_seq_len=None, seq_align="start"):
+
+def _get_vocab_dict(vocab):
+    return {l: i for i, l in enumerate(vocab)}
+
+
+def tokenize(seq, vocab, neutral_vocab=[]):
+    """Convert sequence to integers
+
+    Arguments:
+       seq: Sequence to encode
+       vocab: Vocabulary to use
+       neutral_vocab: Neutral vocabulary -> assign those values to -1
+
+    Returns:4
+       List of length `len(seq)` with integers from `-1` to `len(vocab) - 1`
+    """
+    # Req: all vocabs have the same length
+    if isinstance(neutral_vocab, str):
+        neutral_vocab = [neutral_vocab]
+
+    nchar = len(vocab[0])
+    for l in vocab + neutral_vocab:
+        assert len(l) == nchar
+    assert len(seq) % nchar == 0  # since we are using striding
+
+    vocab_dict = _get_vocab_dict(vocab)
+    for l in neutral_vocab:
+        vocab_dict[l] = -1
+
+    return [vocab_dict[seq[(i * nchar):((i + 1) * nchar)]] for i in range(len(seq) // nchar)]
+
+
+def token2one_hot(tvec, vocab_size):
+    """
+    Note: everything out of the vucabulary is transformed to `np.zeros(vocab_size)`
+    """
+    lb = sklearn.preprocessing.LabelBinarizer()
+    lb.fit(range(vocab_size))
+    return lb.transform(tvec)
+
+
+def encodeSequence(seq_vec, vocab, neutral_vocab, maxlen=None,
+                   seq_align="start", pad_value="N"):
+    if isinstance(neutral_vocab, str):
+        neutral_vocab = [neutral_vocab]
+    if isinstance(seq_vec, str):
+        raise ValueError("seq_vec should be an iterable returning " +
+                         "strings not a string itself")
+    assert len(vocab[0]) == len(pad_value)
+    assert pad_value in neutral_vocab
+
+    seq_vec = pad_sequences(seq_vec, maxlen=maxlen,
+                            align=seq_align, value=pad_value)
+    seq_vec_one_hot = [token2one_hot(tokenize(seq, vocab, neutral_vocab), len(vocab))
+                       for seq in seq_vec]
+
+    return np.stack(seq_vec_one_hot)
+
+
+def encodeDNA(seq_vec, maxlen=None, seq_align="start"):
+    # TODO - update description
     """
     Convert the DNA sequence to 1-hot-encoding numpy array
 
@@ -13,14 +87,14 @@ def encodeDNA(seq_vec, trim_seq_len=None, seq_align="start"):
     seq_align: character; 'end' or 'start'
         To which end should we align sequences?
 
-    trim_seq_len: int or None,
+    maxlen: int or None,
         Should we trim (subset) the resulting sequence. If None don't trim.
         Note that trims wrt the align parameter.
         It should be smaller than the longest sequence.
 
     returns
     -------
-    4D numpy array of shape (len(seq_vec), 1, trim_seq_len(or maximal sequence length if None), 4)
+    3D numpy array of shape (len(seq_vec), trim_seq_len(or maximal sequence length if None), 4)
 
     Examples
     --------
@@ -49,99 +123,94 @@ def encodeDNA(seq_vec, trim_seq_len=None, seq_align="start"):
        [ 0.  0.  0.  1.]
        [ 1.  0.  0.  0.]]]]
     """
-    if isinstance(seq_vec, str):
-        raise ValueError("seq_vec should be an iterable returning " +
-                         "strings not a string itself")
-    seq_vec = pad_and_trim(seq_vec, neutral_element="N",
-                           align=seq_align, target_seq_len=trim_seq_len)
-
-    x = seq2numpy(seq_vec)
-    return x
+    return encodeSequence(seq_vec,
+                          vocab=DNA,
+                          neutral_vocab="N",
+                          maxlen=maxlen,
+                          seq_align=seq_align,
+                          pad_value="N")
 
 
-def dna_seq_to_1hot(seq):
+def encodeRNA(seq_vec, maxlen=None, seq_align="start"):
+    return encodeSequence(seq_vec,
+                          vocab=RNA,
+                          neutral_vocab="N",
+                          maxlen=maxlen,
+                          seq_align=seq_align,
+                          pad_value="N")
+
+
+def encodeCodon(seq_vec, ignore_stop_codons=True, maxlen=None, seq_align="start"):
+    return encodeSequence(seq_vec,
+                          vocab=CODONS,
+                          neutral_vocab=STOP_CODONS + ("NNN"),
+                          maxlen=maxlen,
+                          seq_align=seq_align,
+                          pad_value="NNN")
+
+
+def encodeAA(seq_vec, maxlen=None, seq_align="start"):
+    return encodeSequence(seq_vec,
+                          vocab=AMINO_ACIDS,
+                          neutral_vocab="_",
+                          maxlen=maxlen,
+                          seq_align=seq_align,
+                          pad_value="_")
+
+
+def pad_sequences(sequence_vec, maxlen=None, align="end", value="N"):
     """
-    Convert the DNA string into 1-hot encoded numpy array
+    See also: https://keras.io/preprocessing/sequence/
 
-    Inputs:
-    - seq string
-    """
-    hash_dict = {"A": np.array([1, 0, 0, 0]),
-                 "C": np.array([0, 1, 0, 0]),
-                 "G": np.array([0, 0, 1, 0]),
-                 "T": np.array([0, 0, 0, 1]),
-                 "U": np.array([0, 0, 0, 1]),  # RNA sequence support
-                 "N": np.array([0, 0, 0, 0])}
-
-    DNA_list = []
-    for char in seq:
-        DNA_list.append(hash_dict[char])
-
-    final = np.asarray(DNA_list).astype(np.float32)
-    return final
-
-
-def seq2numpy(sequence_vec):
-    """
-    Convert a list of sequences into a numpy 4D tensor
-    """
-
-    seq_tensor = []
-    for seq in sequence_vec:
-        seq_tensor.append(dna_seq_to_1hot(seq))
-
-    return np.stack(seq_tensor)
-
-
-def pad_and_trim(sequence_vec, neutral_element="N", target_seq_len=None, align="end"):
-    """
     1. Pad the sequence with N's or any other sequence element
     2. Subset the sequence
+
+    Aplicable also for lists of characters
 
     parameters
     ----------
     sequence_vec: list of chars
         List of sequences that can have different lengths
-    neutral_element:
+    value:
         Neutral element to pad the sequence with
-    target_seq_len: int or None,
+    maxlen: int or None,
         Should we trim (subset) the resulting sequence. If None don't trim.
         Note that trims wrt the align parameter.
         It should be smaller than the longest sequence.
     align: character; 'end' or 'start'
-        To which end should we align sequences?
+        To which end should to align the sequences.
 
-    returns
+    Returns
     -------
     List of sequences of the same class as sequence_vec
 
     Examples
     --------
     >>> sequence_vec = ['CTTACTCAGA', 'TCTTTA']
-    >>> seq_pad_and_trim(sequence_vec, "N", 10, "start")
+    >>> pad_sequences(sequence_vec, "N", 10, "start")
     """
 
     # neutral element type checkoing
-    assert len(neutral_element) == 1
-    assert isinstance(neutral_element, type(sequence_vec[0]))
-    assert isinstance(neutral_element, list) or isinstance(neutral_element, str)
+    assert len(value) == 1
+    assert isinstance(value, type(sequence_vec[0]))
+    assert isinstance(value, list) or isinstance(value, str)
     assert not isinstance(sequence_vec, str)
     assert isinstance(sequence_vec[0], list) or isinstance(sequence_vec[0], str)
 
     max_seq_len = max([len(seq) for seq in sequence_vec])
 
-    if target_seq_len is None:
-        target_seq_len = max_seq_len
+    if maxlen is None:
+        maxlen = max_seq_len
     else:
-        target_seq_len = int(target_seq_len)
+        maxlen = int(maxlen)
 
-    if max_seq_len < target_seq_len:
-        print("WARNING: Maximum sequence length (%s) is less than target_seq_len (%s)" % (max_seq_len, target_seq_len))
-        max_seq_len = target_seq_len
+    if max_seq_len < maxlen:
+        print("WARNING: Maximum sequence length (%s) is less than maxlen (%s)" % (max_seq_len, maxlen))
+        max_seq_len = maxlen
 
         # pad and subset
 
-    def pad(seq, max_seq_len, neutral_element="N", align="end"):
+    def pad(seq, max_seq_len, value="N", align="end"):
         seq_len = len(seq)
         assert max_seq_len >= seq_len
         if align is "end":
@@ -155,26 +224,26 @@ def pad_and_trim(sequence_vec, neutral_element="N", target_seq_len=None, align="
             n_right = (max_seq_len - seq_len) // 2
         else:
             raise ValueError("align can be of: end, start or center")
-        return neutral_element * n_left + seq + neutral_element * n_right
+        return value * n_left + seq + value * n_right
 
-    def trim(seq, target_seq_len, align="end"):
+    def trim(seq, maxlen, align="end"):
         seq_len = len(seq)
 
-        assert target_seq_len <= seq_len
+        assert maxlen <= seq_len
         if align is "end":
-            return seq[-target_seq_len:]
+            return seq[-maxlen:]
         elif align is "start":
-            return seq[0:target_seq_len]
+            return seq[0:maxlen]
         elif align is "center":
-            dl = seq_len - target_seq_len
+            dl = seq_len - maxlen
             n_left = dl // 2 + dl % 2
             n_right = seq_len - dl // 2
             return seq[n_left:-n_right]
         else:
             raise ValueError("align can be of: end, start or center")
 
-    padded_sequence_vec = [pad(seq, max(max_seq_len, target_seq_len),
-                               neutral_element=neutral_element, align=align) for seq in sequence_vec]
-    padded_sequence_vec = [trim(seq, target_seq_len, align=align) for seq in padded_sequence_vec]
+    padded_sequence_vec = [pad(seq, max(max_seq_len, maxlen),
+                               value=value, align=align) for seq in sequence_vec]
+    padded_sequence_vec = [trim(seq, maxlen, align=align) for seq in padded_sequence_vec]
 
     return padded_sequence_vec
