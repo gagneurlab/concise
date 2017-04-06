@@ -34,6 +34,7 @@ def cur_time_str():
     time_str = time.strftime("%Y-%m-%d_%H:%M:%S", time.gmtime())
     return time_str
 
+
 def random_string(length=10):
     s = string.digits + string.ascii_letters
     return ''.join(random.sample(s, length))
@@ -53,6 +54,7 @@ def dict_to_numpy_dict(obj_dict):
     """
     return {key: np.asarray(value) if value is not None else None for key, value in obj_dict.items()}
 
+
 def rec_dict_to_numpy_dict(obj_dict):
     """
     Same as dict_to_numpy_dict, but recursive
@@ -63,6 +65,7 @@ def rec_dict_to_numpy_dict(obj_dict):
         return None
     else:
         return np.asarray(obj_dict)
+
 
 def compare_numpy_dict(a, b, exact=True):
     """
@@ -108,4 +111,4 @@ def numpy_dict_to_list(a):
     elif type(a) is np.ndarray:
         return list(a).list()
 
-    
+
