@@ -69,12 +69,6 @@ def read_RNAplfold(tmpdir, maxlen=None, seq_align="start", pad_with="E"):
     return arr
 
 
-def list_split(lst, n):
-    return [lst[i::n] for i in range(n)]
-
-
-# not working currently
-# TODO - fix
 def encodeRNAStructure_parallel(seq_vec, maxlen=None, seq_align="start",
                                 W=240, L=160, U=1, n_cores=4,
                                 tmpdir="/tmp/RNAplfold/"):
@@ -82,19 +76,17 @@ def encodeRNAStructure_parallel(seq_vec, maxlen=None, seq_align="start",
     if maxlen is None:
         maxlen = max([len(seq) for seq in seq_vec])
     n_cores = min(len(seq_vec), n_cores, multiprocessing.cpu_count())
-    seq_vec_chunked = list_split(seq_vec, n_cores)
 
     p = Pool(n_cores)
-    job_args = [(seq_vec_chunked[i], maxlen, seq_align, W, L, U, "{0}/job_{1}".format(tmpdir, i))
+    job_args = [(seq_vec[i::n_cores], maxlen, seq_align, W, L, U, "{0}/job_{1}".format(tmpdir, i))
                 for i in range(n_cores)]
 
-    results = p.map(lambda args: encodeRNAStructure(*args), job_args)
-    # results = Parallel(n_jobs=n_cores)(delayed(run_parallel)(i) for i in range(n_cores))
-    # results = [encodeRNAStructure(seq_vec_chunked[i], maxlen, seq_align,
-    #                               W, L, U, n_cores=1,
-    #                               tmpdir="{0}/job_{1}".format(tmpdir, i))
-    #            for i in range(n_cores)]
+    results = p.map(wrap_encodeRNAStructure, job_args)
     return np.concatenate(results)
+
+
+def wrap_encodeRNAStructure(args):
+    return encodeRNAStructure(*args)
 
 
 def encodeRNAStructure(seq_vec, maxlen=None, seq_align="start",
@@ -122,4 +114,4 @@ def encodeRNAStructure(seq_vec, maxlen=None, seq_align="start",
     # 1. split the fasta into pieces
     # 2. run_RNAplfold for each of them
     # 3. Read the results
-    return read_RNAplfold(tmpdir, maxlen, seq_align, pad_with="E")
+    return read_RNAplfold(tmpdir, maxlen, seq_align=seq_align, pad_with="E")
