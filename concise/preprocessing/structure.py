@@ -5,7 +5,6 @@ from subprocess import call
 import os
 from pkg_resources import resource_filename
 
-from joblib import Parallel, delayed
 from multiprocessing import Pool
 import multiprocessing
 
