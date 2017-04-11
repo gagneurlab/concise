@@ -7,6 +7,7 @@ from pkg_resources import resource_filename
 
 from multiprocessing import Pool
 import multiprocessing
+from uuid import uuid4
 
 
 RNAplfold_BIN_DIR = os.path.dirname(resource_filename('concise', 'resources/RNAplfold/E_RNAplfold'))
@@ -102,6 +103,9 @@ def encodeRNAStructure(seq_vec, maxlen=None, seq_align="start",
     - for fly, yeast   use W, L, u :  80,  40, 1
 
     """
+    # extend the tmpdir with uuid string to allow for parallel execution
+    tmpdir = tmpdir + "/" + str(uuid4()) + "/"
+
     if not isinstance(seq_vec, list):
         seq_vec = seq_vec.tolist()
     if not os.path.exists(tmpdir):
