@@ -2,13 +2,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from concise.utils.helper import merge_dicts
 
-# backcompatible code
-def merge_two_dicts(x, y):
-    '''Given two dicts, merge them into a new dict as a shallow copy.'''
-    z = x.copy()
-    z.update(y)
-    return z
 
 # make a report
 def get_cv_accuracy(res):
@@ -34,17 +29,17 @@ def get_cv_accuracy(res):
 def get_kwargs_cv_accuracy(cv_res, i=None, filename=None):
     a = cv_res['kwargs']
     b = get_cv_accuracy(cv_res['output'])
-    dic = merge_two_dicts(a, b)
+    dic = merge_dicts(a, b)
 
     # append i if neccesary
     if i is not None:
-        dic = merge_two_dicts(dic, {'i': i})
+        dic = merge_dicts(dic, {'i': i})
     if i is not None:
-        dic = merge_two_dicts(dic, {'filename': filename})
+        dic = merge_dicts(dic, {'filename': filename})
     # append motifs, execution time and features:
-    dic = merge_two_dicts(dic, {'features': cv_res.get('features', None)})
-    dic = merge_two_dicts(dic, {'execution_time': cv_res.get('execution_time', None)})
-    dic = merge_two_dicts(dic, {'motifs': cv_res.get('motifs', None)})
+    dic = merge_dicts(dic, {'features': cv_res.get('features', None)})
+    dic = merge_dicts(dic, {'execution_time': cv_res.get('execution_time', None)})
+    dic = merge_dicts(dic, {'motifs': cv_res.get('motifs', None)})
     return dic
 
 

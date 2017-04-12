@@ -30,6 +30,19 @@ def read_json(path):
     return json_data
 
 
+# backcompatible code
+def merge_dicts(*dict_args):
+    """
+    http://stackoverflow.com/questions/38987/how-to-merge-two-python-dictionaries-in-a-single-expression
+
+    Given any number of dicts, shallow copy and merge into a new dict,
+    precedence goes to key value pairs in latter dicts.
+    """
+    result = {}
+    for dictionary in dict_args:
+        result.update(dictionary)
+    return result
+
 def cur_time_str():
     time_str = time.strftime("%Y-%m-%d_%H:%M:%S", time.gmtime())
     return time_str

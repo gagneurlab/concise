@@ -6,6 +6,13 @@ from deepcpg.utils import get_from_module
 def data(max_features=5000, maxlen=400):
     print('Loading data...')
     (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=max_features)
+
+    # subset the data
+    x_train = x_train[:1000]
+    y_train = y_train[:1000]
+    x_test = x_test[:100]
+    y_test = y_test[:100]
+
     print(len(x_train), 'train sequences')
     print(len(x_test), 'test sequences')
 
@@ -15,7 +22,6 @@ def data(max_features=5000, maxlen=400):
     print('x_train shape:', x_train.shape)
     print('x_test shape:', x_test.shape)
     return (x_train, y_train), (x_train, y_train), (x_test, y_test)
-    # TODO - get small data from keras
 
 
 def get(name):

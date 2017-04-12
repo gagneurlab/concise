@@ -14,6 +14,7 @@ from . import metrics
 from . import models
 from . import regularizers
 from . import evaluation
+from . import hyperopt
 
 
 from .concise import Concise, ConciseCV

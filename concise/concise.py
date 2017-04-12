@@ -11,7 +11,7 @@
 # - train - starts training from scratch?
 # TODO: init_motifs input check - don't allow longer motifs than the motif_length
 # MAYBE TODO - implement more rich semantics on feature shareing accross conditions
-from . import analyze
+from .legacy import analyze
 from .legacy import get_data
 from . import splines
 from .utils import helper

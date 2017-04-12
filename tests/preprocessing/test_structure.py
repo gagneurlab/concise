@@ -16,7 +16,7 @@ def cd(newdir):
         os.chdir(prevdir)
 
 
-def test_basic():
+def manual_test_basic():
     input_fasta = "tests/preprocessing/RNAplfold_data/input.fasta"
     tmpdir = "/tmp/RNAplfold"
 
