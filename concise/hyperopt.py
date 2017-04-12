@@ -2,7 +2,7 @@
 """
 from keras.callbacks import EarlyStopping, History
 from hyperopt.mongoexp import MongoTrials
-from concise.utils.helper import write_json
+from concise.utils.helper import write_json, merge_dicts
 from concise.optimizers import data_based_init
 from datetime import datetime
 from uuid import uuid4
@@ -71,7 +71,7 @@ class CMongoTrials(MongoTrials):
             print("Trials: " + str(not_ok))
             print("Statuses: " + str(np.array(self.statuses())[not_ok]))
 
-        r = [{"tid": t["tid"], **t["result"].to_dict()} for t in self.trials if t["result"]["status"] == "ok"]
+        r = [merge_dicts({"tid": t["tid"]}, t["result"].to_dict()) for t in self.trials if t["result"]["status"] == "ok"]
         return r
 
     def as_df(self, ignore_vals=["history"], separator=".", verbose=True):
@@ -195,8 +195,7 @@ class CompileFN():
                    "model": self.model_name,
                },
                "history": {"params": history.params,
-                           "loss": {"epoch": history.epoch,
-                                    **history.history},
+                           "loss": merge_dicts({"epoch": history.epoch}, history.history),
                            },
                # execution times
                "time": {
