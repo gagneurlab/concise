@@ -17,6 +17,11 @@ DEFAULT_IP = "ouga03"
 DEFAULT_SAVE_DIR = "/s/project/deepcis/hyperopt/"
 
 
+def _put_first(df, names):
+    df = df.reindex(columns=names + [c for c in df.columns if c not in names])
+    return df
+
+
 class CMongoTrials(MongoTrials):
 
     def __init__(self, db_name, exp_name, ip=DEFAULT_IP, port=1234, **kwargs):
@@ -53,23 +58,23 @@ class CMongoTrials(MongoTrials):
 
         res = [result2history(t["result"]).assign(tid=t["tid"]) for t in self.trials if t["tid"] in listify(tid)]
         df = pd.concat(res)
-        df = df.reindex(columns=['tid'] + [c for c in df.columns if c not in ["tid"]])
+        df = _put_first(df, ["tid"])
         return df
 
     def get_ok_results(self, verbose=True):
         """Return a list of results with ok status
         """
-        not_ok = np.where(np.array(self.trials.statuses()) != "ok")[0]
+        not_ok = np.where(np.array(self.statuses()) != "ok")[0]
 
         if len(not_ok) > 0 and verbose:
             print("{0}/{1} trials were not ok.".format(len(not_ok), len(self.trials)))
             print("Trials: " + str(not_ok))
-            print("Statuses: " + str(np.array(self.trials.statuses())[not_ok]))
+            print("Statuses: " + str(np.array(self.statuses())[not_ok]))
 
         r = [{"tid": t["tid"], **t["result"].to_dict()} for t in self.trials if t["result"]["status"] == "ok"]
         return r
 
-    def as_df(self, ignore_vals=["history"], verbose=True):
+    def as_df(self, ignore_vals=["history"], separator=".", verbose=True):
         """Return a pd.DataFrame view of the whole experiment
         """
         def delete_key(dct, key):
@@ -91,8 +96,11 @@ class CMongoTrials(MongoTrials):
             return res
 
         results = self.get_ok_results(verbose=verbose)
-        rp = [flatten_dict(delete_key(add_eval(x), ignore_vals), ".") for x in results]
-        return pd.DataFrame.from_records(rp)
+        rp = [flatten_dict(delete_key(add_eval(x), ignore_vals), separator) for x in results]
+        df = pd.DataFrame.from_records(rp)
+
+        first = ["tid", "loss", "status"]
+        return _put_first(df, first)
 
 
 class CompileFN():
@@ -178,21 +186,27 @@ class CompileFN():
                "status": STATUS_OK,
                # additional info
                "param": param,
-               "model_path": model_path,
-               "results_path": results_path,
-               "data_name": self.data_name,
-               "model_name": self.model_name,
+               "path": {
+                   "model": model_path,
+                   "results": results_path,
+               },
+               "name": {
+                   "data": self.data_name,
+                   "model": self.model_name,
+               },
                "history": {"params": history.params,
                            "loss": {"epoch": history.epoch,
                                     **history.history},
                            },
                # execution times
-               "start_time": str(time_start),
-               "end_time": str(time_end),
-               "execution_time": (time_end - time_start).total_seconds(),  # in seconds
-               "data_load_time": (time_data_loaded - time_start).total_seconds(),
-               "training_time": (time_train_end - time_data_loaded).total_seconds(),
-               }
+               "time": {
+                   "start": str(time_start),
+                   "end": str(time_end),
+                   "duration": {
+                       "total": (time_end - time_start).total_seconds(),  # in seconds
+                       "dataload": (time_data_loaded - time_start).total_seconds(),
+                       "training": (time_train_end - time_data_loaded).total_seconds(),
+                   }}}
 
         # optionally save information to disk
         if model_path:
