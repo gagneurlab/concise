@@ -134,14 +134,14 @@ class CompileFN():
 
         # get data
         print("load data")
-        train, valid, _ = self.data_fun(**param["data"], **param.get("shared", {}))
+        train, valid, _ = self.data_fun(**merge_dict(param["data"], param.get("shared", {})))
         time_data_loaded = datetime.now()
 
         # compute the sequence length etc
         param = self.update_param_fun(param, train)
 
         # get model
-        model = self.model_fun(**param["model"], **param.get("shared", {}))
+        model = self.model_fun(**merge_dict(param["model"], param.get("shared", {})))
 
         # set default early-stop parameters
         if param.get("fit") is None:
