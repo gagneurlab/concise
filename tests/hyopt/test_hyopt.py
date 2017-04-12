@@ -7,7 +7,7 @@ import time
 
 from concise.utils.helper import merge_dicts
 import subprocess
-from tests.hyperopt import data, model
+from tests.hyopt import data, model
 import py.test
 
 
@@ -15,10 +15,10 @@ import py.test
 def test_compilefn():
     db_name = "test"
     exp_name = "test2"
-    fn = concise.hyperopt.CompileFN(db_name, exp_name,
-                                    data_module=data, data_name="data",
-                                    model_module=model, model_name="build_model",
-                                    save_dir="/tmp/")
+    fn = concise.hyopt.CompileFN(db_name, exp_name,
+                                 data_module=data, data_name="data",
+                                 model_module=model, model_name="build_model",
+                                 save_dir="/tmp/")
     hyper_params = {
         "data": {},
         "shared": {"max_features": 100, "maxlen": 20},
@@ -31,7 +31,7 @@ def test_compilefn():
     best = fmin(fn, hyper_params, trials=trials, algo=tpe.suggest, max_evals=2)
 
 
-def manual_test_hyperopt(tmpdir):
+def manual_test_hyopt(tmpdir):
 
     # get the base dir
     mongodb_path = str(tmpdir.mkdir('mongodb'))
@@ -69,10 +69,10 @@ def manual_test_hyperopt(tmpdir):
     db_name = "test"
     exp_name = "test2"
 
-    fn = concise.hyperopt.CompileFN(db_name, exp_name,
-                                    data_module=data, data_name="data",
-                                    model_module=model, model_name="build_model",
-                                    save_dir=results_path)
+    fn = concise.hyopt.CompileFN(db_name, exp_name,
+                                 data_module=data, data_name="data",
+                                 model_module=model, model_name="build_model",
+                                 save_dir=results_path)
     hyper_params = {
         "data": {},
         "shared": {"max_features": 100, "maxlen": 20},
