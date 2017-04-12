@@ -27,6 +27,15 @@ def InputDNA(seq_length, name=None, **kwargs):
     return Input((seq_length, 4), name=name, **kwargs)
 
 
+# TODO - implement ConvRNAStructure
+def InputRNAStructure(seq_length, name=None, **kwargs):
+    """Convenience wrapper around keras.layers.Input:
+
+    Input((seq_length, 5), name=name, **kwargs)
+    """
+    return Input((seq_length, 5), name=name, **kwargs)
+
+
 def InputDNAQuantity(seq_length, n_features=1, name=None, **kwargs):
     """Convenience wrapper around keras.layers.Input:
 
