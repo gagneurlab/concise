@@ -26,7 +26,8 @@ requirements = [
     "keras>=2.0.1",
     'deeplift>=0.4',
     'simdna==0.2',
-    'deepcpg'
+    'deepcpg',
+    'hyperopt',
 ]
 
 dependency_links = [
