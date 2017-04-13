@@ -79,3 +79,12 @@ def test_pad_sequences():
                                                       [31, 3],
                                                       [4, 2]]
 
+    # expect error
+    with pytest.raises(ValueError):
+        pad_sequences(sequence_vec, value="NNN", align="end")
+
+    sequence_vec = ["ACGTTTATC"]
+    assert len(pad_sequences(sequence_vec, value="NNN", align="end")[0]) == 9
+    with pytest.raises(ValueError):
+        pad_sequences(sequence_vec, value="NNN", maxlen=10, align="end")
+    assert len(pad_sequences(sequence_vec, value="NNN", maxlen=12, align="end")[0]) == 12

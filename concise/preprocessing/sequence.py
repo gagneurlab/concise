@@ -226,10 +226,9 @@ def pad_sequences(sequence_vec, maxlen=None, align="end", value="N"):
     >>> pad_sequences(sequence_vec, "N", 10, "start")
     """
 
-    # neutral element type checkoing
-    assert len(value) == 1
-    assert isinstance(value, type(sequence_vec[0]))
+    # neutral element type checking
     assert isinstance(value, list) or isinstance(value, str)
+    assert isinstance(value, type(sequence_vec[0]))
     assert not isinstance(sequence_vec, str)
     assert isinstance(sequence_vec[0], list) or isinstance(sequence_vec[0], str)
 
@@ -244,8 +243,14 @@ def pad_sequences(sequence_vec, maxlen=None, align="end", value="N"):
         print("WARNING: Maximum sequence length (%s) is less than maxlen (%s)" % (max_seq_len, maxlen))
         max_seq_len = maxlen
 
-        # pad and subset
+    # handle the case when len > 1
+    for seq in sequence_vec:
+        if not len(seq) % len(value) == 0:
+            raise ValueError("All sequences need to be dividable by len(value)")
+    if not maxlen % len(value) == 0:
+        raise ValueError("maxlen needs to be dividable by len(value)")
 
+    # pad and subset
     def pad(seq, max_seq_len, value="N", align="end"):
         seq_len = len(seq)
         assert max_seq_len >= seq_len
@@ -260,6 +265,11 @@ def pad_sequences(sequence_vec, maxlen=None, align="end", value="N"):
             n_right = (max_seq_len - seq_len) // 2
         else:
             raise ValueError("align can be of: end, start or center")
+
+        # normalize for the length
+        n_left = n_left // len(value)
+        n_right = n_right // len(value)
+
         return value * n_left + seq + value * n_right
 
     def trim(seq, maxlen, align="end"):
