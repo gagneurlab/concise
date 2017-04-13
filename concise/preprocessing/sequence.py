@@ -168,9 +168,16 @@ def encodeRNA(seq_vec, maxlen=None, seq_align="start"):
 
 
 def encodeCodon(seq_vec, ignore_stop_codons=True, maxlen=None, seq_align="start", encode_type="one_hot"):
+    if ignore_stop_codons:
+        vocab = CODONS
+        neutral_vocab = STOP_CODONS + ["NNN"]
+    else:
+        vocab = CODONS + STOP_CODONS
+        neutral_vocab = ["NNN"]
+
     return encodeSequence(seq_vec,
-                          vocab=CODONS,
-                          neutral_vocab=STOP_CODONS + ("NNN"),
+                          vocab=vocab,
+                          neutral_vocab=neutral_vocab,
                           maxlen=maxlen,
                           seq_align=seq_align,
                           pad_value="NNN",
