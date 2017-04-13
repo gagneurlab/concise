@@ -60,7 +60,20 @@ def encodeSequence(seq_vec, vocab, neutral_vocab, maxlen=None,
                    seq_align="start", pad_value="N", encode_type="one_hot"):
     """Convert the sequence to one-hot-encoding.
 
-    encode_type: can be "one_hot" or "token"
+    ## Arguments
+       seq_vec: list of sequences
+       vocab: list of chars: List of "words" to use as the vocabulary. Can be strings of length>0,
+    but all need to have the same length. For DNA, this is: ["A", "C", "G", "T"]
+       neutral_vocab: list of chars: Values used to pad the sequence or represent unknown-values. For DNA, this is: ["N"].
+       maxlen, seq_align: see pad_sequences
+       encode_type: "one_hot" or "token". "token" represents each vocab element as a positive integer from 1 to len(vocab) + 1.
+                  neutral_vocab is represented with 0.
+
+    ## Returns
+       Array with shape for encode_type:
+         - "one_hot": (len(seq_vec), maxlen, len(vocab))
+         - "token": (len(seq_vec), maxlen)
+      If maxlen is None, it gets the value of the longest sequence length from seq_vec.
     """
     if isinstance(neutral_vocab, str):
         neutral_vocab = [neutral_vocab]
@@ -80,7 +93,7 @@ def encodeSequence(seq_vec, vocab, neutral_vocab, maxlen=None,
                     for seq in seq_vec]
     elif encode_type == "token":
         arr_list = [1 + np.array(tokenize(seq, vocab, neutral_vocab)) for seq in seq_vec]
-        # one plus is to be compatible with keras: https://keras.io/layers/embeddings/
+        # we add 1 to be compatible with keras: https://keras.io/layers/embeddings/
         # indexes > 0, 0 = padding element
 
     return np.stack(arr_list)
