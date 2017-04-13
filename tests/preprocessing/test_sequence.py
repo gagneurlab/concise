@@ -22,6 +22,16 @@ def test_token2one_hot():
 def test_encodeSequence():
     assert encodeSequence(["ACG", "TGT"], DNA, "N").shape == (2, 3, 4)
 
+    et = encodeSequence(["ACG", "TGT"], DNA, "N", encode_type="token")
+    assert et.shape == (2, 3)
+    assert np.array_equal(et, np.array([[1, 2, 3],
+                                        [4, 3, 4]]))
+
+    # TODO - should I increase the index by one?
+    et = encodeSequence(["ACG", "TGTN"], DNA, "N", encode_type="token")
+    assert np.array_equal(et, np.array([[1, 2, 3, 0],
+                                        [4, 3, 4, 0]]))
+
 
 def test_encodeDNA():
 
@@ -68,3 +78,4 @@ def test_pad_sequences():
                                                       [2, 2],
                                                       [31, 3],
                                                       [4, 2]]
+

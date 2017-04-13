@@ -57,7 +57,11 @@ def token2one_hot(tvec, vocab_size):
 
 
 def encodeSequence(seq_vec, vocab, neutral_vocab, maxlen=None,
-                   seq_align="start", pad_value="N"):
+                   seq_align="start", pad_value="N", encode_type="one_hot"):
+    """Convert the sequence to one-hot-encoding.
+
+    encode_type: can be "one_hot" or "token"
+    """
     if isinstance(neutral_vocab, str):
         neutral_vocab = [neutral_vocab]
     if isinstance(seq_vec, str):
@@ -66,12 +70,20 @@ def encodeSequence(seq_vec, vocab, neutral_vocab, maxlen=None,
     assert len(vocab[0]) == len(pad_value)
     assert pad_value in neutral_vocab
 
+    assert encode_type in ["one_hot", "token"]
+
     seq_vec = pad_sequences(seq_vec, maxlen=maxlen,
                             align=seq_align, value=pad_value)
-    seq_vec_one_hot = [token2one_hot(tokenize(seq, vocab, neutral_vocab), len(vocab))
-                       for seq in seq_vec]
 
-    return np.stack(seq_vec_one_hot)
+    if encode_type == "one_hot":
+        arr_list = [token2one_hot(tokenize(seq, vocab, neutral_vocab), len(vocab))
+                    for seq in seq_vec]
+    elif encode_type == "token":
+        arr_list = [1 + np.array(tokenize(seq, vocab, neutral_vocab)) for seq in seq_vec]
+        # one plus is to be compatible with keras: https://keras.io/layers/embeddings/
+        # indexes > 0, 0 = padding element
+
+    return np.stack(arr_list)
 
 
 def encodeDNA(seq_vec, maxlen=None, seq_align="start"):
@@ -128,7 +140,8 @@ def encodeDNA(seq_vec, maxlen=None, seq_align="start"):
                           neutral_vocab="N",
                           maxlen=maxlen,
                           seq_align=seq_align,
-                          pad_value="N")
+                          pad_value="N",
+                          encode_type="one_hot")
 
 
 def encodeRNA(seq_vec, maxlen=None, seq_align="start"):
@@ -137,25 +150,28 @@ def encodeRNA(seq_vec, maxlen=None, seq_align="start"):
                           neutral_vocab="N",
                           maxlen=maxlen,
                           seq_align=seq_align,
-                          pad_value="N")
+                          pad_value="N",
+                          encode_type="one_hot")
 
 
-def encodeCodon(seq_vec, ignore_stop_codons=True, maxlen=None, seq_align="start"):
+def encodeCodon(seq_vec, ignore_stop_codons=True, maxlen=None, seq_align="start", encode_type="one_hot"):
     return encodeSequence(seq_vec,
                           vocab=CODONS,
                           neutral_vocab=STOP_CODONS + ("NNN"),
                           maxlen=maxlen,
                           seq_align=seq_align,
-                          pad_value="NNN")
+                          pad_value="NNN",
+                          encode_type=encode_type)
 
 
-def encodeAA(seq_vec, maxlen=None, seq_align="start"):
+def encodeAA(seq_vec, maxlen=None, seq_align="start", encode_type="one_hot"):
     return encodeSequence(seq_vec,
                           vocab=AMINO_ACIDS,
                           neutral_vocab="_",
                           maxlen=maxlen,
                           seq_align=seq_align,
-                          pad_value="_")
+                          pad_value="_",
+                          encode_type=encode_type)
 
 
 def pad_sequences(sequence_vec, maxlen=None, align="end", value="N"):
