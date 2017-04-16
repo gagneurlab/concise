@@ -108,7 +108,7 @@ class CMongoTrials(MongoTrials):
         return _put_first(df, first)
 
 
-def _train_and_eval_single(train, valid, model, epochs=300, callbacks=[]):
+def _train_and_eval_single(train, valid, model, batch_size=32, epochs=300, callbacks=[]):
     """Fit and evaluate a keras model
     """
     def _format_keras_history(history):
@@ -121,6 +121,7 @@ def _train_and_eval_single(train, valid, model, epochs=300, callbacks=[]):
     logger.info("Fit...")
     history = History()
     model.fit(train[0], train[1],
+              batch_size=batch_size,
               validation_data=valid,
               epochs=epochs,
               verbose=2,
@@ -184,6 +185,8 @@ class CompileFN():
             param["fit"]["epochs"] = 500
         if param["fit"].get("patience") is None:
             param["fit"]["patience"] = 10
+        if param["fit"].get("batch_size") is None:
+            param["fit"]["batch_size"] = 32
         callbacks = [EarlyStopping(patience=param["fit"]["patience"])]
 
         # setup paths for storing the data - TODO check if we can somehow get the id from hyperopt
@@ -214,6 +217,7 @@ class CompileFN():
                                                            valid=subset(train, valid_idx),
                                                            model=model,
                                                            epochs=param["fit"]["epochs"],
+                                                           batch_size=param["fit"]["batch_size"],
                                                            callbacks=deepcopy(callbacks))
             if model_path:
                 model.save(model_path)
@@ -227,13 +231,14 @@ class CompileFN():
                                                                        self.random_state)):
                 logger.info("Fold {0}/{1}".format(i + 1, self.cv_n_folds))
                 model = self.model_fn(**model_param)
-                eval_metrics, history_elem = _train_and_eval_single(train=subset(train, train_idx),
-                                                                    valid=subset(train, valid_idx),
-                                                                    model=model,
-                                                                    epochs=param["fit"]["epochs"],
-                                                                    callbacks=deepcopy(callbacks))
+                eval_m, history_elem = _train_and_eval_single(train=subset(train, train_idx),
+                                                              valid=subset(train, valid_idx),
+                                                              model=model,
+                                                              epochs=param["fit"]["epochs"],
+                                                              batch_size=param["fit"]["batch_size"],
+                                                              callbacks=deepcopy(callbacks))
                 print("\n")
-                eval_metrics_list.append(np.array(eval_metrics))
+                eval_metrics_list.append(np.array(eval_m))
                 history.append(history_elem)
                 if model_path:
                     model.save(model_path.replace(".h5", "_fold_{0}.h5".format(i)))
