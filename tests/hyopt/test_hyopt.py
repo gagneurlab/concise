@@ -13,11 +13,13 @@ def test_compilefn_train_test_split():
     db_name = "test"
     exp_name = "test2"
     fn = CompileFN(db_name, exp_name,
-                   data_module=data, data_name="data",
+                   data_fn=data.data,
+                   model_fn=model.build_model,
+                   eval2loss_fn=model.hyperopt_loss_build_model,
+                   # eval
                    valid_split=.5,
                    stratified=False,
                    random_state=True,
-                   model_module=model, model_name="build_model",
                    save_dir="/tmp/")
     hyper_params = {
         "data": {},
@@ -38,8 +40,9 @@ def test_compilefn_cross_val():
                    cv_n_folds=3,
                    stratified=False,
                    random_state=True,
-                   data_module=data, data_name="data",
-                   model_module=model, model_name="build_model",
+                   data_fn=data.data,
+                   model_fn=model.build_model,
+                   eval2loss_fn=model.hyperopt_loss_build_model,
                    save_dir="/tmp/")
     hyper_params = {
         "data": {},
@@ -93,8 +96,9 @@ def manual_test_hyopt(tmpdir):
     exp_name = "test2"
 
     fn = CompileFN(db_name, exp_name,
-                   data_module=data, data_name="data",
-                   model_module=model, model_name="build_model",
+                   data_fn=data.data,
+                   model_fn=model.build_model,
+                   eval2loss_fn=model.hyperopt_loss_build_model,
                    save_dir=results_path)
     hyper_params = {
         "data": {},

@@ -6,7 +6,7 @@ Tests for `concise_keras` module
 """
 import keras
 from keras.models import model_from_json
-from concise.concise_keras import concise_model
+from concise.models import single_layer_pos_effect as concise_model
 from concise.evaluation import mse
 from sklearn.linear_model import LinearRegression
 

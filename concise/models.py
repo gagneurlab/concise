@@ -1,7 +1,8 @@
-from keras.models import Model
-from keras.layers.core import (Activation, Dense)
-from keras.optimizers import Adam
+"""Template for models
+"""
 
+from keras.models import Model
+from keras.optimizers import Adam
 import keras.layers as kl
 import keras.initializers as ki
 import keras.regularizers as kr
@@ -13,7 +14,7 @@ from concise import activations as ca
 from concise.utils import PWM
 
 
-# ### 'Original' Concise architecture
+# ### 'First' Concise architecture from Tensorflow
 
 # Splines:
 # - `spline_score = X_spline %*% spline_weights`
@@ -42,29 +43,29 @@ from concise.utils import PWM
 #   - spline_weights, L2 / n_spline_tracks: spline_param_lamb
 # convolution model
 
-def concise_model(pooling_layer="sum",  # 'sum', 'max' or 'mean'
-                  nonlinearity="relu",  # 'relu' or 'exp'
-                  motif_length=9,
-                  n_motifs=6,           # number of filters
-                  step_size=0.01,
-                  num_tasks=1,          # multi-task learning - 'trans'
-                  n_covariates=0,
-                  seq_length=100,       # pre-defined sequence length
-                  # splines
-                  n_splines=None,
-                  share_splines=False,  # should the positional bias be shared across motifs
-                  spline_exp=False,     # use the exponential function
-                  # regularization
-                  lamb=1e-5,            # overall motif coefficient regularization
-                  motif_lamb=1e-5,
-                  spline_lamb=1e-5,
-                  spline_param_lamb=1e-5,
-                  # initialization
-                  init_motifs=None,     # motifs to intialize
-                  init_motif_bias=0,
-                  init_sd_motif=1e-2,
-                  init_sd_w=1e-3,       # initial weight scale of feature w or motif w
-                  **kwargs):            # unused params
+def single_layer_pos_effect(pooling_layer="sum",  # 'sum', 'max' or 'mean'
+                            nonlinearity="relu",  # 'relu' or 'exp'
+                            motif_length=9,
+                            n_motifs=6,           # number of filters
+                            step_size=0.01,
+                            num_tasks=1,          # multi-task learning - 'trans'
+                            n_covariates=0,
+                            seq_length=100,       # pre-defined sequence length
+                            # splines
+                            n_splines=None,
+                            share_splines=False,  # should the positional bias be shared across motifs
+                            spline_exp=False,     # use the exponential function
+                            # regularization
+                            lamb=1e-5,            # overall motif coefficient regularization
+                            motif_lamb=1e-5,
+                            spline_lamb=1e-5,
+                            spline_param_lamb=1e-5,
+                            # initialization
+                            init_motifs=None,     # motifs to intialize
+                            init_motif_bias=0,
+                            init_sd_motif=1e-2,
+                            init_sd_w=1e-3,       # initial weight scale of feature w or motif w
+                            **kwargs):            # unused params
 
     # initialize conv kernels to known motif pwm's
     if init_motifs:
@@ -121,14 +122,13 @@ def concise_model(pooling_layer="sum",  # 'sum', 'max' or 'mean'
         x = xseq
     # -----
 
-    predictions = Dense(units=num_tasks,
-                        kernel_regularizer=kr.l1(lamb),
-                        kernel_initializer=ki.RandomNormal(stddev=init_sd_w)
-                        )(x)
+    predictions = kl.Dense(units=num_tasks,
+                           kernel_regularizer=kr.l1(lamb),
+                           kernel_initializer=ki.RandomNormal(stddev=init_sd_w)
+                           )(x)
 
     model = Model(inputs=inputs, outputs=predictions)
 
     model.compile(optimizer=Adam(lr=step_size), loss="mse", metrics=["mse"])
 
     return model
-

@@ -130,12 +130,21 @@ def _train_and_eval_single(train, valid, model, epochs=300, callbacks=[]):
     logger.info("Evaluate...")
     return model.evaluate(valid[0], valid[1]), _format_keras_history(history)
 
+def take_first_asis(x):
+    """Take first argument as is
+    """
+    if hasattr(x, "__len__"):
+        return x[0]
+    else:
+        return x
+
 
 class CompileFN():
 
     def __init__(self, db_name, exp_name,  # TODO - check if we can somehow get those from hyperopt
-                 data_module=None, data_name="data",
-                 model_module=None, model_name="model",
+                 data_fn,
+                 model_fn,
+                 eval2loss_fn=take_first_asis,
                  # validation
                  valid_split=.2,
                  cv_n_folds=None,
@@ -146,16 +155,13 @@ class CompileFN():
                  save_model=True,
                  save_results=True,
                  ):
-        if not data_module:
-            import data as data_module
-        if not model_module:
-            import models as model_module
-        self.data_fun = data_module.get(data_name)
-        self.model_fun = model_module.get(model_name)
-        self.loss_fun = model_module.get_loss(model_name)
+        self.data_fn = data_fn
+        self.model_fn = model_fn
+        self.loss_fn = eval2loss_fn
 
-        self.data_name = data_name
-        self.model_name = model_name
+        self.data_name = data_fn.__code__.co_name
+        self.model_name = model_fn.__code__.co_name
+        self.loss_name = eval2loss_fn.__code__.co_name
         self.db_name = db_name
         self.exp_name = exp_name
         # validation
@@ -190,7 +196,7 @@ class CompileFN():
 
         # get data
         logger.info("Load data...")
-        train, _ = self.data_fun(**merge_dicts(param["data"], param.get("shared", {})))
+        train, _ = self.data_fn(**merge_dicts(param["data"], param.get("shared", {})))
         time_data_loaded = datetime.now()
 
         # model parameters
@@ -199,7 +205,7 @@ class CompileFN():
         # train & evaluate the model
         if self.cv_n_folds is None:
             # no cross-validation
-            model = self.model_fun(**model_param)
+            model = self.model_fn(**model_param)
             train_idx, valid_idx = split_train_test_idx(train,
                                                         self.valid_split,
                                                         self.stratified,
@@ -220,7 +226,7 @@ class CompileFN():
                                                                        self.stratified,
                                                                        self.random_state)):
                 logger.info("Fold {0}/{1}".format(i + 1, self.cv_n_folds))
-                model = self.model_fun(**model_param)
+                model = self.model_fn(**model_param)
                 eval_metrics, history_elem = _train_and_eval_single(train=subset(train, train_idx),
                                                                     valid=subset(train, valid_idx),
                                                                     model=model,
@@ -235,7 +241,7 @@ class CompileFN():
             # summarize the metrics, take average
             eval_metrics = np.array(eval_metrics_list).mean(axis=0).tolist()
 
-        loss = self.loss_fun(eval_metrics)
+        loss = self.loss_fn(eval_metrics)
         time_end = datetime.now()
 
         ret = {"loss": loss,
@@ -249,6 +255,7 @@ class CompileFN():
                "name": {
                    "data": self.data_name,
                    "model": self.model_name,
+                   "loss": self.loss_name,
                },
                "history": history,
                # execution times
