@@ -21,7 +21,7 @@ def data(max_features=5000, maxlen=400):
     x_test = sequence.pad_sequences(x_test, maxlen=maxlen)
     print('x_train shape:', x_train.shape)
     print('x_test shape:', x_test.shape)
-    return (x_train, y_train), (x_train, y_train), (x_test, y_test)
+    return (x_train, y_train), (x_test, y_test)
 
 
 def get(name):

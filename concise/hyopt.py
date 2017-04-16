@@ -1,5 +1,6 @@
 """Train the models
 """
+from sklearn.model_selection import train_test_split, KFold, StratifiedKFold
 from keras.callbacks import EarlyStopping, History
 from hyperopt.mongoexp import MongoTrials
 from concise.utils.helper import write_json, merge_dicts
@@ -11,6 +12,11 @@ import numpy as np
 import pandas as pd
 from copy import deepcopy
 import os
+import logging
+
+logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s')
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 # TODO - have a system-wide config for this
 DEFAULT_IP = "ouga03"
@@ -108,6 +114,12 @@ class CompileFN():
     def __init__(self, db_name, exp_name,  # TODO - check if we can somehow get those from hyperopt
                  data_module=None, data_name="data",
                  model_module=None, model_name="model",
+                 # validation
+                 valid_split=.2,
+                 cv_n_folds=None,
+                 stratified=False,
+                 random_state=None,
+                 # saving
                  save_dir=DEFAULT_SAVE_DIR,
                  save_model=True,
                  save_results=True,
@@ -125,23 +137,18 @@ class CompileFN():
         self.model_name = model_name
         self.db_name = db_name
         self.exp_name = exp_name
+        # validation
+        self.valid_split = valid_split
+        self.cv_n_folds = cv_n_folds
+        self.stratified = stratified
+        self.random_state = random_state
+        # saving
         self.save_dir = save_dir
         self.save_model = save_model
         self.save_results = save_results
 
     def __call__(self, param):
         time_start = datetime.now()
-
-        # get data
-        print("load data")
-        train, valid, _ = self.data_fun(**merge_dicts(param["data"], param.get("shared", {})))
-        time_data_loaded = datetime.now()
-
-        # compute the sequence length etc
-        param = self.update_param_fun(param, train)
-
-        # get model
-        model = self.model_fun(**merge_dicts(param["model"], param.get("shared", {})))
 
         # set default early-stop parameters
         if param.get("fit") is None:
@@ -150,38 +157,72 @@ class CompileFN():
             param["fit"]["epochs"] = 500
         if param["fit"].get("patience") is None:
             param["fit"]["patience"] = 10
+        callbacks = [EarlyStopping(patience=param["fit"]["patience"])]
 
-        # weightnorm
-        if param["model"].get("use_weightnorm", False):
-            # initialize on a batch of data
-            # TODO - restrict only to a fraction of the training set
-            data_based_init(model, train[0])
-
-        # train the model
-        print("fit")
-        history = History()
-        model.fit(train[0], train[1],
-                  validation_data=valid,
-                  epochs=param["fit"]["epochs"],
-                  verbose=2,
-                  callbacks=[history, EarlyStopping(patience=param["fit"]["patience"])])
-        time_train_end = datetime.now()
-
-        # evaluate the model
-        print("evaluate")
-        eval_metrics = model.evaluate(valid[0], valid[1])
-        loss = self.loss_fun(eval_metrics)
-
-        # setup paths for storing the data
-        # TODO - check if we can somehow get the id from hyperopt
+        # setup paths for storing the data - TODO check if we can somehow get the id from hyperopt
         rid = str(uuid4())
         tm_dir = self.save_dir + "/{db}/{exp}/train_models/".format(db=self.db_name, exp=self.exp_name)
         os.makedirs(tm_dir, exist_ok=True)
-
         model_path = tm_dir + "{0}.h5".format(rid) if self.save_model else ""
         results_path = tm_dir + "{0}.json".format(rid) if self.save_results else ""
+        # -----------------
 
+        # get data
+        logger.info("Load data...")
+        train, _ = self.data_fun(**merge_dicts(param["data"], param.get("shared", {})))
+        _test_len(train)  # check the data validity at this stage
+        time_data_loaded = datetime.now()
+
+        # compute the sequence length etc
+        param = self.update_param_fun(param, train)
+
+        # convenience wrapper
+        def get_model(model_fun, param, x):
+            model = model_fun(**merge_dicts(param["model"], param.get("shared", {})))
+            # weightnorm, initialize on a batch of data
+            if param["model"].get("use_weightnorm", False):
+                # TODO - restrict only to a fraction of the training set
+                data_based_init(model, x)
+            return model
+
+        # train & evaluate the model
+        if self.cv_n_folds is None:
+            # no cross-validation
+            model = get_model(self.model_fun, param, train[0])
+            train_idx, valid_idx = _train_test_split(train, self.valid_split, self.stratified, self.random_state)
+            c_train, c_valid = _train_test_split_by_idx(train, train_idx, valid_idx)
+            eval_metrics, history = _train_and_eval_single(train=c_train,
+                                                           valid=c_valid,
+                                                           model=model,
+                                                           epochs=param["fit"]["epochs"],
+                                                           callbacks=deepcopy(callbacks))
+            if model_path:
+                model.save(model_path)
+        else:
+            # cross-validation
+            eval_metrics_list = []
+            history = []
+            for i, (train_idx, valid_idx) in enumerate(_get_kf(train, self.cv_n_folds, self.stratified, self.random_state)):
+                logger.info("Fold {0}/{1}".format(i + 1, self.cv_n_folds))
+                c_train, c_valid = _train_test_split_by_idx(train, train_idx, valid_idx)
+                model = get_model(self.model_fun, param, train[0])
+                eval_metrics, history_elem = _train_and_eval_single(train=c_train,
+                                                                    valid=c_valid,
+                                                                    model=model,
+                                                                    epochs=param["fit"]["epochs"],
+                                                                    callbacks=deepcopy(callbacks))
+                print("\n")
+                eval_metrics_list.append(np.array(eval_metrics))
+                history.append(history_elem)
+                if model_path:
+                    model.save(model_path.replace(".h5", "_{0}.h5".format(i)))
+
+            # summarize the metrics, take average
+            eval_metrics = np.array(eval_metrics_list).mean(axis=0).tolist()
+
+        loss = self.loss_fun(eval_metrics)
         time_end = datetime.now()
+
         ret = {"loss": loss,
                "status": STATUS_OK,
                # additional info
@@ -194,9 +235,7 @@ class CompileFN():
                    "data": self.data_name,
                    "model": self.model_name,
                },
-               "history": {"params": history.params,
-                           "loss": merge_dicts({"epoch": history.epoch}, history.history),
-                           },
+               "history": history,
                # execution times
                "time": {
                    "start": str(time_start),
@@ -204,14 +243,13 @@ class CompileFN():
                    "duration": {
                        "total": (time_end - time_start).total_seconds(),  # in seconds
                        "dataload": (time_data_loaded - time_start).total_seconds(),
-                       "training": (time_train_end - time_data_loaded).total_seconds(),
+                       "training": (time_end - time_data_loaded).total_seconds(),
                    }}}
 
         # optionally save information to disk
-        if model_path:
-            model.save(model_path)
         if results_path:
             write_json(ret, results_path)
+        logger.info("Done!")
         return ret
 
     # Style guide:
@@ -227,3 +265,96 @@ class CompileFN():
     # data: ... (pre-preprocessing parameters)
     # model: (architecture, etc)
     # train: (epochs, patience...)
+
+
+def _format_keras_history(history):
+    """nicely format keras history
+    """
+    return {"params": history.params,
+            "loss": merge_dicts({"epoch": history.epoch}, history.history),
+            }
+
+
+def _train_and_eval_single(train, valid, model, epochs=300, callbacks=[]):
+    """Fit and evaluate a single model
+    """
+    # train the model
+    logger.info("Fit...")
+    history = History()
+    model.fit(train[0], train[1],
+              validation_data=valid,
+              epochs=epochs,
+              verbose=2,
+              callbacks=[history] + callbacks)
+
+    # evaluate the model
+    logger.info("Evaluate...")
+    return model.evaluate(valid[0], valid[1]), _format_keras_history(history)
+
+
+def _train_test_split(train, valid_split=.2, stratified=False, random_state=None):
+    y = train[1]
+    x = np.arange(y.shape[0])
+    stratify = y if stratified else None
+    return train_test_split(x, test_size=valid_split, random_state=random_state, stratify=stratify)
+
+
+def _get_kf(train, cv_n_folds=5, stratified=False, random_state=None):
+    """Get k-fold indices generator
+    """
+    y = train[1]
+    n_rows = y.shape[0]
+    if stratified:
+        if len(y.shape) > 1:
+            if y.shape[1] > 1:
+                raise ValueError("Can't use stratified K-fold with multi-column response variable")
+            else:
+                y = y[:, 0]
+            # http://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedKFold.html#sklearn.model_selection.StratifiedKFold.split
+        return StratifiedKFold(n_splits=cv_n_folds, shuffle=True, random_state=random_state)\
+            .split(X=np.zeros((n_rows, 1)), y=y)
+    else:
+        return KFold(n_splits=cv_n_folds, shuffle=True, random_state=random_state)\
+            .split(X=np.zeros((n_rows, 1)))
+
+
+def _train_test_split_by_idx(train, train_idx, test_idx):
+    """Take a training dataset and split it into train, valid set,
+    given the (train, test) indicies
+    """
+    assert train[1].shape[0] == len(train_idx) + len(test_idx)
+
+    # y split
+    train_y = train[1][train_idx]
+    test_y = train[1][test_idx]
+
+    # x split
+    if isinstance(train[0], (list, tuple)):
+        train_x = [x[train_idx] for x in train[0]]
+        test_x = [x[test_idx] for x in train[0]]
+    elif isinstance(train[0], dict):
+        train_x = {k: v[train_idx] for k, v in train[0].items()}
+        test_x = {k: v[test_idx] for k, v in train[0].items()}
+    elif isinstance(train[0], np.ndarray):
+        train_x = train[0][train_idx]
+        test_x = train[0][test_idx]
+    else:
+        raise ValueError("Input can only be of type: list, dict or np.ndarray")
+
+    return (train_x, train_y), (test_x, test_y)
+
+
+def _test_len(train):
+    """Test if all the elements in the training have the same shape[0]
+    """
+    l = train[1].shape[0]
+    if isinstance(train[0], dict):
+        for x in train[0].keys():
+            assert train[0][x].shape[0] == l
+    elif isinstance(train[0], (list, tuple)):
+        for x in train[0]:
+            assert x.shape[0] == l
+    elif isinstance(train[0], np.ndarray):
+        assert train[0].shape[0] == l
+    else:
+        raise ValueError("train[0] can only be of type: list, tuple, dict or np.ndarray")
