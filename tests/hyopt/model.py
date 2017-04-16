@@ -11,7 +11,7 @@ from keras.datasets import imdb
 # set parameters:
 
 
-def build_model(max_features=5000, maxlen=400,
+def build_model(train_data, max_features=5000, maxlen=400,
                 batch_size=32, embedding_dims=50,
                 filters=250, kernel_size=3, hidden_dims=250):
     print('Build model...')
@@ -55,8 +55,6 @@ def build_model(max_features=5000, maxlen=400,
 def hyperopt_loss_build_model(x):
     return x[0]
 
-def update_param_build_model(x, train):
-    return x
 
 # --------------------------------------------
 
@@ -69,9 +67,3 @@ def get_loss(name):
         return get_from_module("hyperopt_loss_" + name, globals())
     except Exception:
         return lambda x: x[0]
-
-def get_update_param(name):
-    try:
-        return get_from_module("update_param_" + name, globals())
-    except Exception:
-        return lambda x: x

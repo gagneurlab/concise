@@ -1,15 +1,11 @@
-import concise
 from hyperopt import fmin, tpe, hp, Trials
-from hyperopt.mongoexp import MongoTrials
 import os
-import sys
 import time
 
 from concise.hyopt import CompileFN, CMongoTrials
 from concise.utils.helper import merge_dicts
 import subprocess
 from tests.hyopt import data, model
-import py.test
 
 
 # TODO - lacking more unit-tests for CMongoTrials

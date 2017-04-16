@@ -4,7 +4,7 @@ from glmnet import ElasticNet
 from sklearn.feature_selection import f_regression
 from sklearn.linear_model import LinearRegression
 from scipy.sparse import csc_matrix
-from concise.preprocessing.dna import seq_pad_and_trim
+from concise.preprocessing.sequence import pad_sequences
 
 # TODO - don't directly require glmnet in the pacakge but rather only when calling the model
 #        - see with keras how to do this
@@ -53,12 +53,12 @@ def best_kmers(dt, response, sequence, k=6, consider_shift=True, n_cores=1,
     seq = dt[sequence]
 
     if trim_seq_len is not None:
-        seq = seq_pad_and_trim(seq, seq_align=seq_align, trim_seq_len=trim_seq_len)
+        seq = pad_sequences(seq, align=seq_align, maxlen=trim_seq_len)
         seq = [s.replace("N", "") for s in seq]
 
     dt_kmer = kmer_count(seq, k)
     Xsp = csc_matrix(dt_kmer)
-    en = ElasticNet(alpha=1, standardize=False, n_folds=3)
+    en = ElasticNet(alpha=1, standardize=False, n_splits=3)
     en.fit(Xsp, y)
     # which coefficients are nonzero?=
     nonzero_kmers = dt_kmer.columns.values[en.coef_ != 0].tolist()
