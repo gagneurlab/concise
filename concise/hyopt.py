@@ -4,13 +4,14 @@ from keras.callbacks import EarlyStopping, History
 from hyperopt.mongoexp import MongoTrials
 from concise.utils.helper import write_json, merge_dicts
 from concise.utils.model_data import (subset, split_train_test_idx, split_KFold_idx)
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import uuid4
 from hyperopt import STATUS_OK
 import numpy as np
 import pandas as pd
 from copy import deepcopy
 import os
+import pprint
 import logging
 
 logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s')
@@ -29,7 +30,7 @@ def _put_first(df, names):
 
 class CMongoTrials(MongoTrials):
 
-    def __init__(self, db_name, exp_name, ip=DEFAULT_IP, port=1234, **kwargs):
+    def __init__(self, db_name, exp_name, ip=DEFAULT_IP, port=1234, kill_timeout=None, **kwargs):
         """
         Concise Mongo trials. Extends MonoTrials with the following four methods:
 
@@ -37,9 +38,62 @@ class CMongoTrials(MongoTrials):
         - train_history
         - get_ok_results
         - as_df
+
+        kill_timeout: After how many seconds to kill the job if it was stalled. None for not killing it
         """
+        self.kill_timeout = kill_timeout
+        if self.kill_timeout is not None and self.kill_timeout < 60:
+            logger.warning("kill_timeout < 60 -> Very short time for " +
+                           "each job to complete before it gets killed!")
+
         super(CMongoTrials, self).__init__(
             'mongo://{ip}:{p}/{n}/jobs'.format(ip=ip, p=port, n=db_name), exp_key=exp_name, **kwargs)
+
+    # def refresh(self):
+    #     """Extends the original object
+    #     """
+    #     self.refresh_tids(None)
+    #     if self.kill_timeout is not None:
+    #         # TODO - remove dry_run
+    #         self.delete_running(self.kill_timeout, dry_run=True)
+
+    def count_by_state_unsynced(self, arg):
+        """Extends the original object in order to inject checking
+        for stalled jobs in the running jobs
+        """
+        if self.kill_timeout is not None:
+            self.delete_running(self.kill_timeout)
+        return super(CMongoTrials, self).count_by_state_unsynced(arg)
+
+    def delete_running(self, timeout_last_refresh=0, dry_run=False):
+        """Delete jobs stalled in the running state for too long
+
+        timeout_last_refresh, int: number of seconds
+        """
+        running_all = self.handle.jobs_running()
+        running_timeout = [job for job in running_all
+                           if datetime.now() > job["refresh_time"] +
+                           timedelta(seconds=timeout_last_refresh)]
+        if len(running_timeout) == 0:
+            # Nothing to stop
+            self.refresh_tids(None)
+            return None
+
+        if dry_run:
+            logger.warning("Dry run. Not removing anything.")
+
+        logger.info("Removing {0}/{1} running jobs. # all jobs: {2} ".
+                    format(len(running_timeout), len(running_all), len(self)))
+
+        for job in running_timeout:
+            logger.info("Removing job: ")
+            pjob = job.to_dict()
+            del pjob["misc"]  # ignore misc when printing
+            logger.info(pprint.pformat(pjob))
+            if not dry_run:
+                self.handle.delete(job)
+                logger.info("Job deleted")
+        self.refresh_tids(None)
 
     def valid_tid(self):
         """List all valid tid's
