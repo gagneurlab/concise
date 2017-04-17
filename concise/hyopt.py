@@ -1,6 +1,7 @@
 """Train the models
 """
 from keras.callbacks import EarlyStopping, History
+from hyperopt.utils import coarse_utcnow
 from hyperopt.mongoexp import MongoTrials
 from concise.utils.helper import write_json, merge_dicts
 from concise.utils.model_data import (subset, split_train_test_idx, split_KFold_idx)
@@ -72,7 +73,7 @@ class CMongoTrials(MongoTrials):
         """
         running_all = self.handle.jobs_running()
         running_timeout = [job for job in running_all
-                           if datetime.now() > job["refresh_time"] +
+                           if coarse_utcnow() > job["refresh_time"] +
                            timedelta(seconds=timeout_last_refresh)]
         if len(running_timeout) == 0:
             # Nothing to stop
