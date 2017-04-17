@@ -86,8 +86,8 @@ class CMongoTrials(MongoTrials):
         logger.info("Removing {0}/{1} running jobs. # all jobs: {2} ".
                     format(len(running_timeout), len(running_all), len(self)))
 
-        logger.info("Current time: {0}. Timeout horizont: {1}".
-                    format(coarse_utcnow()), coarse_utcnow() +
+        logger.info("Current utc time: {0}. Timeout horizont: {1}".
+                    format(coarse_utcnow()), coarse_utcnow() -
                     timedelta(seconds=timeout_last_refresh))
         for job in running_timeout:
             logger.info("Removing job: ")
