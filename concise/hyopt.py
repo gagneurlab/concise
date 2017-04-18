@@ -164,7 +164,7 @@ class CMongoTrials(MongoTrials):
             if "eval" not in res:
                 if isinstance(res["history"], list):
                     # take the average across all folds
-                    eval_names = res["history"][0]["loss"].keys()
+                    eval_names = list(res["history"][0]["loss"].keys())
                     eval_metrics = np.array([[v[-1] for k, v in hist["loss"].items()]
                                              for hist in res["history"]]).mean(axis=0).tolist()
                     res["eval"] = {eval_names[i]: eval_metrics[i] for i in range(len(eval_metrics))}
