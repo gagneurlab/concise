@@ -1,4 +1,4 @@
-import concise.evaluation as ce
+import concise.eval_metrics as ce
 import numpy as np
 
 

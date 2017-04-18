@@ -11,7 +11,7 @@ import os
 import numpy as np
 
 from concise import concise
-import concise.evaluation as ce
+import concise.eval_metrics as ce
 from concise.utils import helper
 from tests.setup_concise_load_data import load_example_data
 

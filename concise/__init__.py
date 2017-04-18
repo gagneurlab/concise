@@ -11,9 +11,9 @@ from . import utils
 from . import data
 from . import initializers
 from . import metrics
+from . import eval_metrics
 from . import models
 from . import regularizers
-from . import evaluation
 from . import hyopt
 
 

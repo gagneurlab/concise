@@ -16,7 +16,7 @@ from .legacy import get_data
 from . import splines
 from .utils import helper
 from .utils import tf_helper
-from . import evaluation as ce
+from . import eval_metrics as ce
 import numpy as np
 import tensorflow as tf
 import pprint
