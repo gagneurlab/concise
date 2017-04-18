@@ -3,13 +3,14 @@ import os
 import time
 
 from concise.hyopt import CompileFN, CMongoTrials
+from concise.hyopt import test_fn as fn_test
 from concise.utils.helper import merge_dicts
 import subprocess
 from tests.hyopt import data, model
 from copy import deepcopy
 
 
-def test_compilefn_train_test_split():
+def test_compilefn_train_test_split(tmpdir):
     db_name = "test"
     exp_name = "test2"
     fn = CompileFN(db_name, exp_name,
@@ -30,12 +31,13 @@ def test_compilefn_train_test_split():
                   },
         "fit": {"epochs": 1}
     }
+    fn_test(fn, hyper_params, tmp_dir=str(tmpdir))
     trials = Trials()
     best = fmin(fn, hyper_params, trials=trials, algo=tpe.suggest, max_evals=2)
     assert isinstance(best, dict)
 
 
-def test_compilefn_cross_val():
+def test_compilefn_cross_val(tmpdir):
     db_name = "test"
     exp_name = "test2"
     fn = CompileFN(db_name, exp_name,
@@ -55,6 +57,7 @@ def test_compilefn_cross_val():
                   },
         "fit": {"epochs": 1}
     }
+    fn_test(fn, hyper_params, tmp_dir=str(tmpdir))
     trials = Trials()
     best = fmin(fn, hyper_params, trials=trials, algo=tpe.suggest, max_evals=2)
     assert isinstance(best, dict)
@@ -110,7 +113,7 @@ def test_hyopt(tmpdir):
                   },
         "fit": {"epochs": 1}
     }
-
+    fn_test(fn, hyper_params, tmp_dir=str(tmpdir))
     trials = CMongoTrials(db_name, exp_name, ip="localhost",
                           kill_timeout=5 * 60,
                           port=22334)
@@ -140,7 +143,7 @@ def test_hyopt(tmpdir):
     trials = CMongoTrials(db_name, exp_name, ip="localhost",
                           kill_timeout=5 * 60,
                           port=22334)
-
+    fn_test(fn, hyper_params, tmp_dir=str(tmpdir))
     best = fmin(fn, deepcopy(hyper_params), trials=trials, algo=tpe.suggest, max_evals=2)
     assert len(trials) == 2
     assert isinstance(best, dict)

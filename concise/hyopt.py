@@ -1,6 +1,8 @@
 """Train the models
 """
 from keras.callbacks import EarlyStopping, History
+from keras.models import load_model
+import hyperopt
 from hyperopt.utils import coarse_utcnow
 from hyperopt.mongoexp import MongoTrials
 import concise.eval_metrics as ce
@@ -13,6 +15,7 @@ import numpy as np
 import pandas as pd
 from copy import deepcopy
 import os
+import glob
 import pprint
 import logging
 
@@ -25,11 +28,45 @@ DEFAULT_IP = "ouga03"
 DEFAULT_SAVE_DIR = "/s/project/deepcis/hyperopt/"
 
 
-# TODO - write a test function that tests the validity of the model and data
-# def test_fn(fn, hyper_params):
-# - 1. save_load model
-# - 2. correct hyper-params
-# - ...
+def test_fn(fn, hyper_params, n_train=100, tmp_dir="/tmp/concise_hyopt_test/"):
+    """Test the correctness of the function before executing on large scale
+    1. Run without error
+    2. Correct save/load model to disk
+
+    # Arguments
+
+        n_train: int, number of training points
+    """
+    def wrap_data_fn(data_fn, n_train=100):
+        def new_data_fn(*args, **kwargs):
+            train, test = data_fn(*args, **kwargs)
+            train = subset(train, np.arange(n_train))
+            return train, test
+        return new_data_fn
+    start_time = datetime.now()
+    fn = deepcopy(fn)
+    hyper_params = deepcopy(hyper_params)
+    fn.save_dir = tmp_dir
+    fn.save_model = True
+    fn.data_fn = wrap_data_fn(fn.data_fn, n_train)
+
+    # sample from hyper_params
+    param = hyperopt.pyll.stochastic.sample(hyper_params)
+    # overwrite the number of epochs
+    if param.get("fit") is None:
+        param["fit"] = {}
+    param["fit"]["epochs"] = 1
+
+    # correct execution
+    res = fn(param)
+    assert res["status"] == STATUS_OK
+
+    # correct model loading
+    model_path = max(glob.iglob(tmp_dir + '/**/*.h5', recursive=True),
+                     key=os.path.getctime)
+    assert datetime.fromtimestamp(os.path.getctime(model_path)) > start_time
+    load_model(model_path)
+
 
 def _delete_keys(dct, keys):
     """Returns a copy of dct without `keys` keys
