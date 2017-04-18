@@ -27,6 +27,34 @@ logger.setLevel(logging.INFO)
 DEFAULT_IP = "ouga03"
 DEFAULT_SAVE_DIR = "/s/project/deepcis/hyperopt/"
 
+# TODO - think about the workflow
+def oof_predictions(fn, params, epochs, model_name, cache_model=True, save_model=True):
+    model_dir = fn.save_dir_exp + "/eval_models/"
+    model_path = model_dir + "/{0}.h5".format(model_name)
+    eval_metrics_path = model_dir + "/{0}_eval_metrics.json".format(model_name)
+
+    train, test = get_data(fn.data_fn, params)
+
+    if cache_model and os.path.isfile(model_path):
+        model = load_model(model_path)
+    else:
+        model = get_model(fn.model_fn, train, params)
+        model.train(train[0], train[1],
+                    batch_size=params["fit"]["batch_size"],
+                    epochs=epochs)
+
+    y_pred = model.predict(test[0])
+    eval_metrics = eval_model(model, test, fn.add_eval_metrics)
+
+    if save_model:
+        os.makedirs(model_dir, exist_ok=True)
+        # TODO - how to name things
+        model.save(model_path)
+
+    #write_json(eval_metrics, eval_metrics_path)
+
+    return eval_metrics, {"y_pred": y_pred, "y_true": test[1]}
+
 
 def test_fn(fn, hyper_params, n_train=100, tmp_dir="/tmp/concise_hyopt_test/"):
     """Test the correctness of the function before executing on large scale
@@ -62,7 +90,7 @@ def test_fn(fn, hyper_params, n_train=100, tmp_dir="/tmp/concise_hyopt_test/"):
     assert res["status"] == STATUS_OK
 
     # correct model loading
-    model_path = max(glob.iglob(tmp_dir + '/**/*.h5', recursive=True),
+    model_path = max(glob.iglob(fn.save_dir_exp + '/train_models/*.h5'),
                      key=os.path.getctime)
     assert datetime.fromtimestamp(os.path.getctime(model_path)) > start_time
     load_model(model_path)
@@ -116,10 +144,16 @@ def _get_ce_fun(fn_str):
 
 class CMongoTrials(MongoTrials):
 
-    def __init__(self, db_name, exp_name, ip=DEFAULT_IP, port=1234, kill_timeout=None, **kwargs):
+    def __init__(self, db_name, exp_name,
+                 ip=DEFAULT_IP, port=1234, kill_timeout=None, **kwargs):
         """
         Concise Mongo trials. Extends MonoTrials with the following four methods:
 
+        - get_trial
+        - best_trial_tid
+        - optimal_epochs
+        - overrides: count_by_state_unsynced
+        - delete_running
         - valid_tid
         - train_history
         - get_ok_results
@@ -134,6 +168,44 @@ class CMongoTrials(MongoTrials):
 
         super(CMongoTrials, self).__init__(
             'mongo://{ip}:{p}/{n}/jobs'.format(ip=ip, p=port, n=db_name), exp_key=exp_name, **kwargs)
+
+    def get_trial(self, tid):
+        """Retrieve trial by tid
+        """
+        lid = np.where(np.array(self.tids) == tid)[0][0]
+        return self.trials[lid]
+
+    def best_trial_tid(self, rank=0):
+        """Get tid of the best trial
+
+        rank=0 means the best model
+        rank=1 means second best
+        ...
+        """
+        candidates = [t for t in self.trials
+                      if t['result']['status'] == STATUS_OK]
+        losses = [float(t['result']['loss']) for t in candidates]
+        assert not np.any(np.isnan(losses))
+        lid = np.where(np.argsort(losses) == rank)[0][0]
+        return candidates[lid]["tid"]
+
+    def optimal_epochs(self, tid):
+        trial = self.get_trial(tid)
+        patience = trial["result"]["param"]["fit"]["patience"]
+        epochs = trial["result"]["param"]["fit"]["epochs"]
+
+        def optimal_len(hist):
+            c_epoch = max(hist["loss"]["epoch"]) + 1
+            if c_epoch == epochs:
+                return epochs
+            else:
+                return c_epoch - patience
+
+        hist = trial["result"]["history"]
+        if isinstance(hist, list):
+            return int(np.floor(np.array([optimal_len(h) for h in hist]).mean()))
+        else:
+            return optimal_len(hist)
 
     # def refresh(self):
     #     """Extends the original object
@@ -255,6 +327,7 @@ class CMongoTrials(MongoTrials):
         return _put_first(df, first)
 
 
+# --------------------------------------------
 def _train_and_eval_single(train, valid, model,
                            batch_size=32, epochs=300, callbacks=[],
                            add_eval_metrics={}):
@@ -276,15 +349,19 @@ def _train_and_eval_single(train, valid, model,
               verbose=2,
               callbacks=[history] + callbacks)
 
+    return eval_model(model, valid, add_eval_metrics), _format_keras_history(history)
+
+
+def eval_model(model, test, add_eval_metrics={}):
     # evaluate the model
     logger.info("Evaluate...")
     # - model_metrics
-    model_metrics_values = model.evaluate(valid[0], valid[1], verbose=0)
+    model_metrics_values = model.evaluate(test[0], test[1], verbose=0)
     model_metrics = dict(zip(_listify(model.metrics_names),
                              _listify(model_metrics_values)))
     # - eval_metrics
-    y_true = valid[1]
-    y_pred = model.predict(valid[0], verbose=0)
+    y_true = test[1]
+    y_pred = model.predict(test[0], verbose=0)
     eval_metrics = {k: v(y_true, y_pred) for k, v in add_eval_metrics.items()}
 
     # handle the case where the two metrics names intersect
@@ -295,7 +372,7 @@ def _train_and_eval_single(train, valid, model,
                        format(intersected_keys))
         eval_metrics = _delete_keys(eval_metrics, intersected_keys)
 
-    return merge_dicts(model_metrics, eval_metrics), _format_keras_history(history)
+    return merge_dicts(model_metrics, eval_metrics)
 
 
 def get_model(model_fn, train_data, param):
@@ -327,9 +404,9 @@ class CompileFN():
                  stratified=False,
                  random_state=None,
                  # saving
-                 save_dir=DEFAULT_SAVE_DIR,
                  save_model=True,
                  save_results=True,
+                 save_dir=DEFAULT_SAVE_DIR,
                  ):
         """
         # Arguments:
@@ -386,6 +463,10 @@ class CompileFN():
         self.save_model = save_model
         self.save_results = save_results
 
+    @property
+    def save_dir_exp(self):
+        return self.save_dir + "/{db}/{exp}/".format(db=self.db_name, exp=self.exp_name)
+
     def _assert_loss_metric(self, model):
         model_metrics = _listify(model.metrics_names)
         eval_metrics = list(self.add_eval_metrics.keys())
@@ -418,7 +499,7 @@ class CompileFN():
 
         # setup paths for storing the data - TODO check if we can somehow get the id from hyperopt
         rid = str(uuid4())
-        tm_dir = self.save_dir + "/{db}/{exp}/train_models/".format(db=self.db_name, exp=self.exp_name)
+        tm_dir = self.save_dir_exp + "/train_models/"
         os.makedirs(tm_dir, exist_ok=True)
         model_path = tm_dir + "{0}.h5".format(rid) if self.save_model else ""
         results_path = tm_dir + "{0}.json".format(rid) if self.save_results else ""
