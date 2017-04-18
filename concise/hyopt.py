@@ -203,6 +203,7 @@ def _train_and_eval_single(train, valid, model, batch_size=32, epochs=300, callb
     logger.info("Evaluate...")
     return _listify(model.evaluate(valid[0], valid[1])), _format_keras_history(history)
 
+
 def take_first_asis(x):
     """Take first argument as is
     """
@@ -210,6 +211,19 @@ def take_first_asis(x):
         return x[0]
     else:
         return x
+
+
+def get_model(model_fn, train_data, param):
+    """Feed model_fn with train_data and param
+    """
+    model_param = merge_dicts({"train_data": train_data}, param["model"], param.get("shared", {}))
+    return model_fn(**model_param)
+
+
+def get_data(data_fn, param):
+    """Feed data_fn with param
+    """
+    return data_fn(**merge_dicts(param["data"], param.get("shared", {})))
 
 
 class CompileFN():
@@ -271,16 +285,13 @@ class CompileFN():
 
         # get data
         logger.info("Load data...")
-        train, _ = self.data_fn(**merge_dicts(param["data"], param.get("shared", {})))
+        train, _ = get_data(self.data_fn, param)
         time_data_loaded = datetime.now()
-
-        # model parameters
-        model_param = merge_dicts({"train_data": train}, param["model"], param.get("shared", {}))
 
         # train & evaluate the model
         if self.cv_n_folds is None:
             # no cross-validation
-            model = self.model_fn(**model_param)
+            model = get_model(self.model_fn, train, param)
             train_idx, valid_idx = split_train_test_idx(train,
                                                         self.valid_split,
                                                         self.stratified,
@@ -302,7 +313,7 @@ class CompileFN():
                                                                        self.stratified,
                                                                        self.random_state)):
                 logger.info("Fold {0}/{1}".format(i + 1, self.cv_n_folds))
-                model = self.model_fn(**model_param)
+                model = get_model(self.model_fn, subset(train, train_idx), param)
                 eval_m, history_elem = _train_and_eval_single(train=subset(train, train_idx),
                                                               valid=subset(train, valid_idx),
                                                               model=model,
