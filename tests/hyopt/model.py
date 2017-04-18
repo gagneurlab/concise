@@ -52,18 +52,8 @@ def build_model(train_data, max_features=5000, maxlen=400,
     #           epochs=epochs,
     #           validation_data=(x_test, y_test))
 
-def hyperopt_loss_build_model(x):
-    return x[0]
-
 
 # --------------------------------------------
 
 def get(name):
     return get_from_module(name, globals())
-
-
-def get_loss(name):
-    try:
-        return get_from_module("hyperopt_loss_" + name, globals())
-    except Exception:
-        return lambda x: x[0]

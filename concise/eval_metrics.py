@@ -14,15 +14,15 @@ from deepcpg.evaluation import (cor, kendall, mad, rmse, rrmse,
                                 )
 
 
-def mse(x, y):
+def mse(y_true, y_pred):
     # equivalent to TF representation
-    y_diff = np.where(np.isnan(y) | np.isnan(x), 0, x - y)
+    y_diff = np.where(np.isnan(y_pred) | np.isnan(y_true), 0, y_true - y_pred)
     return ((y_diff) ** 2).mean(axis=None)
 
 
 # exponentiated root-mean-squared error
-def ermse(x, y):
-    return 10**np.sqrt(mse(x, y))
+def ermse(y_true, y_pred):
+    return 10**np.sqrt(mse(y_true, y_pred))
 
 
 def var_explained(y_true, y_pred):

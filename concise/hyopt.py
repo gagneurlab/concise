@@ -3,6 +3,7 @@
 from keras.callbacks import EarlyStopping, History
 from hyperopt.utils import coarse_utcnow
 from hyperopt.mongoexp import MongoTrials
+import concise.eval_metrics as ce
 from concise.utils.helper import write_json, merge_dicts
 from concise.utils.model_data import (subset, split_train_test_idx, split_KFold_idx)
 from datetime import datetime, timedelta
@@ -24,6 +25,29 @@ DEFAULT_IP = "ouga03"
 DEFAULT_SAVE_DIR = "/s/project/deepcis/hyperopt/"
 
 
+# TODO - write a test function that tests the validity of the model and data
+# def test_fn(fn, hyper_params):
+# - 1. save_load model
+# - 2. correct hyper-params
+# - ...
+
+def _delete_keys(dct, keys):
+    """Returns a copy of dct without `keys` keys
+    """
+    c = deepcopy(dct)
+    assert isinstance(keys, list)
+    for k in keys:
+        c.pop(k)
+    return c
+
+
+def _mean_dict(dict_list):
+    """Compute the mean value across a list of dictionaries
+    """
+    return {k: np.array([d[k] for d in dict_list]).mean()
+            for k in dict_list[0].keys()}
+
+
 def _put_first(df, names):
     df = df.reindex(columns=names + [c for c in df.columns if c not in names])
     return df
@@ -33,6 +57,24 @@ def _listify(arg):
     if hasattr(type(arg), '__len__'):
         return arg
     return [arg, ]
+
+
+def _to_string(fn_str):
+    if isinstance(fn_str, str):
+        return fn_str
+    elif callable(fn_str):
+        return fn_str.__name__
+    else:
+        raise ValueError("fn_str has to be callable or str")
+
+
+def _get_ce_fun(fn_str):
+    if isinstance(fn_str, str):
+        return ce.get(fn_str)
+    elif callable(fn_str):
+        return fn_str
+    else:
+        raise ValueError("fn_str has to be callable or str")
 
 
 class CMongoTrials(MongoTrials):
@@ -46,7 +88,7 @@ class CMongoTrials(MongoTrials):
         - get_ok_results
         - as_df
 
-        kill_timeout: After how many seconds to kill the job if it was stalled. None for not killing it
+        kill_timeout, int: Maximum runtime of a job (in seconds) before it gets killed. None for infinite.
         """
         self.kill_timeout = kill_timeout
         if self.kill_timeout is not None and self.kill_timeout < 60:
@@ -66,7 +108,7 @@ class CMongoTrials(MongoTrials):
 
     def count_by_state_unsynced(self, arg):
         """Extends the original object in order to inject checking
-        for stalled jobs in the running jobs
+        for stalled jobs and killing them if they are running for too long
         """
         if self.kill_timeout is not None:
             self.delete_running(self.kill_timeout)
@@ -128,7 +170,10 @@ class CMongoTrials(MongoTrials):
         res = [result2history(t["result"]).assign(tid=t["tid"]) for t in self.trials
                if t["tid"] in _listify(tid)]
         df = pd.concat(res)
-        df = _put_first(df, ["tid"])
+
+        # reorder columns
+        fold_name = ["fold"] if "fold" in df else []
+        df = _put_first(df, ["tid"] + fold_name + ["epoch"])
         return df
 
     def get_ok_results(self, verbose=True):
@@ -147,13 +192,6 @@ class CMongoTrials(MongoTrials):
     def as_df(self, ignore_vals=["history"], separator=".", verbose=True):
         """Return a pd.DataFrame view of the whole experiment
         """
-        def delete_key(dct, key):
-            c = deepcopy(dct)
-            assert isinstance(key, list)
-            for k in key:
-                c.pop(k)
-            return c
-
         def flatten_dict(dd, separator='_', prefix=''):
             return {prefix + separator + k if prefix else k: v
                     for kk, vv in dd.items()
@@ -173,14 +211,16 @@ class CMongoTrials(MongoTrials):
             return res
 
         results = self.get_ok_results(verbose=verbose)
-        rp = [flatten_dict(delete_key(add_eval(x), ignore_vals), separator) for x in results]
+        rp = [flatten_dict(_delete_keys(add_eval(x), ignore_vals), separator) for x in results]
         df = pd.DataFrame.from_records(rp)
 
         first = ["tid", "loss", "status"]
         return _put_first(df, first)
 
 
-def _train_and_eval_single(train, valid, model, batch_size=32, epochs=300, callbacks=[]):
+def _train_and_eval_single(train, valid, model,
+                           batch_size=32, epochs=300, callbacks=[],
+                           add_eval_metrics={}):
     """Fit and evaluate a keras model
     """
     def _format_keras_history(history):
@@ -201,16 +241,24 @@ def _train_and_eval_single(train, valid, model, batch_size=32, epochs=300, callb
 
     # evaluate the model
     logger.info("Evaluate...")
-    return _listify(model.evaluate(valid[0], valid[1])), _format_keras_history(history)
+    # - model_metrics
+    model_metrics_values = model.evaluate(valid[0], valid[1], verbose=0)
+    model_metrics = dict(zip(_listify(model.metrics_names),
+                             _listify(model_metrics_values)))
+    # - eval_metrics
+    y_true = valid[1]
+    y_pred = model.predict(valid[0], verbose=0)
+    eval_metrics = {k: v(y_true, y_pred) for k, v in add_eval_metrics.items()}
 
+    # handle the case where the two metrics names intersect
+    # - omit duplicates from eval_metrics
+    intersected_keys = set(model_metrics).intersection(set(eval_metrics))
+    if len(intersected_keys) > 0:
+        logger.warning("Some metric names intersect: {0}. Ignoring the add_eval_metrics ones".
+                       format(intersected_keys))
+        eval_metrics = _delete_keys(eval_metrics, intersected_keys)
 
-def take_first_asis(x):
-    """Take first argument as is
-    """
-    if hasattr(x, "__len__"):
-        return x[0]
-    else:
-        return x
+    return merge_dicts(model_metrics, eval_metrics), _format_keras_history(history)
 
 
 def get_model(model_fn, train_data, param):
@@ -227,12 +275,16 @@ def get_data(data_fn, param):
 
 
 class CompileFN():
+    # TODO - check if we can get (db_name, exp_name) from hyperopt
 
-    def __init__(self, db_name, exp_name,  # TODO - check if we can somehow get those from hyperopt
+    def __init__(self, db_name, exp_name,
                  data_fn,
                  model_fn,
-                 eval2loss_fn=take_first_asis,
-                 # validation
+                 # validation metric
+                 add_eval_metrics=[],
+                 loss_metric="loss",  # val_loss
+                 loss_metric_mode="min",
+                 # validation split
                  valid_split=.2,
                  cv_n_folds=None,
                  stratified=False,
@@ -242,13 +294,49 @@ class CompileFN():
                  save_model=True,
                  save_results=True,
                  ):
+        """
+        # Arguments:
+            add_eval_metrics: additional list of (global) evaluation
+                metrics. Individual element can be
+                a string (referring to concise.eval_metrics)
+                or a function taking two numpy arrays: y_true, y_pred.
+                These metrics are ment to supplement those specified in
+                `model.compile(.., metrics = .)`.
+            loss_metric: str, metric to monitor, must be in
+                `add_eval_metrics` or `model.metrics_names`.
+            loss_metric_mode: one of {min, max}. In `min` mode,
+                training will stop when the metric
+                monitored has stopped decreasing; in `max`
+                mode it will stop when the metric
+                monitored has stopped increasing; in `auto`
+                mode, the direction is automatically inferred
+                from the name of the monitored metric.
+        """
         self.data_fn = data_fn
         self.model_fn = model_fn
-        self.loss_fn = eval2loss_fn
+        assert isinstance(add_eval_metrics, (list, tuple, set, dict))
+        if isinstance(add_eval_metrics, dict):
+            self.add_eval_metrics = {k: _get_ce_fun(v) for k, v in add_eval_metrics.items()}
+        else:
+            self.add_eval_metrics = {_to_string(fn_str): _get_ce_fun(fn_str)
+                                     for fn_str in add_eval_metrics}
+        assert isinstance(loss_metric, str)
+        self.loss_metric = loss_metric
+        assert loss_metric_mode in ["min", "max"]
+        self.loss_metric_mode = loss_metric_mode
+
+        # TODO - implement auto
+        # if loss_metric_mode == "auto":
+        #     # TODO - check where they are comming from
+        #     if "acc" in loss_metric or \
+        #        loss_metric.startswith("fmeasure") or \
+        #        "var_explained" in loss_metric:
+        #         metric_mode = "max"
+        #     else:
+        #         metric_mode = "min"
 
         self.data_name = data_fn.__code__.co_name
         self.model_name = model_fn.__code__.co_name
-        self.loss_name = eval2loss_fn.__code__.co_name
         self.db_name = db_name
         self.exp_name = exp_name
         # validation
@@ -261,6 +349,16 @@ class CompileFN():
         self.save_model = save_model
         self.save_results = save_results
 
+    def _assert_loss_metric(self, model):
+        model_metrics = _listify(model.metrics_names)
+        eval_metrics = list(self.add_eval_metrics.keys())
+
+        if self.loss_metric not in model_metrics + eval_metrics:
+            raise ValueError("loss_metric: '{0}' not in ".format(self.loss_metric) +
+                             "either sets of the losses: \n" +
+                             "model.metrics_names: {0}\n".format(model_metrics) +
+                             "add_eval_metrics: {0}".format(eval_metrics))
+
     def __call__(self, param):
         time_start = datetime.now()
 
@@ -269,11 +367,17 @@ class CompileFN():
             param["fit"] = {}
         if param["fit"].get("epochs") is None:
             param["fit"]["epochs"] = 500
+        # TODO - cleanup callback parameters
+        #         - callbacks/early_stop/patience...
         if param["fit"].get("patience") is None:
             param["fit"]["patience"] = 10
         if param["fit"].get("batch_size") is None:
             param["fit"]["batch_size"] = 32
-        callbacks = [EarlyStopping(patience=param["fit"]["patience"])]
+        if param["fit"].get("early_stop_monitor") is None:
+            param["fit"]["early_stop_monitor"] = "val_loss"
+
+        callbacks = [EarlyStopping(monitor=param["fit"]["early_stop_monitor"],
+                                   patience=param["fit"]["patience"])]
 
         # setup paths for storing the data - TODO check if we can somehow get the id from hyperopt
         rid = str(uuid4())
@@ -292,6 +396,8 @@ class CompileFN():
         if self.cv_n_folds is None:
             # no cross-validation
             model = get_model(self.model_fn, train, param)
+            print(_listify(model.metrics_names))
+            self._assert_loss_metric(model)
             train_idx, valid_idx = split_train_test_idx(train,
                                                         self.valid_split,
                                                         self.stratified,
@@ -301,7 +407,8 @@ class CompileFN():
                                                            model=model,
                                                            epochs=param["fit"]["epochs"],
                                                            batch_size=param["fit"]["batch_size"],
-                                                           callbacks=deepcopy(callbacks))
+                                                           callbacks=deepcopy(callbacks),
+                                                           add_eval_metrics=self.add_eval_metrics)
             if model_path:
                 model.save(model_path)
         else:
@@ -314,28 +421,32 @@ class CompileFN():
                                                                        self.random_state)):
                 logger.info("Fold {0}/{1}".format(i + 1, self.cv_n_folds))
                 model = get_model(self.model_fn, subset(train, train_idx), param)
+                self._assert_loss_metric(model)
                 eval_m, history_elem = _train_and_eval_single(train=subset(train, train_idx),
                                                               valid=subset(train, valid_idx),
                                                               model=model,
                                                               epochs=param["fit"]["epochs"],
                                                               batch_size=param["fit"]["batch_size"],
-                                                              callbacks=deepcopy(callbacks))
+                                                              callbacks=deepcopy(callbacks),
+                                                              add_eval_metrics=self.add_eval_metrics)
                 print("\n")
-                eval_metrics_list.append(np.array(eval_m))
+                eval_metrics_list.append(eval_m)
                 history.append(history_elem)
                 if model_path:
                     model.save(model_path.replace(".h5", "_fold_{0}.h5".format(i)))
+            # summarize metrics - take average accross folds
+            eval_metrics = _mean_dict(eval_metrics_list)
 
-            # summarize the metrics, take average
-            eval_metrics = np.array(eval_metrics_list).mean(axis=0).tolist()
+        # get loss from eval_metrics
+        loss = eval_metrics[self.loss_metric]
+        if self.loss_metric_mode == "max":
+            loss = - loss  # loss should get minimized
 
-        loss = self.loss_fn(eval_metrics)
         time_end = datetime.now()
 
         ret = {"loss": loss,
                "status": STATUS_OK,
-               "eval": {_listify(model.metrics_names)[i]: eval_metrics[i]
-                        for i in range(len(eval_metrics))},
+               "eval": eval_metrics,
                # additional info
                "param": param,
                "path": {
@@ -345,7 +456,8 @@ class CompileFN():
                "name": {
                    "data": self.data_name,
                    "model": self.model_name,
-                   "loss": self.loss_name,
+                   "loss_metric": self.loss_metric,
+                   "loss_metric_mode": self.loss_metric,
                },
                "history": history,
                # execution times

@@ -15,7 +15,8 @@ def test_compilefn_train_test_split():
     fn = CompileFN(db_name, exp_name,
                    data_fn=data.data,
                    model_fn=model.build_model,
-                   eval2loss_fn=model.hyperopt_loss_build_model,
+                   loss_metric="acc",
+                   loss_metric_mode="max",
                    # eval
                    valid_split=.5,
                    stratified=False,
@@ -43,7 +44,8 @@ def test_compilefn_cross_val():
                    random_state=True,
                    data_fn=data.data,
                    model_fn=model.build_model,
-                   eval2loss_fn=model.hyperopt_loss_build_model,
+                   loss_metric="loss",
+                   loss_metric_mode="min",
                    save_dir="/tmp/")
     hyper_params = {
         "data": {},
@@ -97,7 +99,8 @@ def test_hyopt(tmpdir):
     fn = CompileFN(db_name, exp_name,
                    data_fn=data.data,
                    model_fn=model.build_model,
-                   eval2loss_fn=model.hyperopt_loss_build_model,
+                   loss_metric="acc",
+                   loss_metric_mode="max",
                    save_dir=results_path)
     hyper_params = {
         "data": {},
@@ -132,7 +135,6 @@ def test_hyopt(tmpdir):
                    data_fn=data.data,
                    model_fn=model.build_model,
                    cv_n_folds=3,
-                   eval2loss_fn=model.hyperopt_loss_build_model,
                    save_dir=results_path)
 
     trials = CMongoTrials(db_name, exp_name, ip="localhost",
