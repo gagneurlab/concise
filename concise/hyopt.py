@@ -29,6 +29,12 @@ def _put_first(df, names):
     return df
 
 
+def _listify(arg):
+    if hasattr(type(arg), '__len__'):
+        return arg
+    return [arg, ]
+
+
 class CMongoTrials(MongoTrials):
 
     def __init__(self, db_name, exp_name, ip=DEFAULT_IP, port=1234, kill_timeout=None, **kwargs):
@@ -86,9 +92,9 @@ class CMongoTrials(MongoTrials):
         logger.info("Removing {0}/{1} running jobs. # all jobs: {2} ".
                     format(len(running_timeout), len(running_all), len(self)))
 
-        logger.info("Current utc time: {0}. Timeout horizont: {1}".
-                    format(coarse_utcnow(), coarse_utcnow() -
-                           timedelta(seconds=timeout_last_refresh)))
+        now = coarse_utcnow()
+        logger.info("Current utc time: {0}".format(now))
+        logger.info("Time horizont: {0}".format(now - timedelta(seconds=timeout_last_refresh)))
         for job in running_timeout:
             logger.info("Removing job: ")
             pjob = job.to_dict()
@@ -107,19 +113,20 @@ class CMongoTrials(MongoTrials):
     def train_history(self, tid=None):
         """Get train history as pd.DataFrame
         """
-        def listify(arg):
-            if hasattr(type(arg), '__len__'):
-                return arg
-            return [arg, ]
 
         def result2history(result):
-            return pd.DataFrame(result["history"]["loss"])
+            if isinstance(result["history"], list):
+                return pd.concat([pd.DataFrame(hist["loss"]).assign(fold=i)
+                                  for i, hist in enumerate(result["history"])])
+            else:
+                return pd.DataFrame(result["history"]["loss"])
 
         # use all
         if tid is None:
             tid = self.valid_tid()
 
-        res = [result2history(t["result"]).assign(tid=t["tid"]) for t in self.trials if t["tid"] in listify(tid)]
+        res = [result2history(t["result"]).assign(tid=t["tid"]) for t in self.trials
+               if t["tid"] in _listify(tid)]
         df = pd.concat(res)
         df = _put_first(df, ["tid"])
         return df
@@ -155,7 +162,14 @@ class CMongoTrials(MongoTrials):
 
         def add_eval(res):
             if "eval" not in res:
-                res["eval"] = {k: v[-1] for k, v in res["history"]["loss"].items()}
+                if isinstance(res["history"], list):
+                    # take the average across all folds
+                    eval_names = res["history"][0]["loss"].keys()
+                    eval_metrics = np.array([[v[-1] for k, v in hist["loss"].items()]
+                                             for hist in res["history"]]).mean(axis=0).tolist()
+                    res["eval"] = {eval_names[i]: eval_metrics[i] for i in range(len(eval_metrics))}
+                else:
+                    res["eval"] = {k: v[-1] for k, v in res["history"]["loss"].items()}
             return res
 
         results = self.get_ok_results(verbose=verbose)
@@ -187,7 +201,7 @@ def _train_and_eval_single(train, valid, model, batch_size=32, epochs=300, callb
 
     # evaluate the model
     logger.info("Evaluate...")
-    return model.evaluate(valid[0], valid[1]), _format_keras_history(history)
+    return _listify(model.evaluate(valid[0], valid[1])), _format_keras_history(history)
 
 def take_first_asis(x):
     """Take first argument as is
@@ -309,6 +323,8 @@ class CompileFN():
 
         ret = {"loss": loss,
                "status": STATUS_OK,
+               "eval": {_listify(model.metrics_names)[i]: eval_metrics[i]
+                        for i in range(len(eval_metrics))},
                # additional info
                "param": param,
                "path": {
