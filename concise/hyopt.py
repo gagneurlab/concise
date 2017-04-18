@@ -194,7 +194,7 @@ def _train_and_eval_single(train, valid, model, batch_size=32, epochs=300, callb
     history = History()
     model.fit(train[0], train[1],
               batch_size=batch_size,
-              validation_data=valid,
+              validation_data=valid[:2],
               epochs=epochs,
               verbose=2,
               callbacks=[history] + callbacks)
