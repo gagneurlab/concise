@@ -1,6 +1,6 @@
 # Docker image with all python environments
 # https://github.com/themattrix/docker-tox
-image: themattrix/tox
+image: avsecz/tox-mongo
 # image: python:3.5
 
 py.test:
