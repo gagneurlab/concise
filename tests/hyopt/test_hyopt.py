@@ -129,6 +129,7 @@ def test_hyopt(tmpdir):
     trials.train_history(trials.valid_tid())
     trials.get_ok_results()
     tid_best = trials.best_trial_tid()
+    assert tid_best == trials.best_trial["tid"]
     assert trials.optimal_epochs(tid_best) == 1
 
     # --------------------------------------------
@@ -157,6 +158,7 @@ def test_hyopt(tmpdir):
     trials.train_history(trials.valid_tid())
     trials.get_ok_results()
     tid_best = trials.best_trial_tid()
+    assert tid_best == trials.best_trial["tid"]
     assert trials.optimal_epochs(tid_best) == 1
 
     assert trials.best_trial_tid() == trials.best_trial["tid"]

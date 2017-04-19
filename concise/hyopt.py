@@ -28,32 +28,32 @@ DEFAULT_IP = "ouga03"
 DEFAULT_SAVE_DIR = "/s/project/deepcis/hyperopt/"
 
 # TODO - think about the workflow
-def oof_predictions(fn, params, epochs, model_name, cache_model=True, save_model=True):
-    model_dir = fn.save_dir_exp + "/eval_models/"
-    model_path = model_dir + "/{0}.h5".format(model_name)
-    eval_metrics_path = model_dir + "/{0}_eval_metrics.json".format(model_name)
+# def oof_predictions(fn, params, epochs, model_name, cache_model=True, save_model=True):
+#     model_dir = fn.save_dir_exp + "/eval_models/"
+#     model_path = model_dir + "/{0}.h5".format(model_name)
+#     eval_metrics_path = model_dir + "/{0}_eval_metrics.json".format(model_name)
 
-    train, test = get_data(fn.data_fn, params)
+#     train, test = get_data(fn.data_fn, params)
 
-    if cache_model and os.path.isfile(model_path):
-        model = load_model(model_path)
-    else:
-        model = get_model(fn.model_fn, train, params)
-        model.train(train[0], train[1],
-                    batch_size=params["fit"]["batch_size"],
-                    epochs=epochs)
+#     if cache_model and os.path.isfile(model_path):
+#         model = load_model(model_path)
+#     else:
+#         model = get_model(fn.model_fn, train, params)
+#         model.train(train[0], train[1],
+#                     batch_size=params["fit"]["batch_size"],
+#                     epochs=epochs)
 
-    y_pred = model.predict(test[0])
-    eval_metrics = eval_model(model, test, fn.add_eval_metrics)
+#     y_pred = model.predict(test[0])
+#     eval_metrics = eval_model(model, test, fn.add_eval_metrics)
 
-    if save_model:
-        os.makedirs(model_dir, exist_ok=True)
-        # TODO - how to name things
-        model.save(model_path)
+#     if save_model:
+#         os.makedirs(model_dir, exist_ok=True)
+#         # TODO - how to name things
+#         model.save(model_path)
 
-    #write_json(eval_metrics, eval_metrics_path)
+#     #write_json(eval_metrics, eval_metrics_path)
 
-    return eval_metrics, {"y_pred": y_pred, "y_true": test[1]}
+#     return eval_metrics, {"y_pred": y_pred, "y_true": test[1]}
 
 
 def test_fn(fn, hyper_params, n_train=100, tmp_dir="/tmp/concise_hyopt_test/"):
@@ -186,7 +186,7 @@ class CMongoTrials(MongoTrials):
                       if t['result']['status'] == STATUS_OK]
         losses = [float(t['result']['loss']) for t in candidates]
         assert not np.any(np.isnan(losses))
-        lid = np.where(np.argsort(losses) == rank)[0][0]
+        lid = np.where(np.argsort(losses).argsort() == rank)[0][0]
         return candidates[lid]["tid"]
 
     def optimal_epochs(self, tid):
