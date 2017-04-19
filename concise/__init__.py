@@ -15,6 +15,7 @@ from . import eval_metrics
 from . import models
 from . import regularizers
 from . import hyopt
+from . import optimizers
 
 
 from .concise import Concise, ConciseCV
@@ -50,6 +51,9 @@ get_custom_objects()['exponential'] = activations.exponential
 # metrics
 get_custom_objects()['var_explained'] = metrics.var_explained
 
+# optimizers
+get_custom_objects()['AdamWithWeightnorm'] = optimizers.AdamWithWeightnorm
+get_custom_objects()['SGDWithWeightnorm'] = optimizers.SGDWithWeightnorm
 
 # remove variables from the scope
 del get_custom_objects

@@ -96,52 +96,6 @@ def test_fn(fn, hyper_params, n_train=100, tmp_dir="/tmp/concise_hyopt_test/"):
     load_model(model_path)
 
 
-def _delete_keys(dct, keys):
-    """Returns a copy of dct without `keys` keys
-    """
-    c = deepcopy(dct)
-    assert isinstance(keys, list)
-    for k in keys:
-        c.pop(k)
-    return c
-
-
-def _mean_dict(dict_list):
-    """Compute the mean value across a list of dictionaries
-    """
-    return {k: np.array([d[k] for d in dict_list]).mean()
-            for k in dict_list[0].keys()}
-
-
-def _put_first(df, names):
-    df = df.reindex(columns=names + [c for c in df.columns if c not in names])
-    return df
-
-
-def _listify(arg):
-    if hasattr(type(arg), '__len__'):
-        return arg
-    return [arg, ]
-
-
-def _to_string(fn_str):
-    if isinstance(fn_str, str):
-        return fn_str
-    elif callable(fn_str):
-        return fn_str.__name__
-    else:
-        raise ValueError("fn_str has to be callable or str")
-
-
-def _get_ce_fun(fn_str):
-    if isinstance(fn_str, str):
-        return ce.get(fn_str)
-    elif callable(fn_str):
-        return fn_str
-    else:
-        raise ValueError("fn_str has to be callable or str")
-
-
 class CMongoTrials(MongoTrials):
 
     def __init__(self, db_name, exp_name,
@@ -607,3 +561,55 @@ class CompileFN():
     # data: ... (pre-preprocessing parameters)
     # model: (architecture, etc)
     # train: (epochs, patience...)
+
+
+# --------------------------------------------
+# helper functions
+
+
+def _delete_keys(dct, keys):
+    """Returns a copy of dct without `keys` keys
+    """
+    c = deepcopy(dct)
+    assert isinstance(keys, list)
+    for k in keys:
+        c.pop(k)
+    return c
+
+
+def _mean_dict(dict_list):
+    """Compute the mean value across a list of dictionaries
+    """
+    return {k: np.array([d[k] for d in dict_list]).mean()
+            for k in dict_list[0].keys()}
+
+
+def _put_first(df, names):
+    df = df.reindex(columns=names + [c for c in df.columns if c not in names])
+    return df
+
+
+def _listify(arg):
+    if hasattr(type(arg), '__len__'):
+        return arg
+    return [arg, ]
+
+
+def _to_string(fn_str):
+    if isinstance(fn_str, str):
+        return fn_str
+    elif callable(fn_str):
+        return fn_str.__name__
+    else:
+        raise ValueError("fn_str has to be callable or str")
+
+
+def _get_ce_fun(fn_str):
+    if isinstance(fn_str, str):
+        return ce.get(fn_str)
+    elif callable(fn_str):
+        return fn_str
+    else:
+        raise ValueError("fn_str has to be callable or str")
+
+
