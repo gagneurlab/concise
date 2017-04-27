@@ -44,7 +44,7 @@ def InputDNAQuantity(seq_length, n_features=1, name=None, **kwargs):
     return Input((seq_length, n_features), name=name, **kwargs)
 
 
-def InputDNAQuantitySplines(seq_length, n_bases, name="DNASmoothPosition", **kwargs):
+def InputDNAQuantitySplines(seq_length, n_bases=10, name="DNASmoothPosition", **kwargs):
     """Convenience wrapper around keras.layers.Input:
 
     Input((seq_length, n_bases), name=name, **kwargs)
@@ -248,7 +248,7 @@ class GAMSmooth(Layer):
 
         # add weights
         self.kernel = self.add_weight(shape=(self.n_bases, n_spline_tracks),
-                                      initializer='ones',
+                                      initializer='glorot_uniform',
                                       name='kernel',
                                       regularizer=GAMRegularizer(self.n_bases, self.spline_order,
                                                                  self.l2_smooth, self.l2),
@@ -349,6 +349,7 @@ class ConvDNAQuantitySplines(Conv1D):
         #     kwargs["batch_input_shape"] = None
 
         # require GAMRegularizer
+
         if not isinstance(kernel_regularizer, GAMRegularizer):
             raise ValueError("Regularizer has to be of type concise.regularizers.GAMRegularizer")
 
