@@ -9,12 +9,9 @@ from deepcpg.metrics import (contingency_table, prec,
                              )
 from concise.utils.helper import get_from_module
 
-# TODO - save those to the model?
-
-# TODO - specify NAN
-
+# TODO - specify NAN - now implicitly taken from deepcpg
 # TODO - subset vector with respect to the mask in K
-
+#        - write a wrapper function like in concise.losses.MaskLoss
 
 def var_explained(y_true, y_pred):
     """Fraction of variance explained.
