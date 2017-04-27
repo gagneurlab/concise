@@ -1,10 +1,11 @@
 """
 Pre-processor for smooth tracks
 """
+import numpy as np
 from ..splines import BSpline
 
-
-def encodeSplines(x, n_bases=10, spline_order=3):
+# TODO - use as pre-processor function? - predict for the test set
+def encodeSplines(x, n_bases=10, spline_order=3, start=None, end=None):
     """
 
     Arguments:
@@ -13,8 +14,10 @@ def encodeSplines(x, n_bases=10, spline_order=3):
         spline_order: 2 for quadratic, 3 for qubic splines
     """
 
-    start = x.min()
-    end = x.max()
+    if start is None:
+        start = np.nanmin(x)
+    if end is None:
+        end = np.nanmax(x)
     bs = BSpline(start, end,
                  n_bases=n_bases,
                  spline_order=spline_order

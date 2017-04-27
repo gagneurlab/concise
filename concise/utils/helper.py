@@ -5,6 +5,7 @@ import numpy as np
 import time
 import random
 import string
+import six
 # read and save the object
 
 
@@ -125,3 +126,16 @@ def numpy_dict_to_list(a):
         return list(a).list()
 
 
+def get_from_module(identifier, module_params, ignore_case=True):
+    if ignore_case:
+        _module_params = dict()
+        for key, value in six.iteritems(module_params):
+            _module_params[key.lower()] = value
+        _identifier = identifier.lower()
+    else:
+        _module_params = module_params
+        _identifier = identifier
+    item = _module_params.get(_identifier)
+    if not item:
+        raise ValueError('Invalid identifier "%s"!' % identifier)
+    return item

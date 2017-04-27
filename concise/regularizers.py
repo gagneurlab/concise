@@ -1,6 +1,7 @@
 from keras import backend as K
 from keras.regularizers import Regularizer
 from concise.splines import get_S
+from concise.utils.helper import get_from_module
 
 
 class GAMRegularizer(Regularizer):
@@ -49,3 +50,10 @@ class GAMRegularizer(Regularizer):
                 'l2_smooth': float(self.l2_smooth),
                 'l2': float(self.l2),
                 }
+
+
+AVAILABLE = ["GAMRegularizer"]
+
+
+def get(name):
+    return get_from_module(name, globals())

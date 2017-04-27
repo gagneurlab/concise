@@ -243,7 +243,7 @@ def pad_sequences(sequence_vec, maxlen=None, align="end", value="N"):
         print("WARNING: Maximum sequence length (%s) is less than maxlen (%s)" % (max_seq_len, maxlen))
         max_seq_len = maxlen
 
-    # handle the case when len > 1
+    # check the case when len > 1
     for seq in sequence_vec:
         if not len(seq) % len(value) == 0:
             raise ValueError("All sequences need to be dividable by len(value)")

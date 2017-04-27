@@ -7,6 +7,7 @@ from concise.utils.pwm import PWM, pwm_list2pwm_array, pwm_array2pssm_array, DEF
 from keras.utils.generic_utils import get_custom_objects
 
 import numpy as np
+from concise.utils.helper import get_from_module
 # Old Concise arguments:
 # - init_motifs=["TATTTAT", ..., "ACTAAT"]
 # - init_motifs_scale=1
@@ -206,3 +207,11 @@ class PWMKernelInitializer(Initializer):
             'stddev': self.stddev,
             'seed': self.seed,
         }
+
+
+AVAILABLE = ["PWMBiasInitializer", "PWMKernelInitializer",
+             "PSSMBiasInitializer", "PSSMKernelInitializer"]
+
+
+def get(name):
+    return get_from_module(name, globals())

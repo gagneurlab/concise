@@ -1,6 +1,7 @@
 from keras import backend as K
 from keras.optimizers import SGD, Adam
 import tensorflow as tf
+from concise.utils.helper import get_from_module
 
 # from https://github.com/openai/weightnorm/blob/master/keras/weightnorm.py
 # Paper:
@@ -217,3 +218,10 @@ def data_based_init(model, input):
         s = tf.sqrt(v + 1e-10)
         updates = tf.group(W.assign(W / tf.reshape(s, [1] * (len(W.get_shape()) - 1) + [-1])), b.assign((b - m) / s))
         sess.run(updates, feed_dict)
+
+
+AVAILABLE = ["SGDWithWeightnorm", "AdamWithWeightnorm"]
+
+
+def get(name):
+    return get_from_module(name, globals())

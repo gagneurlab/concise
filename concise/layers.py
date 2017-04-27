@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from concise.utils.pwm import DEFAULT_BASE_BACKGROUND, pssm_array2pwm_array
 from concise.regularizers import GAMRegularizer
 from concise.splines import BSpline
-
+from concise.utils.helper import get_from_module
 
 # TODO - improve the naming
 # TODO - unit-tests for the general case of smoothing: encodeSplines
@@ -307,9 +307,14 @@ class GAMSmooth(Layer):
         plt.xlabel("Position")
         plt.ylabel("Positional effect")
 
-        # TODO - define a plotting function - plot f(x)
 
-
+# TODO - add the plotting functionality
+# TODO - rename the layer
+# additional arguments?
+# - share_splines=False,
+# - spline_exp=False
+#
+# TODO - use similar arguments to GAMSmooth (not as a thin wrapper around Conv1d)
 class ConvDNAQuantitySplines(Conv1D):
     """
     Convenience wrapper over keras.layers.Conv1D with 2 changes:
@@ -337,6 +342,7 @@ class ConvDNAQuantitySplines(Conv1D):
 
         # override input shape
         if seq_length:
+            # TODO - is this fine?
             kwargs["input_shape"] = (seq_length, 4)
             kwargs["batch_input_shape"] = None
 
@@ -377,3 +383,11 @@ class ConvDNAQuantitySplines(Conv1D):
         config.pop('dilation_rate')
         config["seq_length"] = self.seq_length
         return config
+
+
+AVAILABLE = ["InputDNA", "InputRNAStructure", "InputDNAQuantity", "InputDNAQuantitySplines",
+             "GlobalSumPooling1D", "ConvDNA", "GAMSmooth", "ConvDNAQuantitySplines"]
+
+
+def get(name):
+    return get_from_module(name, globals())
