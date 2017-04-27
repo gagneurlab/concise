@@ -2,7 +2,7 @@
 test layer saving and loading
 """
 
-
+import numpy as np
 from concise.preprocessing import encodeDNA, encodeSplines
 import concise.layers as cl
 import concise.initializers as ci
@@ -43,6 +43,30 @@ def test_convDNA(tmpdir):
     # filepath = "/tmp/model.h5"
     filepath = str(tmpdir.mkdir('data').join('test_keras.h5'))
 
+    model.save(filepath)
+    m = load_model(filepath)
+    assert isinstance(m, Model)
+
+def test_ConvDNAQuantitySplines(tmpdir):
+
+    x_pos = np.vstack([np.arange(15), np.arange(15)])
+    y = np.arange(2)
+
+    x = encodeSplines(x_pos)
+
+    inl = cl.InputDNAQuantitySplines(15, 10)
+    o = cl.ConvDNAQuantitySplines(1,
+                                  kernel_regularizer=cl.GAMRegularizer(),
+                                  )(inl)
+    o = cl.GlobalSumPooling1D()(o)
+
+    model = Model(inl, o)
+    model.compile("Adam", "mse")
+    model.fit(x, y)
+
+    filepath = str(tmpdir.mkdir('data').join('test_keras.h5'))
+
+    # TODO - load and save the model
     model.save(filepath)
     m = load_model(filepath)
     assert isinstance(m, Model)
