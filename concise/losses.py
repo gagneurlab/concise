@@ -17,7 +17,7 @@ class MaskLoss:
             loss = loss function from keras.losses
             mask_value = numeric value to be masked away (np.nan not supported for now)
 
-        From: https://github.com/fchollet/keras/issues/3893
+        Inspired by: https://github.com/fchollet/keras/issues/3893
         """
         self.loss = kloss.deserialize(loss)  # TODO - add the ability to create your own loss functions
         self.mask_value = mask_value

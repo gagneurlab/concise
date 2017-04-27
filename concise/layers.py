@@ -315,6 +315,7 @@ class GAMSmooth(Layer):
 # - spline_exp=False
 #
 # TODO - use similar arguments to GAMSmooth (not as a thin wrapper around Conv1d)
+# TODO - fix & unit-test this layer
 class ConvDNAQuantitySplines(Conv1D):
     """
     Convenience wrapper over keras.layers.Conv1D with 2 changes:
@@ -341,10 +342,11 @@ class ConvDNAQuantitySplines(Conv1D):
                  **kwargs):
 
         # override input shape
-        if seq_length:
-            # TODO - is this fine?
-            kwargs["input_shape"] = (seq_length, 4)
-            kwargs["batch_input_shape"] = None
+        # TODO - fix
+        # if seq_length:
+        #     # TODO - is this fine?
+        #     kwargs["input_shape"] = (seq_length, n_bases)
+        #     kwargs["batch_input_shape"] = None
 
         # require GAMRegularizer
         if not isinstance(kernel_regularizer, GAMRegularizer):

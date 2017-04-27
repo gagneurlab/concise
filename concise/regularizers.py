@@ -28,6 +28,7 @@ class GAMRegularizer(Regularizer):
             ))
 
     def __call__(self, x):
+        # TODO - how is it with the conv layers? (channels, filters?)- then it's equivalent to this case
         # x.shape = (n_bases, n_spline_tracks)
         n_spline_tracks = K.cast_to_floatx(K.int_shape(x)[1])
 
