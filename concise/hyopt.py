@@ -129,6 +129,9 @@ class CMongoTrials(MongoTrials):
         lid = np.where(np.array(self.tids) == tid)[0][0]
         return self.trials[lid]
 
+    def get_param(self, tid):
+        return self.get_trial(tid)["result"]["param"]
+
     def best_trial_tid(self, rank=0):
         """Get tid of the best trial
 
