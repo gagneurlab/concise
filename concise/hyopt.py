@@ -56,7 +56,7 @@ DEFAULT_SAVE_DIR = "/s/project/deepcis/hyperopt/"
 #     return eval_metrics, {"y_pred": y_pred, "y_true": test[1]}
 
 
-def test_fn(fn, hyper_params, n_train=100, tmp_dir="/tmp/concise_hyopt_test/"):
+def test_fn(fn, hyper_params, n_train=1000, tmp_dir="/tmp/concise_hyopt_test/"):
     """Test the correctness of the function before executing on large scale
     1. Run without error
     2. Correct save/load model to disk
