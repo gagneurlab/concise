@@ -8,6 +8,7 @@ from deeplift.visualization import viz_sequence
 import matplotlib.pyplot as plt
 
 from concise.utils.pwm import DEFAULT_BASE_BACKGROUND, pssm_array2pwm_array
+import concise.regularizers as cr
 from concise.regularizers import GAMRegularizer
 from concise.splines import BSpline
 from concise.utils.helper import get_from_module
@@ -338,20 +339,14 @@ class ConvDNAQuantitySplines(Conv1D):
                  kernel_constraint=None,
                  bias_constraint=None,
                  activity_regularizer=None,
-                 seq_length=None,
+                 # seq_length=None,
                  **kwargs):
 
         # override input shape
-        # TODO - fix
         # if seq_length:
         #     # TODO - is this fine?
         #     kwargs["input_shape"] = (seq_length, n_bases)
         #     kwargs["batch_input_shape"] = None
-
-        # require GAMRegularizer
-
-        if not isinstance(kernel_regularizer, GAMRegularizer):
-            raise ValueError("Regularizer has to be of type concise.regularizers.GAMRegularizer")
 
         super(ConvDNAQuantitySplines, self).__init__(
             filters=filters,
@@ -370,7 +365,12 @@ class ConvDNAQuantitySplines(Conv1D):
             bias_constraint=bias_constraint,
             **kwargs)
 
-        self.seq_length = seq_length
+        if not isinstance(self.kernel_regularizer, cr.GAMRegularizer):
+            raise ValueError("Regularizer has to be of type concise.regularizers.GAMRegularizer. " +
+                             "Current type: " + str(type(self.kernel_regularizer)),
+                             "\nObject: " + str(self.kernel_regularizer))
+
+        # self.seq_length = seq_length
 
     def build(self, input_shape):
         # update the regularizer
@@ -384,7 +384,7 @@ class ConvDNAQuantitySplines(Conv1D):
         config.pop('strides')
         config.pop('padding')
         config.pop('dilation_rate')
-        config["seq_length"] = self.seq_length
+        # config["seq_length"] = self.seq_length
         return config
 
 
