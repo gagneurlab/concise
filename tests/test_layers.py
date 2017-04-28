@@ -55,8 +55,9 @@ def test_ConvDNAQuantitySplines(tmpdir):
     x = encodeSplines(x_pos)
 
     inl = cl.InputDNAQuantitySplines(15, 10)
+    # TODO - fix this unit-test - changed dimentions order?
     o = cl.ConvDNAQuantitySplines(1,
-                                  kernel_regularizer=cl.GAMRegularizer(),
+                                  kernel_regularizer=cr.GAMRegularizer(l2_smooth=.5),
                                   )(inl)
     o = cl.GlobalSumPooling1D()(o)
 
@@ -66,7 +67,7 @@ def test_ConvDNAQuantitySplines(tmpdir):
 
     filepath = str(tmpdir.mkdir('data').join('test_keras.h5'))
 
-    # TODO - load and save the model
+    # load and save the model
     model.save(filepath)
     m = load_model(filepath)
     assert isinstance(m, Model)

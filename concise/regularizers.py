@@ -28,8 +28,12 @@ class GAMRegularizer(Regularizer):
             ))
 
     def __call__(self, x):
-        # TODO - how is it with the conv layers? (channels, filters?)- then it's equivalent to this case
         # x.shape = (n_bases, n_spline_tracks)
+        # from conv: (kernel_width=1, n_bases, n_spline_tracks)
+        from_conv = len(K.int_shape(x)) == 3
+        if from_conv:
+            x = K.squeeze(x, 0)
+
         n_spline_tracks = K.cast_to_floatx(K.int_shape(x)[1])
 
         regularization = 0.
