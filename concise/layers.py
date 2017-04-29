@@ -247,9 +247,9 @@ class GAMSmooth(Layer):
         # convert to the right precision and K.constant
         self.X_spline_K = K.constant(K.cast_to_floatx(self.X_spline))
 
-        # add weights
+        # add weights - all set to 0
         self.kernel = self.add_weight(shape=(self.n_bases, n_spline_tracks),
-                                      initializer='glorot_uniform',
+                                      initializer='zeros',
                                       name='kernel',
                                       regularizer=GAMRegularizer(self.n_bases, self.spline_order,
                                                                  self.l2_smooth, self.l2),

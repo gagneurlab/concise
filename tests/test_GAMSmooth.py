@@ -40,7 +40,7 @@ def test_serialization():
     js
     # a = model_from_json(js, custom_objects={"Conv1D": kl.Conv1D})
     a = model_from_json(js)
-    assert np.all(a.layers[1].get_weights()[0] == 1)
+    assert np.all(a.layers[1].get_weights()[0] == 0)
 
     # check just layer serialization:
     conv_l.build(input_shape)
