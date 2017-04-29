@@ -31,6 +31,6 @@ def test_metrics():
     assert res4 == expect
 
     # test serialization
-    s = serialize_keras_object(cm.acc)
+    s = serialize_keras_object(cm.accuracy)
     a = deserialize_keras_object(s)
-    assert a == cm.acc
+    assert a == cm.accuracy

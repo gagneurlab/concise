@@ -2,14 +2,16 @@
 Loss-metrics
 """
 import keras.backend as K
-from deepcpg.metrics import (cat_acc, mse, mae, CPG_NAN,
-                             _sample_weights, _cat_sample_weights)
 from concise.utils.helper import get_from_module
 from concise.losses import MASK_VALUE
 
+# binary classification
+# -----
 
-# y and z are not rounded to 0 or 1, they are ignored
+
 def contingency_table(y, z):
+    """Note:  if y and z are not rounded to 0 or 1, they are ignored
+    """
     y = K.cast(K.round(y), K.floatx())
     z = K.cast(K.round(z), K.floatx())
 
@@ -29,11 +31,6 @@ def contingency_table(y, z):
     fn = count_matches(y_ones, z_zeros)
 
     return (tp, tn, fp, fn)
-
-
-def prec(y, z):
-    tp, tn, fp, fn = contingency_table(y, z)
-    return tp / (tp + fp)
 
 
 def tpr(y, z):
@@ -56,10 +53,29 @@ def fnr(y, z):
     return fn / (fn + tp)
 
 
+def precision(y, z):
+    tp, tn, fp, fn = contingency_table(y, z)
+    return tp / (tp + fp)
+
+
+def fdr(y, z):
+    tp, tn, fp, fn = contingency_table(y, z)
+    return fp / (tp + fp)
+
+
+def accuracy(y, z):
+    tp, tn, fp, fn = contingency_table(y, z)
+    return (tp + tn) / (tp + tn + fp + fn)
+
+
+sensitivity = recall = tpr
+specificity = tnr
+
+
 def f1(y, z):
-    _tpr = tpr(y, z)
-    _prec = prec(y, z)
-    return 2 * (_prec * _tpr) / (_prec + _tpr)
+    _recall = recall(y, z)
+    _prec = precision(y, z)
+    return 2 * (_prec * _recall) / (_prec + _recall)
 
 
 def mcc(y, z):
@@ -67,9 +83,45 @@ def mcc(y, z):
     return (tp * tn - fp * fn) / K.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
 
 
-def acc(y, z):
-    tp, tn, fp, fn = contingency_table(y, z)
-    return (tp + tn) / (tp + tn + fp + fn)
+# weights helper
+
+def _sample_weights(y, mask=None):
+    if mask is None:
+        weights = K.ones_like(y)
+    else:
+        weights = 1 - K.cast(K.equal(y, mask), K.floatx())
+    return weights
+
+
+def _cat_sample_weights(y, mask=None):
+    return 1 - K.cast(K.equal(K.sum(y, axis=-1), 0), K.floatx())
+
+# multi-class classification
+# -----
+
+
+def cat_acc(y, z):
+    weights = _cat_sample_weights(y)
+    _acc = K.cast(K.equal(K.argmax(y, axis=-1),
+                          K.argmax(z, axis=-1)),
+                  K.floatx())
+    _acc = K.sum(_acc * weights) / K.sum(weights)
+    return _acc
+
+# regression
+# -----
+
+
+def mse(y, z, mask=MASK_VALUE):
+    weights = _sample_weights(y, mask)
+    _mse = K.sum(K.square(y - z) * weights) / K.sum(weights)
+    return _mse
+
+
+def mae(y, z, mask=MASK_VALUE):
+    weights = _sample_weights(y, mask)
+    _mae = K.sum(K.abs(y - z) * weights) / K.sum(weights)
+    return _mae
 
 
 def var_explained(y_true, y_pred):
@@ -79,14 +131,20 @@ def var_explained(y_true, y_pred):
     var_y_true = K.var(y_true)
     return 1 - var_resid / var_y_true
 
+# available metrics
+# ----
 
-# TODO - fix these metrics by masking them?
-AVAILABLE = ["var_explained", "prec", "tpr", "tnr", "fpr",
-             "fnr", "f1", "mcc", "acc", "cat_acc", "mse", "mae"]
 
-# TODO - add their masked equivalent
-# - subset y_pred, y_true by their masks and pass them to your metrics
-# K.gather(reference, indices)?
+BINARY_CLASS = ["tpr", "tnr", "fpr", "fnr",
+                "precision", "fdr", "recall", "sensitivity", "specificity",
+                "f1", "mcc", "accuracy"]
+CATEGORY_CLASS = ["cat_acc"]
+REGRESSION = ["var_explained", "mse", "mae"]
+AVAILABLE = BINARY_CLASS + CATEGORY_CLASS + REGRESSION
+
+# make sure all metrics have the same __name__ (targeting aliases)
+for v in AVAILABLE:
+    globals()[v].__name__ = v
 
 
 def get(name):
