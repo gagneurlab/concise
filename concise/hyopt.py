@@ -1,6 +1,6 @@
 """Train the models
 """
-from keras.callbacks import EarlyStopping, History
+from keras.callbacks import EarlyStopping, History, TensorBoard
 from keras.models import load_model
 import hyperopt
 from hyperopt.utils import coarse_utcnow
@@ -258,11 +258,6 @@ class CMongoTrials(MongoTrials):
     def as_df(self, ignore_vals=["history"], separator=".", verbose=True):
         """Return a pd.DataFrame view of the whole experiment
         """
-        def flatten_dict(dd, separator='_', prefix=''):
-            return {prefix + separator + k if prefix else k: v
-                    for kk, vv in dd.items()
-                    for k, v in flatten_dict(vv, separator, kk).items()
-                    } if isinstance(dd, dict) else {prefix: dd}
 
         def add_eval(res):
             if "eval" not in res:
@@ -277,7 +272,7 @@ class CMongoTrials(MongoTrials):
             return res
 
         results = self.get_ok_results(verbose=verbose)
-        rp = [flatten_dict(_delete_keys(add_eval(x), ignore_vals), separator) for x in results]
+        rp = [_flatten_dict(_delete_keys(add_eval(x), ignore_vals), separator) for x in results]
         df = pd.DataFrame.from_records(rp)
 
         first = ["tid", "loss", "status"]
@@ -361,6 +356,7 @@ class CompileFN():
                  stratified=False,
                  random_state=None,
                  # saving
+                 use_tensorboard=True,
                  save_model=True,
                  save_results=True,
                  save_dir=DEFAULT_SAVE_DIR,
@@ -416,6 +412,7 @@ class CompileFN():
         self.stratified = stratified
         self.random_state = random_state
         # saving
+        self.use_tensorboard = use_tensorboard
         self.save_dir = save_dir
         self.save_model = save_model
         self.save_results = save_results
@@ -460,6 +457,15 @@ class CompileFN():
         os.makedirs(tm_dir, exist_ok=True)
         model_path = tm_dir + "{0}.h5".format(rid) if self.save_model else ""
         results_path = tm_dir + "{0}.json".format(rid) if self.save_results else ""
+
+        if self.use_tensorboard:
+            max_len = 256 - len(rid) - 1
+            param_string = _dict_to_filestring(_flatten_dict_ignore(param))[:max_len] + ";" + rid
+            tb_dir = self.save_dir_exp + "/tensorboard/" + param_string[:256]
+            callbacks += [TensorBoard(log_dir=tb_dir,
+                                      histogram_freq=0,  # TODO - set to some number afterwards
+                                      write_graph=False,
+                                      write_images=True)]
         # -----------------
 
         # get data
@@ -615,4 +621,23 @@ def _get_ce_fun(fn_str):
     else:
         raise ValueError("fn_str has to be callable or str")
 
+def _flatten_dict(dd, separator='_', prefix=''):
+    return {prefix + separator + k if prefix else k: v
+            for kk, vv in dd.items()
+            for k, v in _flatten_dict(vv, separator, kk).items()
+            } if isinstance(dd, dict) else {prefix: dd}
 
+def _flatten_dict_ignore(dd, prefix=''):
+    return {k if prefix else k: v
+            for kk, vv in dd.items()
+            for k, v in _flatten_dict_ignore(vv, kk).items()
+            } if isinstance(dd, dict) else {prefix: dd}
+
+def _dict_to_filestring(d):
+    def to_str(v):
+        if isinstance(v, float):
+            return '%s' % float('%.2g' % v)
+        else:
+            return str(v)
+
+    return ";".join([k + "=" + to_str(v) for k, v in d.items()])
