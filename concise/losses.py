@@ -61,24 +61,26 @@ def mask_loss(loss, mask_value=MASK_VALUE):
 
 
 # masked loss functions
-AVAILABLE = ["mean_squared_error_masked",
-             "mean_absolute_error_masked",
-             "mean_absolute_percentage_error_masked",
-             "mean_squared_logarithmic_error_masked",
-             "squared_hinge_masked",
-             "hinge_masked",
-             "categorical_crossentropy_masked",
-             "sparse_categorical_crossentropy_masked",
-             "binary_crossentropy_masked",
-             "kullback_leibler_divergence_masked"]
+AVAILABLE = [  # "mean_squared_error_masked",
+    # "mean_absolute_error_masked",
+    # "mean_absolute_percentage_error_masked",
+    # "mean_squared_logarithmic_error_masked",
+    # "squared_hinge_masked",
+    # "hinge_masked",
+    "categorical_crossentropy_masked",
+    "sparse_categorical_crossentropy_masked",
+    "binary_crossentropy_masked",
+    "kullback_leibler_divergence_masked"]
 
 # NOTE - name has to be <loss>_mask
-mean_squared_error_masked = mask_loss("mean_squared_error")
-mean_absolute_error_masked = mask_loss("mean_absolute_error")
-mean_absolute_percentage_error_masked = mask_loss("mean_absolute_percentage_error")
-mean_squared_logarithmic_error_masked = mask_loss("mean_squared_logarithmic_error")
-squared_hinge_masked = mask_loss("squared_hinge")
-hinge_masked = mask_loss("hinge")
+# TODO - take care of which masking value you are using
+#         - use nan for numeric values
+# mean_squared_error_masked = mask_loss("mean_squared_error")
+# mean_absolute_error_masked = mask_loss("mean_absolute_error")
+# mean_absolute_percentage_error_masked = mask_loss("mean_absolute_percentage_error")
+# mean_squared_logarithmic_error_masked = mask_loss("mean_squared_logarithmic_error")
+# squared_hinge_masked = mask_loss("squared_hinge")
+# hinge_masked = mask_loss("hinge")
 categorical_crossentropy_masked = mask_loss("categorical_crossentropy")
 sparse_categorical_crossentropy_masked = mask_loss("sparse_categorical_crossentropy")
 binary_crossentropy_masked = mask_loss("binary_crossentropy")

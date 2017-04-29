@@ -6,24 +6,15 @@ from deepcpg.metrics import (cat_acc, mse, mae, CPG_NAN,
                              _sample_weights, _cat_sample_weights)
 from concise.utils.helper import get_from_module
 from concise.losses import MASK_VALUE
-# TODO - specify NAN - now implicitly taken from deepcpg
-# TODO - subset vector with respect to the mask in K
-#        - write a wrapper function like in concise.losses.MaskLoss
 
 
-# TODO - fix this function
-def contingency_table(y, z, mask=MASK_VALUE):
-    y = K.round(y)
-    z = K.round(z)
+# y and z are not rounded to 0 or 1, they are ignored
+def contingency_table(y, z):
+    y = K.cast(K.round(y), K.floatx())
+    z = K.cast(K.round(z), K.floatx())
 
-    weights = _sample_weights(y, mask=mask)
-
-    def count_matches(a, b):
-        import pdb
-        pdb.set_trace()
-
-        tmp = K.concatenate([a, b])
-        return K.sum(K.cast(K.all(tmp, -1), K.floatx()) * weights) / K.sum(weights)
+    def count_matches(y, z):
+        return K.sum(K.cast(y, K.floatx()) * K.cast(z, K.floatx()))
 
     ones = K.ones_like(y)
     zeros = K.zeros_like(y)
@@ -73,8 +64,7 @@ def f1(y, z):
 
 def mcc(y, z):
     tp, tn, fp, fn = contingency_table(y, z)
-    return (tp * tn - fp * fn) /\
-        K.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
+    return (tp * tn - fp * fn) / K.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
 
 
 def acc(y, z):
