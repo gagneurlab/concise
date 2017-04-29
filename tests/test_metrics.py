@@ -1,5 +1,6 @@
 import numpy as np
 import concise.metrics as cm
+import concise.eval_metrics as cem
 from concise.losses import MASK_VALUE
 import keras.backend as K
 from keras.utils.generic_utils import deserialize_keras_object, serialize_keras_object, get_custom_objects
@@ -30,7 +31,26 @@ def test_metrics():
     assert res3 == expect
     assert res4 == expect
 
+    assert np.allclose(K.eval(cm.tpr(y_true, y_pred)), cem.tpr(y_true, y_pred))
+    assert np.allclose(K.eval(cm.accuracy(y_true, y_pred)), cem.accuracy(y_true, y_pred))
+
     # test serialization
     s = serialize_keras_object(cm.accuracy)
     a = deserialize_keras_object(s)
     assert a == cm.accuracy
+
+
+def test_regression_metrics():
+    y_true = np.arange(10, dtype=float)
+    y_pred = np.arange(10, dtype=float)
+    y_true[:2] = np.nan
+
+    assert cem.var_explained(y_true, y_pred) == 1
+    # can't handle NA values for now
+    #
+    # assert np.allclose(K.eval(cm.var_explained(K.cast(y_true, K.floatx()),
+    #                                            K.cast(y_pred, K.floatx()))),
+    #                    cem.var_explained(y_true, y_pred))
+    # assert np.allclose(K.eval(cm.mse(K.cast(y_true, K.floatx()),
+    #                                  K.cast(y_pred, K.floatx()))),
+    #                    cem.mse(y_true, y_pred))

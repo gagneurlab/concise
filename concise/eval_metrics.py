@@ -50,7 +50,7 @@ def auprc(y, z):
     return skm.average_precision_score(y, z)
 
 
-def acc(y, z, round=True):
+def accuracy(y, z, round=True):
     y, z = _mask_value_nan(y, z)
     if round:
         y = np.round(y)
