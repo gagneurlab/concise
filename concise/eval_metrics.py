@@ -24,6 +24,10 @@ def auc(y, z, round=True):
     return skm.roc_auc_score(y, z)
 
 
+# def auprc(y, z):
+#     return skm.average_precision_score(y, z)
+
+
 def acc(y, z, round=True):
     if round:
         y = np.round(y)
