@@ -155,7 +155,7 @@ def var_explained(y_true, y_pred):
 # ----
 
 
-BINARY_CLASS = ["auc", "acc", "tpr", "tnr", "f1", "mcc"]
+BINARY_CLASS = ["auc", "auprc", "accuracy", "tpr", "tnr", "f1", "mcc"]
 CATEGORY_CLASS = ["cat_acc"]
 REGRESSION = ["mse", "mad", "cor", "ermse", "var_explained"]
 
