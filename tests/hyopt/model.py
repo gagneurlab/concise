@@ -1,6 +1,5 @@
 from __future__ import print_function
 
-from deepcpg.utils import get_from_module
 from keras.preprocessing import sequence
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
@@ -51,9 +50,3 @@ def build_model(train_data, max_features=5000, maxlen=400,
     #           batch_size=batch_size,
     #           epochs=epochs,
     #           validation_data=(x_test, y_test))
-
-
-# --------------------------------------------
-
-def get(name):
-    return get_from_module(name, globals())

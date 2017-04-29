@@ -1,6 +1,5 @@
 from keras.preprocessing import sequence
 from keras.datasets import imdb
-from deepcpg.utils import get_from_module
 
 
 def data(max_features=5000, maxlen=400):
@@ -22,7 +21,3 @@ def data(max_features=5000, maxlen=400):
     print('x_train shape:', x_train.shape)
     print('x_test shape:', x_test.shape)
     return (x_train, y_train, [1, 2, 3, "dummy_data"]), (x_test, y_test)
-
-
-def get(name):
-    return get_from_module(name, globals())
