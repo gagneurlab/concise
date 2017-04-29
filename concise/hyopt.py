@@ -87,6 +87,8 @@ def test_fn(fn, hyper_params, n_train=1000, tmp_dir="/tmp/concise_hyopt_test/"):
 
     # correct execution
     res = fn(param)
+    print("Returned value:")
+    pprint.pprint(res)
     assert res["status"] == STATUS_OK
 
     # correct model loading
@@ -281,8 +283,8 @@ class CMongoTrials(MongoTrials):
 
 # --------------------------------------------
 def _train_and_eval_single(train, valid, model,
-                           batch_size=32, epochs=300, callbacks=[],
-                           add_eval_metrics={}):
+                           batch_size=32, epochs=300, use_weight=False,
+                           callbacks=[], add_eval_metrics={}):
     """Fit and evaluate a keras model
     """
     def _format_keras_history(history):
@@ -291,6 +293,10 @@ def _train_and_eval_single(train, valid, model,
         return {"params": history.params,
                 "loss": merge_dicts({"epoch": history.epoch}, history.history),
                 }
+    if use_weight:
+        sample_weight = train[2]
+    else:
+        sample_weight = None
     # train the model
     logger.info("Fit...")
     history = History()
@@ -298,6 +304,7 @@ def _train_and_eval_single(train, valid, model,
               batch_size=batch_size,
               validation_data=valid[:2],
               epochs=epochs,
+              sample_weight=sample_weight,
               verbose=2,
               callbacks=[history] + callbacks)
 
@@ -459,9 +466,9 @@ class CompileFN():
         results_path = tm_dir + "{0}.json".format(rid) if self.save_results else ""
 
         if self.use_tensorboard:
-            max_len = 256 - len(rid) - 1
+            max_len = 240 - len(rid) - 1
             param_string = _dict_to_filestring(_flatten_dict_ignore(param))[:max_len] + ";" + rid
-            tb_dir = self.save_dir_exp + "/tensorboard/" + param_string[:256]
+            tb_dir = self.save_dir_exp + "/tensorboard/" + param_string[:240]
             callbacks += [TensorBoard(log_dir=tb_dir,
                                       histogram_freq=0,  # TODO - set to some number afterwards
                                       write_graph=False,
@@ -488,6 +495,7 @@ class CompileFN():
                                                            model=model,
                                                            epochs=param["fit"]["epochs"],
                                                            batch_size=param["fit"]["batch_size"],
+                                                           use_weight=param["fit"].get("use_weight", False),
                                                            callbacks=deepcopy(callbacks),
                                                            add_eval_metrics=self.add_eval_metrics)
             if model_path:
@@ -508,6 +516,7 @@ class CompileFN():
                                                               model=model,
                                                               epochs=param["fit"]["epochs"],
                                                               batch_size=param["fit"]["batch_size"],
+                                                              use_weight=param["fit"].get("use_weight", False),
                                                               callbacks=deepcopy(callbacks),
                                                               add_eval_metrics=self.add_eval_metrics)
                 print("\n")
