@@ -124,22 +124,22 @@ def encodeDNA(seq_vec, maxlen=None, seq_align="start"):
     Examples
     --------
     >>> sequence_vec = ['CTTACTCAGA', 'TCTTTA']
-    >>> X_seq = dna_seq_list_to_1hot(sequence_vec, "end", trim_seq_len = 8)
+    >>> X_seq = encodeDNA(sequence_vec, align="end", maxlen=8)
     >>> X_seq.shape
     (2, 1, 8, 4)
 
     >>> print(X_seq)
-    [[[[ 0.  0.  0.  1.]
+     [[[ 0.  0.  0.  1.]
        [ 1.  0.  0.  0.]
        [ 0.  1.  0.  0.]
        [ 0.  0.  0.  1.]
        [ 0.  1.  0.  0.]
        [ 1.  0.  0.  0.]
        [ 0.  0.  1.  0.]
-       [ 1.  0.  0.  0.]]]
+       [ 1.  0.  0.  0.]] 
 
 
-     [[[ 0.  0.  0.  0.]
+      [[ 0.  0.  0.  0.]
        [ 0.  0.  0.  0.]
        [ 0.  0.  0.  1.]
        [ 0.  1.  0.  0.]
