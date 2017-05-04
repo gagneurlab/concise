@@ -18,6 +18,8 @@ import os
 import glob
 import pprint
 import logging
+import matplotlib.pyplot as plt
+
 
 logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger()
@@ -243,6 +245,22 @@ class CMongoTrials(MongoTrials):
         fold_name = ["fold"] if "fold" in df else []
         df = _put_first(df, ["tid"] + fold_name + ["epoch"])
         return df
+
+    def plot_history(self, tid, scores=["loss", "f1", "accuracy"],
+                     figsize=(15, 3)):
+        """Plot the loss curves"""
+        history = self.train_history(tid)
+        fig = plt.figure(figsize=figsize)
+        for i, score in enumerate(scores):
+            plt.subplot(1, len(scores), i + 1)
+            plt.tight_layout()
+            plt.plot(history[score], label="train")
+            plt.plot(history['val_' + score], label="validation")
+            plt.title(score)
+            plt.ylabel(score)
+            plt.xlabel('epoch')
+            plt.legend(loc='best')
+        return fig
 
     def get_ok_results(self, verbose=True):
         """Return a list of results with ok status
