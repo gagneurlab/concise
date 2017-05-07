@@ -43,7 +43,7 @@ class PSSMBiasInitializer(Initializer):
         """
 
         # handle pwm_list as a dictionary
-        if isinstance(pwm_list[0], dict):
+        if len(pwm_list) > 0 and isinstance(pwm_list[0], dict):
             pwm_list = [PWM.from_config(pwm) for pwm in pwm_list]
 
         if kernel_size is None:
@@ -95,7 +95,7 @@ class PSSMKernelInitializer(Initializer):
     """
 
     def __init__(self, pwm_list=[], stddev=0.05, seed=None, background_probs=DEFAULT_BASE_BACKGROUND):
-        if isinstance(pwm_list[0], dict):
+        if len(pwm_list) > 0 and isinstance(pwm_list[0], dict):
             pwm_list = [PWM.from_config(pwm) for pwm in pwm_list]
 
         self.pwm_list = pwm_list
@@ -139,7 +139,7 @@ class PWMBiasInitializer(Initializer):
                                     max pwm match (mean_max_scale = 1.)
         """
         # handle pwm_list as a dictionary
-        if isinstance(pwm_list[0], dict):
+        if len(pwm_list) > 0 and isinstance(pwm_list[0], dict):
             pwm_list = [PWM.from_config(pwm) for pwm in pwm_list]
 
         if kernel_size is None:
@@ -186,7 +186,7 @@ class PWMKernelInitializer(Initializer):
     """
 
     def __init__(self, pwm_list=[], stddev=0.05, seed=None):
-        if isinstance(pwm_list[0], dict):
+        if len(pwm_list) > 0 and isinstance(pwm_list[0], dict):
             pwm_list = [PWM.from_config(pwm) for pwm in pwm_list]
 
         self.stddev = stddev

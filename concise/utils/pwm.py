@@ -154,9 +154,13 @@ def pwm_list2pwm_array(pwm_list, shape=(None, 4, None), dtype=None, background_p
     # set the default values
     shape = list(shape)
     if shape[0] is None:
+        if len(pwm_list) == 0:
+            raise ValueError("Max pwm length can't be inferred for empty pwm list")
         # max pwm length
         shape[0] = max([pwm.pwm.shape[0] for pwm in pwm_list])
     if shape[2] is None:
+        if len(pwm_list) == 0:
+            raise ValueError("n_motifs can't be inferred for empty pwm list")
         shape[2] = n_motifs
 
     # (kernel_size, 4, filters)

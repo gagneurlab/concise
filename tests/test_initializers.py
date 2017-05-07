@@ -101,3 +101,26 @@ def test_init_serialization(kernel_initializer, bias_initializer):
     # serialization was successfull
     assert np.all(a.kernel_initializer.pwm_list[0].pwm == pwm_list[0].pwm)
 
+
+@pytest.mark.parametrize("kernel_initializer,bias_initializer", [
+    (ci.PWMKernelInitializer, ci.PWMBiasInitializer),
+    (ci.PSSMKernelInitializer, ci.PSSMBiasInitializer)
+])
+def test_empty_pwm_list(kernel_initializer, bias_initializer):
+    pwm_list = []
+    pass
+    seq_length = 100
+    input_shape = (None, seq_length, 4)  # (batch_size, steps, input_dim)
+    # input_shape = (seq_length, 4)  # (batch_size, steps, input_dim)
+
+    # output_shape = (None, steps, filters)
+
+    conv_l = kl.Conv1D(filters=15, kernel_size=11,
+                       kernel_regularizer=L1L2(l1=1, l2=1),  # Regularization
+                       padding="valid",
+                       activation="relu",
+                       kernel_initializer=kernel_initializer(pwm_list, stddev=0.1),
+                       bias_initializer=bias_initializer(pwm_list, kernel_size=11),
+                       batch_input_shape=input_shape,
+                       )
+
