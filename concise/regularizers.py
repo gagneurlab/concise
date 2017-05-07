@@ -1,6 +1,6 @@
 from keras import backend as K
 from keras.regularizers import Regularizer
-from concise.splines import get_S
+from concise.utils.splines import get_S
 from concise.utils.helper import get_from_module
 
 

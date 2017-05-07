@@ -91,7 +91,8 @@ class PSSMKernelInitializer(Initializer):
         stddev: a python scalar or a scalar tensor. Standard deviation of the
           random values to generate.
         seed: A Python integer. Used to seed the random generator.
-        background_probs: A dictionary of background probabilities. Default: `{'A': .25, 'C': .25, 'G': .25, 'T': .25}`
+        background_probs: A dictionary of background probabilities.
+                  Default: `{'A': .25, 'C': .25, 'G': .25, 'T': .25}`
     """
 
     def __init__(self, pwm_list=[], stddev=0.05, seed=None, background_probs=DEFAULT_BASE_BACKGROUND):

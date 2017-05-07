@@ -8,6 +8,9 @@ from concise.losses import MASK_VALUE
 # binary classification
 # -----
 
+# adopted from:
+# https://github.com/cangermueller/deepcpg/blob/master/deepcpg/metrics.py
+
 
 def contingency_table(y, z):
     """Note:  if y and z are not rounded to 0 or 1, they are ignored

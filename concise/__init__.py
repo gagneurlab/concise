@@ -18,7 +18,6 @@ from . import regularizers
 from . import hyopt
 from . import optimizers
 
-
 from .concise import Concise, ConciseCV
 from .legacy.get_data import prepare_data
 from .args_sampler import sample_params

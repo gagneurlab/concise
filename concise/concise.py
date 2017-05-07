@@ -13,7 +13,7 @@
 # MAYBE TODO - implement more rich semantics on feature shareing accross conditions
 from .legacy import analyze
 from .legacy import get_data
-from . import splines
+from .utils import splines
 from .utils import helper
 from .utils import tf_helper
 from . import eval_metrics as ce

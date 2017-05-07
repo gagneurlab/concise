@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from concise.utils.pwm import DEFAULT_BASE_BACKGROUND, pssm_array2pwm_array
 import concise.regularizers as cr
 from concise.regularizers import GAMRegularizer
-from concise.splines import BSpline
+from concise.utils.splines import BSpline
 from concise.utils.helper import get_from_module
 
 # TODO - improve the naming

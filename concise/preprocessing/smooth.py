@@ -2,7 +2,7 @@
 Pre-processor for smooth tracks
 """
 import numpy as np
-from ..splines import BSpline
+from concise.utils.splines import BSpline
 
 # TODO - use as pre-processor function? - predict for the test set
 def encodeSplines(x, n_bases=10, spline_order=3, start=None, end=None):
