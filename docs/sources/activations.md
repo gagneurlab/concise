@@ -1,6 +1,0 @@
-### exponential
-
-
-```python
-exponential(x)
-```

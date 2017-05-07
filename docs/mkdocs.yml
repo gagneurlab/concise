@@ -29,6 +29,7 @@ pages:
 - Activations: activations.md
 - Initializers: initializers.md
 - Regularizers: regularizers.md
+- Hyper-parameter optimization: hyopt.md
 - Utils:
     - Fasta: utils/fasta.md
     - Model Data: utils/model_data.md

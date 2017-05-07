@@ -169,6 +169,17 @@ PAGES = [
         'classes': [utils.splines.BSpline]
     },
     {
+        'page': 'hyopt.md',
+        'classes': [
+            hyopt.CMongoTrials,
+            hyopt.CompileFN,
+        ],
+        'functions': [
+            hyopt.test_fn,
+            hyopt.eval_model,
+        ]
+    },
+    {
         'page': 'data/encode.md',
         'functions': [
             encode.get_metadata,
