@@ -11,7 +11,7 @@ py.test:
     #- apt-get -y update
     #- apt-get install -y gfortran
     - python --version
-    - pip install -U tox
+    - pip3.5 install -U tox
     - tox --version
   script:
     - tox

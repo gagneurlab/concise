@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Genomic Sequence Preprocessing - Concise Documentation</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Genomic Sequence Preprocessing";
+    var mkdocs_page_input_path = "preprocessing/sequence.md";
+    var mkdocs_page_url = "/preprocessing/sequence/";
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js"></script>
+  <script src="../../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script> 
+  
+  <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'TODO', 'concise.TODO');
+      ga('send', 'pageview');
+  </script>
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Concise Documentation</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../getting-started/simple_concise_model/">Getting started</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../layers/">Layers</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Preprocessing</span>
+    <ul class="subnav">
+                <li class=" current">
+                    
+    <a class="current" href="./">Genomic Sequence Preprocessing</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#encodedna">encodeDNA</a></li>
+    
+
+    <li class="toctree-l3"><a href="#parameters">parameters</a></li>
+    
+
+    <li class="toctree-l3"><a href="#returns">returns</a></li>
+    
+
+    <li class="toctree-l3"><a href="#examples">Examples</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#encoderna">encodeRNA</a></li>
+        
+            <li><a class="toctree-l4" href="#encodecodon">encodeCodon</a></li>
+        
+            <li><a class="toctree-l4" href="#encodeaa">encodeAA</a></li>
+        
+            <li><a class="toctree-l4" href="#pad_sequences">pad_sequences</a></li>
+        
+        </ul>
+    
+
+    <li class="toctree-l3"><a href="#parameters_1">parameters</a></li>
+    
+
+    <li class="toctree-l3"><a href="#returns_1">Returns</a></li>
+    
+
+    <li class="toctree-l3"><a href="#examples_1">Examples</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#encodesequence">encodeSequence</a></li>
+        
+        </ul>
+    
+
+    <li class="toctree-l3"><a href="#arguments">Arguments</a></li>
+    
+
+    <li class="toctree-l3"><a href="#returns_2">Returns</a></li>
+    
+
+    </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../structure/">RNA Structure Preprocessing</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../splines/">Spline-position Preprocessing</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../losses/">Losses</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../metrics/">Metrics</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../eval_metrics/">Evaluation Metrics</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../optimizers/">Optimizers</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../activations/">Activations</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../initializers/">Initializers</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../regularizers/">Regularizers</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Utils</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../utils/fasta/">Fasta</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../utils/model_data/">Model Data</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../utils/pwm/">Position weights matrix (PWM)</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../utils/splines/">Splines</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Data</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../../data/encode/">ENCODE PWMs</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../data/attract/">ATtRACT PWMs</a>
+                </li>
+    </ul>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Concise Documentation</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Preprocessing &raquo;</li>
+        
+      
+    
+    <li>Genomic Sequence Preprocessing</li>
+    <li class="wy-breadcrumbs-aside">
+      
+        <a href="http://github.com/avsecz/concise/edit/master/docs/preprocessing/sequence.md"
+          class="icon icon-github"> Edit on GitHub</a>
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h3 id="encodedna">encodeDNA</h3>
+<pre><code class="python">encodeDNA(seq_vec, maxlen=None, seq_align='start')
+</code></pre>
+
+<p>Convert the DNA sequence to 1-hot-encoding numpy array</p>
+<h2 id="parameters">parameters</h2>
+<ul>
+<li>
+<p><strong>seq_vec</strong>: list of chars
+List of sequences that can have different lengths</p>
+</li>
+<li>
+<p><strong>seq_align</strong>: character; 'end' or 'start'
+To which end should we align sequences?</p>
+</li>
+<li>
+<p><strong>maxlen</strong>: int or None,
+Should we trim (subset) the resulting sequence. If None don't trim.
+Note that trims wrt the align parameter.
+It should be smaller than the longest sequence.</p>
+</li>
+</ul>
+<h2 id="returns">returns</h2>
+<p>3D numpy array of shape (len(seq_vec), trim_seq_len(or maximal sequence length if None), 4)</p>
+<h2 id="examples">Examples</h2>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>sequence_vec = ['CTTACTCAGA', 'TCTTTA']
+X_seq = encodeDNA(sequence_vec, align="end", maxlen=8)
+X_seq.shape
+(2, 8, 4)</p>
+<p>print(X_seq)
+ [[[ 0.  0.  0.  1.]
+   [ 1.  0.  0.  0.]
+   [ 0.  1.  0.  0.]
+   [ 0.  0.  0.  1.]
+   [ 0.  1.  0.  0.]
+   [ 1.  0.  0.  0.]
+   [ 0.  0.  1.  0.]
+   [ 1.  0.  0.  0.]] </p>
+</blockquote>
+</blockquote>
+</blockquote>
+<p>[[ 0.  0.  0.  0.]
+   [ 0.  0.  0.  0.]
+   [ 0.  0.  0.  1.]
+   [ 0.  1.  0.  0.]
+   [ 0.  0.  0.  1.]
+   [ 0.  0.  0.  1.]
+   [ 0.  0.  0.  1.]
+   [ 1.  0.  0.  0.]]]]</p>
+<hr />
+<h3 id="encoderna">encodeRNA</h3>
+<pre><code class="python">encodeRNA(seq_vec, maxlen=None, seq_align='start')
+</code></pre>
+
+<hr />
+<h3 id="encodecodon">encodeCodon</h3>
+<pre><code class="python">encodeCodon(seq_vec, ignore_stop_codons=True, maxlen=None, seq_align='start', encode_type='one_hot')
+</code></pre>
+
+<hr />
+<h3 id="encodeaa">encodeAA</h3>
+<pre><code class="python">encodeAA(seq_vec, maxlen=None, seq_align='start', encode_type='one_hot')
+</code></pre>
+
+<hr />
+<h3 id="pad_sequences">pad_sequences</h3>
+<pre><code class="python">pad_sequences(sequence_vec, maxlen=None, align='end', value='N')
+</code></pre>
+
+<p>See also: https://keras.io/preprocessing/sequence/</p>
+<ol>
+<li>Pad the sequence with N's or any other sequence element</li>
+<li>Subset the sequence</li>
+</ol>
+<p>Aplicable also for lists of characters</p>
+<h2 id="parameters_1">parameters</h2>
+<ul>
+<li><strong>sequence_vec</strong>: list of chars
+List of sequences that can have different lengths</li>
+<li><strong>value</strong>:
+Neutral element to pad the sequence with</li>
+<li><strong>maxlen</strong>: int or None,
+Should we trim (subset) the resulting sequence. If None don't trim.
+Note that trims wrt the align parameter.
+It should be smaller than the longest sequence.</li>
+<li><strong>align</strong>: character; 'end' or 'start'
+To which end should to align the sequences.</li>
+</ul>
+<h2 id="returns_1">Returns</h2>
+<p>List of sequences of the same class as sequence_vec</p>
+<h2 id="examples_1">Examples</h2>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>sequence_vec = ['CTTACTCAGA', 'TCTTTA']
+pad_sequences(sequence_vec, "N", 10, "start")</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<hr />
+<h3 id="encodesequence">encodeSequence</h3>
+<pre><code class="python">encodeSequence(seq_vec, vocab, neutral_vocab, maxlen=None, seq_align='start', pad_value='N', encode_type='one_hot')
+</code></pre>
+
+<p>Convert the sequence to one-hot-encoding.</p>
+<h2 id="arguments">Arguments</h2>
+<ul>
+<li><strong>seq_vec</strong>: list of sequences</li>
+<li><strong>vocab</strong>: list of chars: List of "words" to use as the vocabulary. Can be strings of length&gt;0,
+but all need to have the same length. For DNA, this is: ["A", "C", "G", "T"]</li>
+<li><strong>neutral_vocab</strong>: list of chars: Values used to pad the sequence or represent unknown-values. For DNA, this is: ["N"].
+   maxlen, seq_align: see pad_sequences</li>
+<li><strong>encode_type</strong>: "one_hot" or "token". "token" represents each vocab element as a positive integer from 1 to len(vocab) + 1.
+      neutral_vocab is represented with 0.</li>
+</ul>
+<h2 id="returns_2">Returns</h2>
+<p>Array with shape for encode_type:
+ - "one_hot": (len(seq_vec), maxlen, len(vocab))
+ - "token": (len(seq_vec), maxlen)
+  If maxlen is None, it gets the value of the longest sequence length from seq_vec.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../structure/" class="btn btn-neutral float-right" title="RNA Structure Preprocessing">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../../layers/" class="btn btn-neutral" title="Layers"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+    
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="http://github.com/avsecz/concise" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="../../layers/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../structure/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script src="../../js/theme.js"></script>
+
+</body>
+</html>

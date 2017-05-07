@@ -1,0 +1,40 @@
+site_name: Concise Documentation
+theme: readthedocs
+#theme_dir: theme
+docs_dir: sources
+repo_url: http://github.com/avsecz/concise
+# TODO
+site_url: http://concise.io/
+site_description: 'Documentation for Concise, Keras extension for regulatory genomics.'
+
+dev_addr: '0.0.0.0:8000'
+# TODO
+google_analytics: ["TODO" , 'concise.TODO']
+
+pages:
+- Home: index.md
+- Getting started: getting-started/simple_concise_model.md
+#   - Guide to the Sequential model: getting-started/sequential-model-guide.md
+#   - Guide to the Functional API: getting-started/functional-api-guide.md
+#   - FAQ: getting-started/faq.md
+- Layers: layers.md # TODO - check
+- Preprocessing:
+  - Genomic Sequence Preprocessing: preprocessing/sequence.md
+  - RNA Structure Preprocessing: preprocessing/structure.md
+  - Spline-position Preprocessing: preprocessing/splines.md
+- Losses: losses.md
+- Metrics: metrics.md
+- Evaluation Metrics: eval_metrics.md
+- Optimizers: optimizers.md
+- Activations: activations.md
+- Initializers: initializers.md
+- Regularizers: regularizers.md
+- Utils:
+    - Fasta: utils/fasta.md
+    - Model Data: utils/model_data.md
+    - Position weights matrix (PWM): utils/pwm.md
+    - Splines: utils/splines.md
+- Data:
+    - ENCODE PWMs: data/encode.md
+    - ATtRACT PWMs: data/attract.md
+# - Contributing: contributing.md

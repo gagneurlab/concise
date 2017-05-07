@@ -1,0 +1,6 @@
+### exponential
+
+
+```python
+exponential(x)
+```

@@ -1,0 +1,519 @@
+{
+    "docs": [
+        {
+            "location": "/",
+            "text": "Concise: Keras extension for regulatory genomics",
+            "title": "Home"
+        },
+        {
+            "location": "/#concise-keras-extension-for-regulatory-genomics",
+            "text": "",
+            "title": "Concise: Keras extension for regulatory genomics"
+        },
+        {
+            "location": "/getting-started/simple_concise_model/",
+            "text": "TODO - write a simple tutorial how to do things",
+            "title": "Getting started"
+        },
+        {
+            "location": "/getting-started/simple_concise_model/#todo-write-a-simple-tutorial-how-to-do-things",
+            "text": "",
+            "title": "TODO - write a simple tutorial how to do things"
+        },
+        {
+            "location": "/layers/",
+            "text": "[source]\n\n\nGlobalSumPooling1D\n\n\nkeras.layers.pooling.GlobalSumPooling1D()\n\n\n\n\nGlobal average pooling operation for temporal data.\n\nInput shape\n\n\n3D tensor with shape: \n(batch_size, steps, features)\n.\n\nOutput shape\n\n\n2D tensor with shape:\n\n(batch_size, channels)\n\n\n\n\n[source]\n\n\nConvDNA\n\n\nconcise.layers.ConvDNA(filters, kernel_size, strides=1, padding='valid', dilation_rate=1, activation=None, use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None, seq_length=None, background_probs=None)\n\n\n\n\nConvenience wrapper over keras.layers.Conv1D with 2 changes:\n- additional argument seq_length specifying input_shape\n- restriction in build method: input_shape[-1] needs to be 4\n\n\n\n\n[source]\n\n\nGAMSmooth\n\n\nconcise.layers.GAMSmooth(n_bases=10, spline_order=3, share_splines=False, spline_exp=False, l2_smooth=1e-05, l2=1e-05, use_bias=False, bias_initializer='zeros')\n\n\n\n\n\n\n[source]\n\n\nConvDNAQuantitySplines\n\n\nconcise.layers.ConvDNAQuantitySplines(filters, activation=None, use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer=<concise.regularizers.GAMRegularizer object at 0x2b38ee396518>, bias_regularizer=None, kernel_constraint=None, bias_constraint=None, activity_regularizer=None)\n\n\n\n\nConvenience wrapper over keras.layers.Conv1D with 2 changes:\n- additional argument seq_length specifying input_shape (as in ConvDNA)\n- restriction in kernel_regularizer - needs to be of class GAMRegularizer\n- hard-coded values:\n   - kernel_size=1,\n   - strides=1,\n   - padding='valid',\n   - dilation_rate=1,\n\n\n\n\nInputDNA\n\n\nInputDNA(seq_length, name=None)\n\n\n\n\nConvenience wrapper around keras.layers.Input:\n\n\nInput((seq_length, 4), name=name, **kwargs)\n\n\n\n\nInputRNAStructure\n\n\nInputRNAStructure(seq_length, name=None)\n\n\n\n\nConvenience wrapper around keras.layers.Input:\n\n\nInput((seq_length, 5), name=name, **kwargs)\n\n\n\n\nInputDNAQuantity\n\n\nInputDNAQuantity(seq_length, n_features=1, name=None)\n\n\n\n\nConvenience wrapper around keras.layers.Input:\n\n\nInput((seq_length, n_features), name=name, **kwargs)\n\n\n\n\nInputDNAQuantitySplines\n\n\nInputDNAQuantitySplines(seq_length, n_bases=10, name='DNASmoothPosition')\n\n\n\n\nConvenience wrapper around keras.layers.Input:\n\n\nInput((seq_length, n_bases), name=name, **kwargs)",
+            "title": "Layers"
+        },
+        {
+            "location": "/layers/#globalsumpooling1d",
+            "text": "keras.layers.pooling.GlobalSumPooling1D()  Global average pooling operation for temporal data. Input shape  3D tensor with shape:  (batch_size, steps, features) . Output shape  2D tensor with shape: (batch_size, channels)   [source]",
+            "title": "GlobalSumPooling1D"
+        },
+        {
+            "location": "/layers/#convdna",
+            "text": "concise.layers.ConvDNA(filters, kernel_size, strides=1, padding='valid', dilation_rate=1, activation=None, use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None, seq_length=None, background_probs=None)  Convenience wrapper over keras.layers.Conv1D with 2 changes:\n- additional argument seq_length specifying input_shape\n- restriction in build method: input_shape[-1] needs to be 4   [source]",
+            "title": "ConvDNA"
+        },
+        {
+            "location": "/layers/#gamsmooth",
+            "text": "concise.layers.GAMSmooth(n_bases=10, spline_order=3, share_splines=False, spline_exp=False, l2_smooth=1e-05, l2=1e-05, use_bias=False, bias_initializer='zeros')   [source]",
+            "title": "GAMSmooth"
+        },
+        {
+            "location": "/layers/#convdnaquantitysplines",
+            "text": "concise.layers.ConvDNAQuantitySplines(filters, activation=None, use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer=<concise.regularizers.GAMRegularizer object at 0x2b38ee396518>, bias_regularizer=None, kernel_constraint=None, bias_constraint=None, activity_regularizer=None)  Convenience wrapper over keras.layers.Conv1D with 2 changes:\n- additional argument seq_length specifying input_shape (as in ConvDNA)\n- restriction in kernel_regularizer - needs to be of class GAMRegularizer\n- hard-coded values:\n   - kernel_size=1,\n   - strides=1,\n   - padding='valid',\n   - dilation_rate=1,",
+            "title": "ConvDNAQuantitySplines"
+        },
+        {
+            "location": "/layers/#inputdna",
+            "text": "InputDNA(seq_length, name=None)  Convenience wrapper around keras.layers.Input:  Input((seq_length, 4), name=name, **kwargs)",
+            "title": "InputDNA"
+        },
+        {
+            "location": "/layers/#inputrnastructure",
+            "text": "InputRNAStructure(seq_length, name=None)  Convenience wrapper around keras.layers.Input:  Input((seq_length, 5), name=name, **kwargs)",
+            "title": "InputRNAStructure"
+        },
+        {
+            "location": "/layers/#inputdnaquantity",
+            "text": "InputDNAQuantity(seq_length, n_features=1, name=None)  Convenience wrapper around keras.layers.Input:  Input((seq_length, n_features), name=name, **kwargs)",
+            "title": "InputDNAQuantity"
+        },
+        {
+            "location": "/layers/#inputdnaquantitysplines",
+            "text": "InputDNAQuantitySplines(seq_length, n_bases=10, name='DNASmoothPosition')  Convenience wrapper around keras.layers.Input:  Input((seq_length, n_bases), name=name, **kwargs)",
+            "title": "InputDNAQuantitySplines"
+        },
+        {
+            "location": "/preprocessing/sequence/",
+            "text": "encodeDNA\n\n\nencodeDNA(seq_vec, maxlen=None, seq_align='start')\n\n\n\n\nConvert the DNA sequence to 1-hot-encoding numpy array\n\n\nparameters\n\n\n\n\n\n\nseq_vec\n: list of chars\nList of sequences that can have different lengths\n\n\n\n\n\n\nseq_align\n: character; 'end' or 'start'\nTo which end should we align sequences?\n\n\n\n\n\n\nmaxlen\n: int or None,\nShould we trim (subset) the resulting sequence. If None don't trim.\nNote that trims wrt the align parameter.\nIt should be smaller than the longest sequence.\n\n\n\n\n\n\nreturns\n\n\n3D numpy array of shape (len(seq_vec), trim_seq_len(or maximal sequence length if None), 4)\n\n\nExamples\n\n\n\n\n\n\n\n\nsequence_vec = ['CTTACTCAGA', 'TCTTTA']\nX_seq = encodeDNA(sequence_vec, align=\"end\", maxlen=8)\nX_seq.shape\n(2, 8, 4)\n\n\nprint(X_seq)\n [[[ 0.  0.  0.  1.]\n   [ 1.  0.  0.  0.]\n   [ 0.  1.  0.  0.]\n   [ 0.  0.  0.  1.]\n   [ 0.  1.  0.  0.]\n   [ 1.  0.  0.  0.]\n   [ 0.  0.  1.  0.]\n   [ 1.  0.  0.  0.]] \n\n\n\n\n\n\n\n\n[[ 0.  0.  0.  0.]\n   [ 0.  0.  0.  0.]\n   [ 0.  0.  0.  1.]\n   [ 0.  1.  0.  0.]\n   [ 0.  0.  0.  1.]\n   [ 0.  0.  0.  1.]\n   [ 0.  0.  0.  1.]\n   [ 1.  0.  0.  0.]]]]\n\n\n\n\nencodeRNA\n\n\nencodeRNA(seq_vec, maxlen=None, seq_align='start')\n\n\n\n\n\n\nencodeCodon\n\n\nencodeCodon(seq_vec, ignore_stop_codons=True, maxlen=None, seq_align='start', encode_type='one_hot')\n\n\n\n\n\n\nencodeAA\n\n\nencodeAA(seq_vec, maxlen=None, seq_align='start', encode_type='one_hot')\n\n\n\n\n\n\npad_sequences\n\n\npad_sequences(sequence_vec, maxlen=None, align='end', value='N')\n\n\n\n\nSee also: https://keras.io/preprocessing/sequence/\n\n\n\n\nPad the sequence with N's or any other sequence element\n\n\nSubset the sequence\n\n\n\n\nAplicable also for lists of characters\n\n\nparameters\n\n\n\n\nsequence_vec\n: list of chars\nList of sequences that can have different lengths\n\n\nvalue\n:\nNeutral element to pad the sequence with\n\n\nmaxlen\n: int or None,\nShould we trim (subset) the resulting sequence. If None don't trim.\nNote that trims wrt the align parameter.\nIt should be smaller than the longest sequence.\n\n\nalign\n: character; 'end' or 'start'\nTo which end should to align the sequences.\n\n\n\n\nReturns\n\n\nList of sequences of the same class as sequence_vec\n\n\nExamples\n\n\n\n\n\n\n\n\nsequence_vec = ['CTTACTCAGA', 'TCTTTA']\npad_sequences(sequence_vec, \"N\", 10, \"start\")\n\n\n\n\n\n\n\n\n\n\nencodeSequence\n\n\nencodeSequence(seq_vec, vocab, neutral_vocab, maxlen=None, seq_align='start', pad_value='N', encode_type='one_hot')\n\n\n\n\nConvert the sequence to one-hot-encoding.\n\n\nArguments\n\n\n\n\nseq_vec\n: list of sequences\n\n\nvocab\n: list of chars: List of \"words\" to use as the vocabulary. Can be strings of length>0,\nbut all need to have the same length. For DNA, this is: [\"A\", \"C\", \"G\", \"T\"]\n\n\nneutral_vocab\n: list of chars: Values used to pad the sequence or represent unknown-values. For DNA, this is: [\"N\"].\n   maxlen, seq_align: see pad_sequences\n\n\nencode_type\n: \"one_hot\" or \"token\". \"token\" represents each vocab element as a positive integer from 1 to len(vocab) + 1.\n      neutral_vocab is represented with 0.\n\n\n\n\nReturns\n\n\nArray with shape for encode_type:\n - \"one_hot\": (len(seq_vec), maxlen, len(vocab))\n - \"token\": (len(seq_vec), maxlen)\n  If maxlen is None, it gets the value of the longest sequence length from seq_vec.",
+            "title": "Genomic Sequence Preprocessing"
+        },
+        {
+            "location": "/preprocessing/sequence/#encodedna",
+            "text": "encodeDNA(seq_vec, maxlen=None, seq_align='start')  Convert the DNA sequence to 1-hot-encoding numpy array",
+            "title": "encodeDNA"
+        },
+        {
+            "location": "/preprocessing/sequence/#parameters",
+            "text": "seq_vec : list of chars\nList of sequences that can have different lengths    seq_align : character; 'end' or 'start'\nTo which end should we align sequences?    maxlen : int or None,\nShould we trim (subset) the resulting sequence. If None don't trim.\nNote that trims wrt the align parameter.\nIt should be smaller than the longest sequence.",
+            "title": "parameters"
+        },
+        {
+            "location": "/preprocessing/sequence/#returns",
+            "text": "3D numpy array of shape (len(seq_vec), trim_seq_len(or maximal sequence length if None), 4)",
+            "title": "returns"
+        },
+        {
+            "location": "/preprocessing/sequence/#examples",
+            "text": "sequence_vec = ['CTTACTCAGA', 'TCTTTA']\nX_seq = encodeDNA(sequence_vec, align=\"end\", maxlen=8)\nX_seq.shape\n(2, 8, 4)  print(X_seq)\n [[[ 0.  0.  0.  1.]\n   [ 1.  0.  0.  0.]\n   [ 0.  1.  0.  0.]\n   [ 0.  0.  0.  1.]\n   [ 0.  1.  0.  0.]\n   [ 1.  0.  0.  0.]\n   [ 0.  0.  1.  0.]\n   [ 1.  0.  0.  0.]]      [[ 0.  0.  0.  0.]\n   [ 0.  0.  0.  0.]\n   [ 0.  0.  0.  1.]\n   [ 0.  1.  0.  0.]\n   [ 0.  0.  0.  1.]\n   [ 0.  0.  0.  1.]\n   [ 0.  0.  0.  1.]\n   [ 1.  0.  0.  0.]]]]",
+            "title": "Examples"
+        },
+        {
+            "location": "/preprocessing/sequence/#encoderna",
+            "text": "encodeRNA(seq_vec, maxlen=None, seq_align='start')",
+            "title": "encodeRNA"
+        },
+        {
+            "location": "/preprocessing/sequence/#encodecodon",
+            "text": "encodeCodon(seq_vec, ignore_stop_codons=True, maxlen=None, seq_align='start', encode_type='one_hot')",
+            "title": "encodeCodon"
+        },
+        {
+            "location": "/preprocessing/sequence/#encodeaa",
+            "text": "encodeAA(seq_vec, maxlen=None, seq_align='start', encode_type='one_hot')",
+            "title": "encodeAA"
+        },
+        {
+            "location": "/preprocessing/sequence/#pad_sequences",
+            "text": "pad_sequences(sequence_vec, maxlen=None, align='end', value='N')  See also: https://keras.io/preprocessing/sequence/   Pad the sequence with N's or any other sequence element  Subset the sequence   Aplicable also for lists of characters",
+            "title": "pad_sequences"
+        },
+        {
+            "location": "/preprocessing/sequence/#parameters_1",
+            "text": "sequence_vec : list of chars\nList of sequences that can have different lengths  value :\nNeutral element to pad the sequence with  maxlen : int or None,\nShould we trim (subset) the resulting sequence. If None don't trim.\nNote that trims wrt the align parameter.\nIt should be smaller than the longest sequence.  align : character; 'end' or 'start'\nTo which end should to align the sequences.",
+            "title": "parameters"
+        },
+        {
+            "location": "/preprocessing/sequence/#returns_1",
+            "text": "List of sequences of the same class as sequence_vec",
+            "title": "Returns"
+        },
+        {
+            "location": "/preprocessing/sequence/#examples_1",
+            "text": "sequence_vec = ['CTTACTCAGA', 'TCTTTA']\npad_sequences(sequence_vec, \"N\", 10, \"start\")",
+            "title": "Examples"
+        },
+        {
+            "location": "/preprocessing/sequence/#encodesequence",
+            "text": "encodeSequence(seq_vec, vocab, neutral_vocab, maxlen=None, seq_align='start', pad_value='N', encode_type='one_hot')  Convert the sequence to one-hot-encoding.",
+            "title": "encodeSequence"
+        },
+        {
+            "location": "/preprocessing/sequence/#arguments",
+            "text": "seq_vec : list of sequences  vocab : list of chars: List of \"words\" to use as the vocabulary. Can be strings of length>0,\nbut all need to have the same length. For DNA, this is: [\"A\", \"C\", \"G\", \"T\"]  neutral_vocab : list of chars: Values used to pad the sequence or represent unknown-values. For DNA, this is: [\"N\"].\n   maxlen, seq_align: see pad_sequences  encode_type : \"one_hot\" or \"token\". \"token\" represents each vocab element as a positive integer from 1 to len(vocab) + 1.\n      neutral_vocab is represented with 0.",
+            "title": "Arguments"
+        },
+        {
+            "location": "/preprocessing/sequence/#returns_2",
+            "text": "Array with shape for encode_type:\n - \"one_hot\": (len(seq_vec), maxlen, len(vocab))\n - \"token\": (len(seq_vec), maxlen)\n  If maxlen is None, it gets the value of the longest sequence length from seq_vec.",
+            "title": "Returns"
+        },
+        {
+            "location": "/preprocessing/structure/",
+            "text": "encodeRNAStructure\n\n\nencodeRNAStructure(seq_vec, maxlen=None, seq_align='start', W=240, L=160, U=1, tmpdir='/tmp/RNAplfold/')\n\n\n\n\n\n\n\n\nArguments\n:\n   W, Int: span - window length\n   L, Int, maxiumm span\n   U, Int, size of unpaired region\n\n\n\n\n\n\nRecomendation\n:\n\n\n\n\nfor human, mouse use W, L, u : 240, 160, 1\n\n\nfor fly, yeast   use W, L, u :  80,  40, 1",
+            "title": "RNA Structure Preprocessing"
+        },
+        {
+            "location": "/preprocessing/structure/#encodernastructure",
+            "text": "encodeRNAStructure(seq_vec, maxlen=None, seq_align='start', W=240, L=160, U=1, tmpdir='/tmp/RNAplfold/')    Arguments :\n   W, Int: span - window length\n   L, Int, maxiumm span\n   U, Int, size of unpaired region    Recomendation :   for human, mouse use W, L, u : 240, 160, 1  for fly, yeast   use W, L, u :  80,  40, 1",
+            "title": "encodeRNAStructure"
+        },
+        {
+            "location": "/preprocessing/splines/",
+            "text": "encodeSplines\n\n\nencodeSplines(x, n_bases=10, spline_order=3, start=None, end=None)\n\n\n\n\n\n\nArguments\n:\n\n\nx\n: a numpy array of positions with 2 dimensions\nn_splines int: Number of splines used for the positional bias.\n\n\nspline_order\n: 2 for quadratic, 3 for qubic splines",
+            "title": "Spline-position Preprocessing"
+        },
+        {
+            "location": "/preprocessing/splines/#encodesplines",
+            "text": "encodeSplines(x, n_bases=10, spline_order=3, start=None, end=None)   Arguments :  x : a numpy array of positions with 2 dimensions\nn_splines int: Number of splines used for the positional bias.  spline_order : 2 for quadratic, 3 for qubic splines",
+            "title": "encodeSplines"
+        },
+        {
+            "location": "/losses/",
+            "text": "mask_loss\n\n\nmask_loss(loss, mask_value=-1)\n\n\n\n\n\n\ncategorical_crossentropy_masked\n\n\ncategorical_crossentropy_masked(y_true, y_pred)\n\n\n\n\n\n\nsparse_categorical_crossentropy_masked\n\n\nsparse_categorical_crossentropy_masked(y_true, y_pred)\n\n\n\n\n\n\nbinary_crossentropy_masked\n\n\nbinary_crossentropy_masked(y_true, y_pred)\n\n\n\n\n\n\nkullback_leibler_divergence_masked\n\n\nkullback_leibler_divergence_masked(y_true, y_pred)",
+            "title": "Losses"
+        },
+        {
+            "location": "/losses/#mask_loss",
+            "text": "mask_loss(loss, mask_value=-1)",
+            "title": "mask_loss"
+        },
+        {
+            "location": "/losses/#categorical_crossentropy_masked",
+            "text": "categorical_crossentropy_masked(y_true, y_pred)",
+            "title": "categorical_crossentropy_masked"
+        },
+        {
+            "location": "/losses/#sparse_categorical_crossentropy_masked",
+            "text": "sparse_categorical_crossentropy_masked(y_true, y_pred)",
+            "title": "sparse_categorical_crossentropy_masked"
+        },
+        {
+            "location": "/losses/#binary_crossentropy_masked",
+            "text": "binary_crossentropy_masked(y_true, y_pred)",
+            "title": "binary_crossentropy_masked"
+        },
+        {
+            "location": "/losses/#kullback_leibler_divergence_masked",
+            "text": "kullback_leibler_divergence_masked(y_true, y_pred)",
+            "title": "kullback_leibler_divergence_masked"
+        },
+        {
+            "location": "/metrics/",
+            "text": "contingency_table\n\n\ncontingency_table(y, z)\n\n\n\n\nNote:  if y and z are not rounded to 0 or 1, they are ignored\n\n\n\n\nsensitivity\n\n\nsensitivity(y, z)\n\n\n\n\n\n\nspecificity\n\n\nspecificity(y, z)\n\n\n\n\n\n\nfpr\n\n\nfpr(y, z)\n\n\n\n\n\n\nfnr\n\n\nfnr(y, z)\n\n\n\n\n\n\nprecision\n\n\nprecision(y, z)\n\n\n\n\n\n\nfdr\n\n\nfdr(y, z)\n\n\n\n\n\n\naccuracy\n\n\naccuracy(y, z)\n\n\n\n\n\n\nf1\n\n\nf1(y, z)\n\n\n\n\n\n\nmcc\n\n\nmcc(y, z)\n\n\n\n\n\n\ncat_acc\n\n\ncat_acc(y, z)\n\n\n\n\n\n\nmse\n\n\nmse(y, z, mask=-1)\n\n\n\n\n\n\nmae\n\n\nmae(y, z, mask=-1)\n\n\n\n\n\n\nvar_explained\n\n\nvar_explained(y_true, y_pred)\n\n\n\n\nFraction of variance explained.",
+            "title": "Metrics"
+        },
+        {
+            "location": "/metrics/#contingency_table",
+            "text": "contingency_table(y, z)  Note:  if y and z are not rounded to 0 or 1, they are ignored",
+            "title": "contingency_table"
+        },
+        {
+            "location": "/metrics/#sensitivity",
+            "text": "sensitivity(y, z)",
+            "title": "sensitivity"
+        },
+        {
+            "location": "/metrics/#specificity",
+            "text": "specificity(y, z)",
+            "title": "specificity"
+        },
+        {
+            "location": "/metrics/#fpr",
+            "text": "fpr(y, z)",
+            "title": "fpr"
+        },
+        {
+            "location": "/metrics/#fnr",
+            "text": "fnr(y, z)",
+            "title": "fnr"
+        },
+        {
+            "location": "/metrics/#precision",
+            "text": "precision(y, z)",
+            "title": "precision"
+        },
+        {
+            "location": "/metrics/#fdr",
+            "text": "fdr(y, z)",
+            "title": "fdr"
+        },
+        {
+            "location": "/metrics/#accuracy",
+            "text": "accuracy(y, z)",
+            "title": "accuracy"
+        },
+        {
+            "location": "/metrics/#f1",
+            "text": "f1(y, z)",
+            "title": "f1"
+        },
+        {
+            "location": "/metrics/#mcc",
+            "text": "mcc(y, z)",
+            "title": "mcc"
+        },
+        {
+            "location": "/metrics/#cat_acc",
+            "text": "cat_acc(y, z)",
+            "title": "cat_acc"
+        },
+        {
+            "location": "/metrics/#mse",
+            "text": "mse(y, z, mask=-1)",
+            "title": "mse"
+        },
+        {
+            "location": "/metrics/#mae",
+            "text": "mae(y, z, mask=-1)",
+            "title": "mae"
+        },
+        {
+            "location": "/metrics/#var_explained",
+            "text": "var_explained(y_true, y_pred)  Fraction of variance explained.",
+            "title": "var_explained"
+        },
+        {
+            "location": "/eval_metrics/",
+            "text": "auc\n\n\nauc(y, z, round=True)\n\n\n\n\n\n\nauprc\n\n\nauprc(y, z)\n\n\n\n\n\n\naccuracy\n\n\naccuracy(y, z, round=True)\n\n\n\n\n\n\ntpr\n\n\ntpr(y, z, round=True)\n\n\n\n\n\n\ntnr\n\n\ntnr(y, z, round=True)\n\n\n\n\n\n\nmcc\n\n\nmcc(y, z, round=True)\n\n\n\n\n\n\nf1\n\n\nf1(y, z, round=True)\n\n\n\n\n\n\ncat_acc\n\n\ncat_acc(y, z)\n\n\n\n\n\n\ncor\n\n\ncor(y, z)\n\n\n\n\nCompute Pearson correlation coefficient.\n\n\nkendall\n\n\nkendall(y, z, nb_sample=100000)\n\n\n\n\n\n\nmad\n\n\nmad(y, z)\n\n\n\n\n\n\nrmse\n\n\nrmse(y, z)\n\n\n\n\n\n\nrrmse\n\n\nrrmse(y, z)\n\n\n\n\n\n\nmse\n\n\nmse(y_true, y_pred)\n\n\n\n\n\n\nermse\n\n\nermse(y_true, y_pred)\n\n\n\n\nExponentiated root-mean-squared error\n\n\n\n\nvar_explained\n\n\nvar_explained(y_true, y_pred)\n\n\n\n\nFraction of variance explained.",
+            "title": "Evaluation Metrics"
+        },
+        {
+            "location": "/eval_metrics/#auc",
+            "text": "auc(y, z, round=True)",
+            "title": "auc"
+        },
+        {
+            "location": "/eval_metrics/#auprc",
+            "text": "auprc(y, z)",
+            "title": "auprc"
+        },
+        {
+            "location": "/eval_metrics/#accuracy",
+            "text": "accuracy(y, z, round=True)",
+            "title": "accuracy"
+        },
+        {
+            "location": "/eval_metrics/#tpr",
+            "text": "tpr(y, z, round=True)",
+            "title": "tpr"
+        },
+        {
+            "location": "/eval_metrics/#tnr",
+            "text": "tnr(y, z, round=True)",
+            "title": "tnr"
+        },
+        {
+            "location": "/eval_metrics/#mcc",
+            "text": "mcc(y, z, round=True)",
+            "title": "mcc"
+        },
+        {
+            "location": "/eval_metrics/#f1",
+            "text": "f1(y, z, round=True)",
+            "title": "f1"
+        },
+        {
+            "location": "/eval_metrics/#cat_acc",
+            "text": "cat_acc(y, z)",
+            "title": "cat_acc"
+        },
+        {
+            "location": "/eval_metrics/#cor",
+            "text": "cor(y, z)",
+            "title": "cor"
+        },
+        {
+            "location": "/eval_metrics/#compute-pearson-correlation-coefficient",
+            "text": "",
+            "title": "Compute Pearson correlation coefficient."
+        },
+        {
+            "location": "/eval_metrics/#kendall",
+            "text": "kendall(y, z, nb_sample=100000)",
+            "title": "kendall"
+        },
+        {
+            "location": "/eval_metrics/#mad",
+            "text": "mad(y, z)",
+            "title": "mad"
+        },
+        {
+            "location": "/eval_metrics/#rmse",
+            "text": "rmse(y, z)",
+            "title": "rmse"
+        },
+        {
+            "location": "/eval_metrics/#rrmse",
+            "text": "rrmse(y, z)",
+            "title": "rrmse"
+        },
+        {
+            "location": "/eval_metrics/#mse",
+            "text": "mse(y_true, y_pred)",
+            "title": "mse"
+        },
+        {
+            "location": "/eval_metrics/#ermse",
+            "text": "ermse(y_true, y_pred)  Exponentiated root-mean-squared error",
+            "title": "ermse"
+        },
+        {
+            "location": "/eval_metrics/#var_explained",
+            "text": "var_explained(y_true, y_pred)  Fraction of variance explained.",
+            "title": "var_explained"
+        },
+        {
+            "location": "/optimizers/",
+            "text": "[source]\n\n\nSGDWithWeightnorm\n\n\nkeras.optimizers.SGDWithWeightnorm(lr=0.01, momentum=0.0, decay=0.0, nesterov=False)\n\n\n\n\n\n\n[source]\n\n\nAdamWithWeightnorm\n\n\nkeras.optimizers.AdamWithWeightnorm(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)\n\n\n\n\n\n\ndata_based_init\n\n\ndata_based_init(model, input)",
+            "title": "Optimizers"
+        },
+        {
+            "location": "/optimizers/#sgdwithweightnorm",
+            "text": "keras.optimizers.SGDWithWeightnorm(lr=0.01, momentum=0.0, decay=0.0, nesterov=False)   [source]",
+            "title": "SGDWithWeightnorm"
+        },
+        {
+            "location": "/optimizers/#adamwithweightnorm",
+            "text": "keras.optimizers.AdamWithWeightnorm(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)",
+            "title": "AdamWithWeightnorm"
+        },
+        {
+            "location": "/optimizers/#data_based_init",
+            "text": "data_based_init(model, input)",
+            "title": "data_based_init"
+        },
+        {
+            "location": "/activations/",
+            "text": "exponential\n\n\nexponential(x)",
+            "title": "Activations"
+        },
+        {
+            "location": "/activations/#exponential",
+            "text": "exponential(x)",
+            "title": "exponential"
+        },
+        {
+            "location": "/initializers/",
+            "text": "[source]\n\n\nPSSMBiasInitializer\n\n\nconcise.initializers.PSSMBiasInitializer(pwm_list=[], kernel_size=None, mean_max_scale=0.0, background_probs={'T': 0.25, 'G': 0.25, 'A': 0.25, 'C': 0.25})\n\n\n\n\n\n\n[source]\n\n\nPSSMKernelInitializer\n\n\nconcise.initializers.PSSMKernelInitializer(pwm_list=[], stddev=0.05, seed=None, background_probs={'T': 0.25, 'G': 0.25, 'A': 0.25, 'C': 0.25})\n\n\n\n\ntruncated normal distribution shifted by a PSSM\n\n\nArguments\n\n\n\n\npwm_list\n: a list of PWM's or motifs\n\n\nstddev\n: a python scalar or a scalar tensor. Standard deviation of the\n  random values to generate.\n\n\nseed\n: A Python integer. Used to seed the random generator.\n\n\nbackground_probs\n: A dictionary of background probabilities.\n\n\nDefault\n: \n{'A': .25, 'C': .25, 'G': .25, 'T': .25}\n\n\n\n\n\n\n\n\n\n\n[source]\n\n\nPWMBiasInitializer\n\n\nconcise.initializers.PWMBiasInitializer(pwm_list=[], kernel_size=None, mean_max_scale=0.0)\n\n\n\n\n\n\n[source]\n\n\nPWMKernelInitializer\n\n\nconcise.initializers.PWMKernelInitializer(pwm_list=[], stddev=0.05, seed=None)\n\n\n\n\ntruncated normal distribution shifted by a PWM\n\n\nArguments\n\n\n\n\npwm_list\n: a list of PWM's or motifs\n\n\nstddev\n: a python scalar or a scalar tensor. Standard deviation of the\n  random values to generate.\n\n\nseed\n: A Python integer. Used to seed the random generator.",
+            "title": "Initializers"
+        },
+        {
+            "location": "/initializers/#pssmbiasinitializer",
+            "text": "concise.initializers.PSSMBiasInitializer(pwm_list=[], kernel_size=None, mean_max_scale=0.0, background_probs={'T': 0.25, 'G': 0.25, 'A': 0.25, 'C': 0.25})   [source]",
+            "title": "PSSMBiasInitializer"
+        },
+        {
+            "location": "/initializers/#pssmkernelinitializer",
+            "text": "concise.initializers.PSSMKernelInitializer(pwm_list=[], stddev=0.05, seed=None, background_probs={'T': 0.25, 'G': 0.25, 'A': 0.25, 'C': 0.25})  truncated normal distribution shifted by a PSSM  Arguments   pwm_list : a list of PWM's or motifs  stddev : a python scalar or a scalar tensor. Standard deviation of the\n  random values to generate.  seed : A Python integer. Used to seed the random generator.  background_probs : A dictionary of background probabilities.  Default :  {'A': .25, 'C': .25, 'G': .25, 'T': .25}      [source]",
+            "title": "PSSMKernelInitializer"
+        },
+        {
+            "location": "/initializers/#pwmbiasinitializer",
+            "text": "concise.initializers.PWMBiasInitializer(pwm_list=[], kernel_size=None, mean_max_scale=0.0)   [source]",
+            "title": "PWMBiasInitializer"
+        },
+        {
+            "location": "/initializers/#pwmkernelinitializer",
+            "text": "concise.initializers.PWMKernelInitializer(pwm_list=[], stddev=0.05, seed=None)  truncated normal distribution shifted by a PWM  Arguments   pwm_list : a list of PWM's or motifs  stddev : a python scalar or a scalar tensor. Standard deviation of the\n  random values to generate.  seed : A Python integer. Used to seed the random generator.",
+            "title": "PWMKernelInitializer"
+        },
+        {
+            "location": "/regularizers/",
+            "text": "[source]\n\n\nGAMRegularizer\n\n\nconcise.regularizers.GAMRegularizer(n_bases=10, spline_order=2, l2_smooth=0.0, l2=0.0)",
+            "title": "Regularizers"
+        },
+        {
+            "location": "/regularizers/#gamregularizer",
+            "text": "concise.regularizers.GAMRegularizer(n_bases=10, spline_order=2, l2_smooth=0.0, l2=0.0)",
+            "title": "GAMRegularizer"
+        },
+        {
+            "location": "/utils/fasta/",
+            "text": "write_fasta\n\n\nwrite_fasta(file_path, seq_list, name_list=None)\n\n\n\n\nWrite fasta to file\n\n\n\n\niter_fasta\n\n\niter_fasta(file_path)\n\n\n\n\nReturns an iterator over the fasta file\n\n\nmodified from Brent Pedersen\nCorrect Way To Parse A Fasta File In Python\ngiven a fasta file. yield tuples of header, sequence\n\n\n\n\n_Usage\n_:\n\n\n\n\n\n\nfasta = fasta_iter(\"hg19.fa\")\nfor header, seq in fasta:\n  print(header)\n\n\n\n\n\n\nread_fasta\n\n\nread_fasta(file_path)\n\n\n\n\nRead the fasta file as ordered dictionary",
+            "title": "Fasta"
+        },
+        {
+            "location": "/utils/fasta/#write_fasta",
+            "text": "write_fasta(file_path, seq_list, name_list=None)  Write fasta to file",
+            "title": "write_fasta"
+        },
+        {
+            "location": "/utils/fasta/#iter_fasta",
+            "text": "iter_fasta(file_path)  Returns an iterator over the fasta file  modified from Brent Pedersen\nCorrect Way To Parse A Fasta File In Python\ngiven a fasta file. yield tuples of header, sequence   _Usage _:    fasta = fasta_iter(\"hg19.fa\")\nfor header, seq in fasta:\n  print(header)",
+            "title": "iter_fasta"
+        },
+        {
+            "location": "/utils/fasta/#read_fasta",
+            "text": "read_fasta(file_path)  Read the fasta file as ordered dictionary",
+            "title": "read_fasta"
+        },
+        {
+            "location": "/utils/model_data/",
+            "text": "test_len\n\n\ntest_len(train)\n\n\n\n\nTest if all the elements in the training have the same shape[0]\n\n\n\n\nsplit_train_test_idx\n\n\nsplit_train_test_idx(train, valid_split=0.2, stratified=False, random_state=None)\n\n\n\n\nReturn indicies for train-test split\n\n\n\n\nsplit_KFold_idx\n\n\nsplit_KFold_idx(train, cv_n_folds=5, stratified=False, random_state=None)\n\n\n\n\nGet k-fold indices generator\n\n\n\n\nsubset\n\n\nsubset(train, idx, keep_other=True)\n\n\n\n\nSubset the (train, test) data tuple, each of the form:\n- list, np.ndarray\n- tuple, np.ndarray\n- dictionary, np.ndarray\n- np.ndarray, np.ndarray\n\n\nIn case there are other data present in the tuple:\n(train, test, other1, other2, ...), these get passed on as:\n(train_sub, test_sub, other1, other2)\n\n\nidx = indices to subset the data with\n\n\nFurther fields are ignored",
+            "title": "Model Data"
+        },
+        {
+            "location": "/utils/model_data/#test_len",
+            "text": "test_len(train)  Test if all the elements in the training have the same shape[0]",
+            "title": "test_len"
+        },
+        {
+            "location": "/utils/model_data/#split_train_test_idx",
+            "text": "split_train_test_idx(train, valid_split=0.2, stratified=False, random_state=None)  Return indicies for train-test split",
+            "title": "split_train_test_idx"
+        },
+        {
+            "location": "/utils/model_data/#split_kfold_idx",
+            "text": "split_KFold_idx(train, cv_n_folds=5, stratified=False, random_state=None)  Get k-fold indices generator",
+            "title": "split_KFold_idx"
+        },
+        {
+            "location": "/utils/model_data/#subset",
+            "text": "subset(train, idx, keep_other=True)  Subset the (train, test) data tuple, each of the form:\n- list, np.ndarray\n- tuple, np.ndarray\n- dictionary, np.ndarray\n- np.ndarray, np.ndarray  In case there are other data present in the tuple:\n(train, test, other1, other2, ...), these get passed on as:\n(train_sub, test_sub, other1, other2)  idx = indices to subset the data with  Further fields are ignored",
+            "title": "subset"
+        },
+        {
+            "location": "/utils/pwm/",
+            "text": "[source]\n\n\nPWM\n\n\nconcise.utils.pwm.PWM(pwm, name=None)",
+            "title": "Position weights matrix (PWM)"
+        },
+        {
+            "location": "/utils/pwm/#pwm",
+            "text": "concise.utils.pwm.PWM(pwm, name=None)",
+            "title": "PWM"
+        },
+        {
+            "location": "/utils/splines/",
+            "text": "[source]\n\n\nBSpline\n\n\nconcise.utils.splines.BSpline(start=0, end=101, n_bases=10, spline_order=3)",
+            "title": "Splines"
+        },
+        {
+            "location": "/utils/splines/#bspline",
+            "text": "concise.utils.splines.BSpline(start=0, end=101, n_bases=10, spline_order=3)",
+            "title": "BSpline"
+        },
+        {
+            "location": "/data/encode/",
+            "text": "get_metadata\n\n\nget_metadata()\n\n\n\n\n\n\nget_pwm_list\n\n\nget_pwm_list(motif_name_list, pseudocountProb=0.0001)",
+            "title": "ENCODE PWMs"
+        },
+        {
+            "location": "/data/encode/#get_metadata",
+            "text": "get_metadata()",
+            "title": "get_metadata"
+        },
+        {
+            "location": "/data/encode/#get_pwm_list",
+            "text": "get_pwm_list(motif_name_list, pseudocountProb=0.0001)",
+            "title": "get_pwm_list"
+        },
+        {
+            "location": "/data/attract/",
+            "text": "get_metadata\n\n\nget_metadata()\n\n\n\n\nGet pandas.DataFrame with metadata about the PWM's.\n\n\n\n\nColumns\n:\nPWM_id (id of the PWM - pass to get_pwm_list() for getting the pwm\nGene_name\nGene_id\nMutated (if the target gene is mutated)\nOrganism\nMotif (concsensus motif)\nLen (lenght of the motif)\nExperiment_description(when available)\nDatabase (Database from where the motifs were extracted PDB: Protein data bank, C: Cisbp-RNA, R:RBPDB, S: Spliceaid-F, AEDB:ASD)\nPubmed (pubmed ID)\nExperiment (type of experiment; short description)\nFamily (domain)\nScore (Qscore refer to the paper)\n\n\n\n\n\n\nget_pwm_list\n\n\nget_pwm_list(pwm_id_list, pseudocountProb=0.0001)",
+            "title": "ATtRACT PWMs"
+        },
+        {
+            "location": "/data/attract/#get_metadata",
+            "text": "get_metadata()  Get pandas.DataFrame with metadata about the PWM's.   Columns :\nPWM_id (id of the PWM - pass to get_pwm_list() for getting the pwm\nGene_name\nGene_id\nMutated (if the target gene is mutated)\nOrganism\nMotif (concsensus motif)\nLen (lenght of the motif)\nExperiment_description(when available)\nDatabase (Database from where the motifs were extracted PDB: Protein data bank, C: Cisbp-RNA, R:RBPDB, S: Spliceaid-F, AEDB:ASD)\nPubmed (pubmed ID)\nExperiment (type of experiment; short description)\nFamily (domain)\nScore (Qscore refer to the paper)",
+            "title": "get_metadata"
+        },
+        {
+            "location": "/data/attract/#get_pwm_list",
+            "text": "get_pwm_list(pwm_id_list, pseudocountProb=0.0001)",
+            "title": "get_pwm_list"
+        }
+    ]
+}
