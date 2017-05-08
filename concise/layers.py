@@ -27,9 +27,9 @@ from concise.preprocessing.structure import RNAplfold_PROFILES
 
 
 def InputDNA(seq_length, name=None, **kwargs):
-    """Input placeholder for array returned by encodeDNA/encodeRNA
+    """Input placeholder for array returned by `encodeDNA` or `encodeRNA`
 
-    Wrapper for: keras.layers.Input((seq_length, 4), name=name, **kwargs)
+    Wrapper for: `keras.layers.Input((seq_length, 4), name=name, **kwargs)`
     """
     return Input((seq_length, 4), name=name, **kwargs)
 
@@ -38,11 +38,11 @@ InputRNA = InputDNA
 
 
 def InputCodon(seq_length, ignore_stop_codons=True, name=None, **kwargs):
-    """Input placeholder for array returned by encodeCodon
+    """Input placeholder for array returned by `encodeCodon`
 
     Note: The seq_length is divided by 3
 
-    Wrapper for: keras.layers.Input((seq_length / 3, 61 or 61), name=name, **kwargs)
+    Wrapper for: `keras.layers.Input((seq_length / 3, 61 or 61), name=name, **kwargs)`
     """
     if ignore_stop_codons:
         vocab = CODONS
@@ -54,34 +54,34 @@ def InputCodon(seq_length, ignore_stop_codons=True, name=None, **kwargs):
 
 
 def InputAA(seq_length, name=None, **kwargs):
-    """Input placeholder for array returned by encodeAA
+    """Input placeholder for array returned by `encodeAA`
 
-    Wrapper for: keras.layers.Input((seq_length, 22), name=name, **kwargs)
+    Wrapper for: `keras.layers.Input((seq_length, 22), name=name, **kwargs)`
     """
     return Input((seq_length, len(AMINO_ACIDS)), name=name, **kwargs)
 
 
 def InputRNAStructure(seq_length, name=None, **kwargs):
-    """Input placeholder for array returned by encodeRNAStructure
+    """Input placeholder for array returned by `encodeRNAStructure`
 
-    Wrapper for: keras.layers.Input((seq_length, 5), name=name, **kwargs)
+    Wrapper for: `keras.layers.Input((seq_length, 5), name=name, **kwargs)`
     """
     return Input((seq_length, len(RNAplfold_PROFILES)), name=name, **kwargs)
 
 
 def InputSplines(seq_length, n_bases=10, name=None, **kwargs):
-    """Input placeholder for array returned by encodeSplines
+    """Input placeholder for array returned by `encodeSplines`
 
-    Wrapper for: keras.layers.Input((seq_length, n_bases), name=name, **kwargs)
+    Wrapper for: `keras.layers.Input((seq_length, n_bases), name=name, **kwargs)`
     """
     return Input((seq_length, n_bases), name=name, **kwargs)
 
 
 # TODO - deprecate
 def InputDNAQuantity(seq_length, n_features=1, name=None, **kwargs):
-    """Convenience wrapper around keras.layers.Input:
+    """Convenience wrapper around `keras.layers.Input`:
 
-    Input((seq_length, n_features), name=name, **kwargs)
+    `Input((seq_length, n_features), name=name, **kwargs)`
     """
     return Input((seq_length, n_features), name=name, **kwargs)
 
@@ -90,7 +90,7 @@ def InputDNAQuantity(seq_length, n_features=1, name=None, **kwargs):
 def InputDNAQuantitySplines(seq_length, n_bases=10, name="DNASmoothPosition", **kwargs):
     """Convenience wrapper around keras.layers.Input:
 
-    Input((seq_length, n_bases), name=name, **kwargs)
+    `Input((seq_length, n_bases), name=name, **kwargs)`
     """
     return Input((seq_length, n_bases), name=name, **kwargs)
 
@@ -284,120 +284,6 @@ class ConvCodon(ConvSequence):
 
 # --------------------------------------------
 
-
-# class ConvDNA(Conv1D):
-#     """
-#     Convenience wrapper over keras.layers.Conv1D with 2 changes:
-#     - additional argument seq_length specifying input_shape
-#     - restriction in build method: input_shape[-1] needs to be 4
-#     """
-
-#     def __init__(self, filters,
-#                  kernel_size,
-#                  strides=1,
-#                  padding='valid',
-#                  dilation_rate=1,
-#                  activation=None,
-#                  use_bias=True,
-#                  kernel_initializer='glorot_uniform',
-#                  bias_initializer='zeros',
-#                  kernel_regularizer=None,
-#                  bias_regularizer=None,
-#                  activity_regularizer=None,
-#                  kernel_constraint=None,
-#                  bias_constraint=None,
-#                  seq_length=None,
-#                  background_probs=None,
-#                  **kwargs):
-
-#         # override input shape
-#         if seq_length:
-#             kwargs["input_shape"] = (seq_length, 4)
-#             kwargs.pop("batch_input_shape", None)
-
-#         super(ConvDNA, self).__init__(
-#             filters=filters,
-#             kernel_size=kernel_size,
-#             strides=strides,
-#             padding=padding,
-#             dilation_rate=dilation_rate,
-#             activation=activation,
-#             use_bias=use_bias,
-#             kernel_initializer=kernel_initializer,
-#             bias_initializer=bias_initializer,
-#             kernel_regularizer=kernel_regularizer,
-#             bias_regularizer=bias_regularizer,
-#             activity_regularizer=activity_regularizer,
-#             kernel_constraint=kernel_constraint,
-#             bias_constraint=bias_constraint,
-#             **kwargs)
-
-#         self.seq_length = seq_length
-
-#         if background_probs is None:
-#             background_probs = DEFAULT_BASE_BACKGROUND
-#         self.background_probs = background_probs
-
-#     def build(self, input_shape):
-#         if input_shape[-1] is not 4:
-#             raise ValueError("ConvDNA requires input_shape[-1] == 4")
-#         return super(ConvDNA, self).build(input_shape)
-
-#     def get_config(self):
-#         config = super(ConvDNA, self).get_config()
-#         config["seq_length"] = self.seq_length
-#         config["background_probs"] = self.background_probs
-#         return config
-
-#     # def plotWeights(self):
-#     #     """Plot weights as matrices
-#     #     """
-#     #     pass
-
-#     # plot_as_motif
-#     # TODO - implement plotting in bits
-#     def plotMotif(self, index, figsize=(10, 2)):
-
-#         W = self.get_weights()[0]
-
-#         assert isinstance(index, int)
-#         assert index >= 0
-#         assert index < W.shape[2]
-
-#         pwm = pssm_array2pwm_array(W, self.background_probs)
-
-#         return viz_sequence.plot_weights(pwm[:, :, index], figsize=figsize)
-
-#     # TODO - rename into plot_weights(index=None),
-#     # plot_type="raw", "motif", "motif_info", "matrix" ???
-#     def plotFilter(self, index, figsize=(10, 2)):
-#         """
-
-#         Arguments:
-#             index: Which motif to plot
-#         """
-
-#         W = self.get_weights()[0]
-
-#         assert isinstance(index, int)
-#         assert index >= 0
-#         assert index < W.shape[2]
-#         return viz_sequence.plot_weights(W[:, :, index], figsize=figsize)
-
-#     def plotFilters(self, figsize=(10, 2)):
-#         """
-
-#         Arguments:
-#             indices: Index list which ones to choose
-#         """
-
-#         W = self.get_weights()[0]
-
-#         for index in range(W.shape[2]):
-#             print("filter index: {0}".format(index))
-#             viz_sequence.plot_weights(W[:, :, index], figsize=figsize)
-
-
 ############################################
 # Smoothing layers
 
@@ -421,11 +307,13 @@ class GAMSmooth(Layer):
                  **kwargs):
         """
 
-        Arguments:
+        # Arguments:
             n_splines int: Number of splines used for the positional bias.
-            spline_exp (bool): If True, the positional bias score is observed by: :code:`np.exp(spline_score)`,
-                  where :code:`spline_score` is the linear combination of B-spline basis functions. If False, :code:`np.exp(spline_score + 1)` is used.
-            l2 (float): L2 regularization strength for the second order differences in positional bias' smooth splines. (GAM smoothing regularization)
+            spline_exp (bool): If True, the positional bias score is observed by: `np.exp(spline_score)`,
+               where `spline_score` is the linear combination of B-spline basis functions.
+               If False, `np.exp(spline_score + 1)` is used.
+            l2 (float): L2 regularization strength for the second order differences in positional bias' smooth splines.
+            (GAM smoothing regularization)
             l2_smooth (float): L2 regularization strength for the spline base coefficients.
             use_bias: boolean; should we add a bias to the transition
             bias_initializer; bias initializer - from keras.initailizers
@@ -539,8 +427,7 @@ SmoothPositionWeight = GAMSmooth
 # TODO - use similar arguments to GAMSmooth (not as a thin wrapper around Conv1d)
 # TODO - fix & unit-test this layer
 class ConvSplines(Conv1D):
-    """
-    Convenience wrapper over keras.layers.Conv1D with 2 changes:
+    """Convenience wrapper over `keras.layers.Conv1D` with 2 changes:
     - additional argument seq_length specifying input_shape (as in ConvDNA)
     - restriction in kernel_regularizer - needs to be of class GAMRegularizer
     - hard-coded values:
