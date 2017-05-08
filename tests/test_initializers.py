@@ -7,9 +7,6 @@ import numpy as np
 from keras.utils.generic_utils import deserialize_keras_object, serialize_keras_object, get_custom_objects
 from keras.models import Sequential, model_from_json
 
-# TODO - test for 2 different intiailziation sets:
-# -
-
 
 @pytest.mark.parametrize("kernel_initializer,bias_initializer", [
     (ci.PWMKernelInitializer, ci.PWMBiasInitializer),
