@@ -12,31 +12,68 @@ import concise.regularizers as cr
 from concise.regularizers import GAMRegularizer
 from concise.utils.splines import BSpline
 from concise.utils.helper import get_from_module
-
+from concise.preprocessing.sequence import (DNA, RNA, AMINO_ACIDS,
+                                            CODONS, STOP_CODONS)
+from concise.preprocessing.structure import RNAplfold_PROFILES
 # TODO - improve the naming
 # TODO - unit-tests for the general case of smoothing: encodeSplines
 # TODO - write unit-tests - use synthetic dataset from motifp - check both cases encodeSplines
 
 ############################################
 
+# --------------------------------------------
+# Input()
+
 
 def InputDNA(seq_length, name=None, **kwargs):
-    """Convenience wrapper around keras.layers.Input:
+    """Input placeholder for array returned by encodeDNA/encodeRNA
 
-    Input((seq_length, 4), name=name, **kwargs)
+    Wrapper for: keras.layers.Input((seq_length, 4), name=name, **kwargs)
     """
     return Input((seq_length, 4), name=name, **kwargs)
 
 
-# TODO - implement ConvRNAStructure
-def InputRNAStructure(seq_length, name=None, **kwargs):
-    """Convenience wrapper around keras.layers.Input:
+InputRNA = InputDNA
 
-    Input((seq_length, 5), name=name, **kwargs)
+
+def InputCodon(seq_length, ignore_stop_codons=True, name=None, **kwargs):
+    """Input placeholder for array returned by encodeCodon
+
+    Wrapper for: keras.layers.Input((seq_length, 61 or 61), name=name, **kwargs)
     """
-    return Input((seq_length, 5), name=name, **kwargs)
+    if ignore_stop_codons:
+        vocab = CODONS
+    else:
+        vocab = CODONS + STOP_CODONS
+
+    return Input((seq_length, len(vocab)), name=name, **kwargs)
 
 
+def InputAA(seq_length, name=None, **kwargs):
+    """Input placeholder for array returned by encodeAA
+
+    Wrapper for: keras.layers.Input((seq_length, 22), name=name, **kwargs)
+    """
+    return Input((seq_length, len(AMINO_ACIDS)), name=name, **kwargs)
+
+
+def InputRNAStructure(seq_length, name=None, **kwargs):
+    """Input placeholder for array returned by encodeRNAStructure
+
+    Wrapper for: keras.layers.Input((seq_length, 5), name=name, **kwargs)
+    """
+    return Input((seq_length, len(RNAplfold_PROFILES)), name=name, **kwargs)
+
+
+def InputSplines(seq_length, n_bases=10, name=None, **kwargs):
+    """Input placeholder for array returned by encodeSplines
+
+    Wrapper for: keras.layers.Input((seq_length, n_bases), name=name, **kwargs)
+    """
+    return Input((seq_length, len(RNAplfold_PROFILES)), name=name, **kwargs)
+
+
+# TODO - deprecate
 def InputDNAQuantity(seq_length, n_features=1, name=None, **kwargs):
     """Convenience wrapper around keras.layers.Input:
 
@@ -45,12 +82,17 @@ def InputDNAQuantity(seq_length, n_features=1, name=None, **kwargs):
     return Input((seq_length, n_features), name=name, **kwargs)
 
 
+# TODO - deprecate
 def InputDNAQuantitySplines(seq_length, n_bases=10, name="DNASmoothPosition", **kwargs):
     """Convenience wrapper around keras.layers.Input:
 
     Input((seq_length, n_bases), name=name, **kwargs)
     """
     return Input((seq_length, n_bases), name=name, **kwargs)
+
+# --------------------------------------------
+
+# TODO - implement ConvRNAStructure
 
 
 class GlobalSumPooling1D(_GlobalPooling1D):
@@ -65,6 +107,8 @@ class GlobalSumPooling1D(_GlobalPooling1D):
     def call(self, inputs):
         return K.sum(inputs, axis=1)
 
+
+# TODO how to write a generic class for it?
 
 class ConvDNA(Conv1D):
     """
@@ -135,6 +179,7 @@ class ConvDNA(Conv1D):
     #     """
     #     pass
 
+    # plot_as_motif
     # TODO - implement plotting in bits
     def plotMotif(self, index, figsize=(10, 2)):
 
@@ -148,6 +193,8 @@ class ConvDNA(Conv1D):
 
         return viz_sequence.plot_weights(pwm[:, :, index], figsize=figsize)
 
+    # TODO - rename into plot_weights(index=None),
+    # plot_type="raw", "motif", "motif_info", "matrix" ???
     def plotFilter(self, index, figsize=(10, 2)):
         """
 
