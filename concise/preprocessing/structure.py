@@ -33,9 +33,9 @@ def run_RNAplfold(input_fasta, tmpdir, W=240, L=160, U=1):
 
         os.system(command + args)
 
+        # check if the file is empty
         if os.path.getsize(file_out) == 0:
             raise Exception("command wrote an empty file: {0}".format(file_out))
-        # TODO - check if the file is empty
     print("done!")
 
 
@@ -92,16 +92,32 @@ def wrap_encodeRNAStructure(args):
 def encodeRNAStructure(seq_vec, maxlen=None, seq_align="start",
                        W=240, L=160, U=1,
                        tmpdir="/tmp/RNAplfold/"):
-    """
-    Arguments:
-       W, Int: span - window length
-       L, Int, maxiumm span
-       U, Int, size of unpaired region
+    """Compute RNA secondary structure with RNAplfold implemented in
+    Kazan et al 2010, [doi](https://doi.org/10.1371/journal.pcbi.1000832).
 
-    Recomendation:
-    - for human, mouse use W, L, u : 240, 160, 1
-    - for fly, yeast   use W, L, u :  80,  40, 1
+    # Note
+        Secondary structure is represented as the probability
+        to be in the following states:
+        - `["Pairedness", "Hairpin loop", "Internal loop", "Multi loop", "External region"]`
+        See Kazan et al 2010, [doi](https://doi.org/10.1371/journal.pcbi.1000832)
+        for more information.
 
+
+    # Arguments
+         seq_vec: list of DNA/RNA sequences
+         maxlen, seq_align: see `pad_sequences`
+         W, Int: span - window length
+         L, Int, maxiumm span
+         U, Int, size of unpaired region
+         tmpdir: Where to store the intermediary files of RNAplfold.
+
+    # Note
+        Recommended parameters:
+        - for human, mouse use W, L, u : 240, 160, 1
+        - for fly, yeast   use W, L, u :  80,  40, 1
+
+    # Returns
+        np.ndarray of shape `(len(seq_vec), maxlen, 5)`
     """
     # extend the tmpdir with uuid string to allow for parallel execution
     tmpdir = tmpdir + "/" + str(uuid4()) + "/"

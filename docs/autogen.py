@@ -108,15 +108,21 @@ PAGES = [
         'page': 'layers.md',
         'functions': [
             layers.InputDNA,
+            layers.InputRNA,
             layers.InputRNAStructure,
-            layers.InputDNAQuantity,
-            layers.InputDNAQuantitySplines,
+            layers.InputCodon,
+            layers.InputAA,
+            layers.InputSplines,
         ],
         'classes': [
-            layers.GlobalSumPooling1D,
             layers.ConvDNA,
-            layers.GAMSmooth,
-            layers.ConvDNAQuantitySplines,
+            layers.ConvRNA,
+            layers.ConvRNAStructure,
+            layers.ConvAA,
+            layers.ConvCodon,
+            layers.ConvSplines,
+            layers.SmoothPositionWeight,
+            layers.GlobalSumPooling1D,
         ],
     },
     {
@@ -319,6 +325,7 @@ def process_function_docstring(docstring):
     docstring = docstring.replace('    ' * 4, '\t')
     docstring = docstring.replace('    ', '')
     return docstring
+
 
 print('Cleaning up existing sources directory.')
 if os.path.exists('sources'):

@@ -23,12 +23,12 @@ def _get_vocab_dict(vocab):
 def tokenize(seq, vocab, neutral_vocab=[]):
     """Convert sequence to integers
 
-    Arguments:
+    # Arguments
        seq: Sequence to encode
        vocab: Vocabulary to use
        neutral_vocab: Neutral vocabulary -> assign those values to -1
 
-    Returns:4
+    # Returns:
        List of length `len(seq)` with integers from `-1` to `len(vocab) - 1`
     """
     # Req: all vocabs have the same length
@@ -49,7 +49,7 @@ def tokenize(seq, vocab, neutral_vocab=[]):
 
 def token2one_hot(tvec, vocab_size):
     """
-    Note: everything out of the vucabulary is transformed to `np.zeros(vocab_size)`
+    Note: everything out of the vucabulary is transformed into `np.zeros(vocab_size)`
     """
     lb = sklearn.preprocessing.LabelBinarizer()
     lb.fit(range(vocab_size))
@@ -58,22 +58,22 @@ def token2one_hot(tvec, vocab_size):
 
 def encodeSequence(seq_vec, vocab, neutral_vocab, maxlen=None,
                    seq_align="start", pad_value="N", encode_type="one_hot"):
-    """Convert the sequence to one-hot-encoding.
+    """Convert the sequence into one-hot-encoding.
 
-    ## Arguments
+    # Arguments
        seq_vec: list of sequences
        vocab: list of chars: List of "words" to use as the vocabulary. Can be strings of length>0,
-    but all need to have the same length. For DNA, this is: ["A", "C", "G", "T"]
+           but all need to have the same length. For DNA, this is: ["A", "C", "G", "T"]
        neutral_vocab: list of chars: Values used to pad the sequence or represent unknown-values. For DNA, this is: ["N"].
        maxlen, seq_align: see pad_sequences
        encode_type: "one_hot" or "token". "token" represents each vocab element as a positive integer from 1 to len(vocab) + 1.
                   neutral_vocab is represented with 0.
 
-    ## Returns
-       Array with shape for encode_type:
-         - "one_hot": (len(seq_vec), maxlen, len(vocab))
-         - "token": (len(seq_vec), maxlen)
-      If maxlen is None, it gets the value of the longest sequence length from seq_vec.
+    # Returns
+        Array with shape for encode_type:
+            - "one_hot": (len(seq_vec), maxlen, len(vocab))
+            - "token": (len(seq_vec), maxlen)
+        If maxlen is None, it gets the value of the longest sequence length from seq_vec.
     """
     if isinstance(neutral_vocab, str):
         neutral_vocab = [neutral_vocab]
@@ -100,53 +100,50 @@ def encodeSequence(seq_vec, vocab, neutral_vocab, maxlen=None,
 
 
 def encodeDNA(seq_vec, maxlen=None, seq_align="start"):
-    # TODO - update description
-    """
-    Convert the DNA sequence to 1-hot-encoding numpy array
+    """Convert the DNA sequence into 1-hot-encoding numpy array
 
-    parameters
-    ----------
-    seq_vec: list of chars
-        List of sequences that can have different lengths
+    # Arguments
+        seq_vec: list of chars
+            List of sequences that can have different lengths
 
-    seq_align: character; 'end' or 'start'
-        To which end should we align sequences?
+        maxlen: int or None,
+            Should we trim (subset) the resulting sequence. If None don't trim.
+            Note that trims wrt the align parameter.
+            It should be smaller than the longest sequence.
 
-    maxlen: int or None,
-        Should we trim (subset) the resulting sequence. If None don't trim.
-        Note that trims wrt the align parameter.
-        It should be smaller than the longest sequence.
+        seq_align: character; 'end' or 'start'
+            To which end should we align sequences?
 
-    returns
-    -------
-    3D numpy array of shape (len(seq_vec), trim_seq_len(or maximal sequence length if None), 4)
+    # Returns
+        3D numpy array of shape (len(seq_vec), trim_seq_len(or maximal sequence length if None), 4)
 
-    Examples
-    --------
-    >>> sequence_vec = ['CTTACTCAGA', 'TCTTTA']
-    >>> X_seq = encodeDNA(sequence_vec, align="end", maxlen=8)
-    >>> X_seq.shape
-    (2, 8, 4)
+    # Example
 
-    >>> print(X_seq)
-     [[[ 0.  0.  0.  1.]
-       [ 1.  0.  0.  0.]
-       [ 0.  1.  0.  0.]
-       [ 0.  0.  0.  1.]
-       [ 0.  1.  0.  0.]
-       [ 1.  0.  0.  0.]
-       [ 0.  0.  1.  0.]
-       [ 1.  0.  0.  0.]] 
+        ```python
+            >>> sequence_vec = ['CTTACTCAGA', 'TCTTTA']
+            >>> X_seq = encodeDNA(sequence_vec, seq_align="end", maxlen=8)
+            >>> X_seq.shape
+            (2, 8, 4)
 
+            >>> print(X_seq)
+            [[[0 0 0 1]
+              [1 0 0 0]
+              [0 1 0 0]
+              [0 0 0 1]
+              [0 1 0 0]
+              [1 0 0 0]
+              [0 0 1 0]
+              [1 0 0 0]]
 
-      [[ 0.  0.  0.  0.]
-       [ 0.  0.  0.  0.]
-       [ 0.  0.  0.  1.]
-       [ 0.  1.  0.  0.]
-       [ 0.  0.  0.  1.]
-       [ 0.  0.  0.  1.]
-       [ 0.  0.  0.  1.]
-       [ 1.  0.  0.  0.]]]]
+             [[0 0 0 0]
+              [0 0 0 0]
+              [0 0 0 1]
+              [0 1 0 0]
+              [0 0 0 1]
+              [0 0 0 1]
+              [0 0 0 1]
+              [1 0 0 0]]]
+          ```
     """
     return encodeSequence(seq_vec,
                           vocab=DNA,
@@ -158,6 +155,8 @@ def encodeDNA(seq_vec, maxlen=None, seq_align="start"):
 
 
 def encodeRNA(seq_vec, maxlen=None, seq_align="start"):
+    """Convert the RNA sequence into 1-hot-encoding numpy array as for encodeDNA
+    """
     return encodeSequence(seq_vec,
                           vocab=RNA,
                           neutral_vocab="N",
@@ -168,6 +167,18 @@ def encodeRNA(seq_vec, maxlen=None, seq_align="start"):
 
 
 def encodeCodon(seq_vec, ignore_stop_codons=True, maxlen=None, seq_align="start", encode_type="one_hot"):
+    """Convert the Codon sequence into 1-hot-encoding numpy array
+
+    # Arguments
+        seq_vec: List of strings/DNA sequences
+        ignore_stop_codons: boolean; if True, STOP_CODONS are omitted from one-hot encoding.
+        maxlen: Maximum sequence length. See `pad_sequences` for more detail
+        seq_align: How to align the sequences of variable lengths. See `pad_sequences` for more detail
+        encode_type: can be `"one_hot"` or `token` for token encoding of codons (incremental integer ).
+
+    # Returns
+        numpy.ndarray of shape `(len(seq_vec), maxlen / 3, 61 if ignore_stop_codons else 64)`
+    """
     if ignore_stop_codons:
         vocab = CODONS
         neutral_vocab = STOP_CODONS + ["NNN"]
@@ -188,6 +199,17 @@ def encodeCodon(seq_vec, ignore_stop_codons=True, maxlen=None, seq_align="start"
 
 
 def encodeAA(seq_vec, maxlen=None, seq_align="start", encode_type="one_hot"):
+    """Convert the Amino-acid sequence into 1-hot-encoding numpy array
+
+    # Arguments
+        seq_vec: List of strings/amino-acid sequences
+        maxlen: Maximum sequence length. See `pad_sequences` for more detail
+        seq_align: How to align the sequences of variable lengths. See `pad_sequences` for more detail
+        encode_type: can be `"one_hot"` or `token` for token encoding of codons (incremental integer ).
+
+    # Returns
+        numpy.ndarray of shape `(len(seq_vec), maxlen, 22)`
+    """
     return encodeSequence(seq_vec,
                           vocab=AMINO_ACIDS,
                           neutral_vocab="_",
@@ -198,35 +220,39 @@ def encodeAA(seq_vec, maxlen=None, seq_align="start", encode_type="one_hot"):
 
 
 def pad_sequences(sequence_vec, maxlen=None, align="end", value="N"):
-    """
-    See also: https://keras.io/preprocessing/sequence/
+    """Pad and/or trim a list of sequences to have common length
 
-    1. Pad the sequence with N's or any other sequence element
+    Procedure:
+    1. Pad the sequence with N's or any other string or list element (`value`)
     2. Subset the sequence
 
-    Aplicable also for lists of characters
+    # Note
+        See also: https://keras.io/preprocessing/sequence/
+        Aplicable also for lists of characters
 
-    parameters
-    ----------
-    sequence_vec: list of chars
-        List of sequences that can have different lengths
-    value:
-        Neutral element to pad the sequence with
-    maxlen: int or None,
-        Should we trim (subset) the resulting sequence. If None don't trim.
-        Note that trims wrt the align parameter.
-        It should be smaller than the longest sequence.
-    align: character; 'end' or 'start'
-        To which end should to align the sequences.
+    # Arguments
+        sequence_vec: list of chars or lists
+            List of sequences that can have various lengths
+        value: Neutral element to pad the sequence with. Can be `str` or `list`.
+        maxlen: int or None; Final lenght of sequences.
+             If None, maxlen is set to the longest sequence length.
+        align: character; 'start', 'end' or 'center'
+            To which end to align the sequences when triming/padding. See examples bellow.
 
-    Returns
-    -------
-    List of sequences of the same class as sequence_vec
+    # Returns
+        List of sequences of the same class as sequence_vec
 
-    Examples
-    --------
-    >>> sequence_vec = ['CTTACTCAGA', 'TCTTTA']
-    >>> pad_sequences(sequence_vec, "N", 10, "start")
+    # Example
+
+        ```python
+            >>> sequence_vec = ['CTTACTCAGA', 'TCTTTA']
+            >>> pad_sequences(sequence_vec, 10, align="start", value="N")
+            ['CTTACTCAGA', 'TCTTTANNNN']
+            >>> pad_sequences(sequence_vec, 10, align="end", value="N")
+            ['CTTACTCAGA', 'NNNNTCTTTA']
+            >>> pad_sequences(sequence_vec, 4, align="center", value="N")
+            ['ACTC', 'CTTT']
+        ```
     """
 
     # neutral element type checking
@@ -287,7 +313,7 @@ def pad_sequences(sequence_vec, maxlen=None, align="end", value="N"):
             dl = seq_len - maxlen
             n_left = dl // 2 + dl % 2
             n_right = seq_len - dl // 2
-            return seq[n_left:-n_right]
+            return seq[n_left:n_right]
         else:
             raise ValueError("align can be of: end, start or center")
 

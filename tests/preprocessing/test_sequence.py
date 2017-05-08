@@ -88,3 +88,10 @@ def test_pad_sequences():
     with pytest.raises(ValueError):
         pad_sequences(sequence_vec, value="NNN", maxlen=10, align="end")
     assert len(pad_sequences(sequence_vec, value="NNN", maxlen=12, align="end")[0]) == 12
+
+
+def test_pad_sequences():
+    sequence_vec = ['CTTACTCAGA', 'TCTTTA']
+    assert pad_sequences(sequence_vec, 10, align="start", value="N") == ['CTTACTCAGA', 'TCTTTANNNN']
+    assert pad_sequences(sequence_vec, 10, align="end", value="N") == ['CTTACTCAGA', 'NNNNTCTTTA']
+    assert pad_sequences(sequence_vec, 4, align="center", value="N") == ['ACTC', 'CTTT']
