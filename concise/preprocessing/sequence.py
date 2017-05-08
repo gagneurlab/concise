@@ -175,6 +175,9 @@ def encodeCodon(seq_vec, ignore_stop_codons=True, maxlen=None, seq_align="start"
         vocab = CODONS + STOP_CODONS
         neutral_vocab = ["NNN"]
 
+    # replace all U's with A's?
+    seq_vec = [str(seq).replace("U", "T") for seq in seq_vec]
+
     return encodeSequence(seq_vec,
                           vocab=vocab,
                           neutral_vocab=neutral_vocab,

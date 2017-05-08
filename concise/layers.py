@@ -7,11 +7,12 @@ from keras.layers import Conv1D, Input
 from deeplift.visualization import viz_sequence
 import matplotlib.pyplot as plt
 
-from concise.utils.pwm import DEFAULT_BASE_BACKGROUND, pssm_array2pwm_array
+from concise.utils.pwm import DEFAULT_BASE_BACKGROUND, pssm_array2pwm_array, _pwm2pwm_info
 import concise.regularizers as cr
 from concise.regularizers import GAMRegularizer
 from concise.utils.splines import BSpline
 from concise.utils.helper import get_from_module
+from concise.utils.plot import heatmap
 from concise.preprocessing.sequence import (DNA, RNA, AMINO_ACIDS,
                                             CODONS, STOP_CODONS)
 from concise.preprocessing.structure import RNAplfold_PROFILES
@@ -39,14 +40,17 @@ InputRNA = InputDNA
 def InputCodon(seq_length, ignore_stop_codons=True, name=None, **kwargs):
     """Input placeholder for array returned by encodeCodon
 
-    Wrapper for: keras.layers.Input((seq_length, 61 or 61), name=name, **kwargs)
+    Note: The seq_length is divided by 3
+
+    Wrapper for: keras.layers.Input((seq_length / 3, 61 or 61), name=name, **kwargs)
     """
     if ignore_stop_codons:
         vocab = CODONS
     else:
         vocab = CODONS + STOP_CODONS
 
-    return Input((seq_length, len(vocab)), name=name, **kwargs)
+    assert seq_length % 3 == 0
+    return Input((seq_length / 3, len(vocab)), name=name, **kwargs)
 
 
 def InputAA(seq_length, name=None, **kwargs):
@@ -70,7 +74,7 @@ def InputSplines(seq_length, n_bases=10, name=None, **kwargs):
 
     Wrapper for: keras.layers.Input((seq_length, n_bases), name=name, **kwargs)
     """
-    return Input((seq_length, len(RNAplfold_PROFILES)), name=name, **kwargs)
+    return Input((seq_length, n_bases), name=name, **kwargs)
 
 
 # TODO - deprecate
@@ -92,9 +96,6 @@ def InputDNAQuantitySplines(seq_length, n_bases=10, name="DNASmoothPosition", **
 
 # --------------------------------------------
 
-# TODO - implement ConvRNAStructure
-
-
 class GlobalSumPooling1D(_GlobalPooling1D):
     """Global average pooling operation for temporal data.
     # Input shape
@@ -110,14 +111,19 @@ class GlobalSumPooling1D(_GlobalPooling1D):
 
 # TODO how to write a generic class for it?
 
-class ConvDNA(Conv1D):
-    """
-    Convenience wrapper over keras.layers.Conv1D with 2 changes:
-    - additional argument seq_length specifying input_shape
-    - restriction in build method: input_shape[-1] needs to be 4
+class ConvSequence(Conv1D):
+    """Convenience wrapper over keras.layers.Conv1D with 3 changes:
+
+    - plotting method: plot_weights
+    - additional argument seq_length instead of input_shape
+    - restriction in build method: input_shape[-1] needs to be the
+    same as the vocabulary size
     """
 
-    def __init__(self, filters,
+    VOCAB = DNA
+
+    def __init__(self,
+                 filters,
                  kernel_size,
                  strides=1,
                  padding='valid',
@@ -132,15 +138,14 @@ class ConvDNA(Conv1D):
                  kernel_constraint=None,
                  bias_constraint=None,
                  seq_length=None,
-                 background_probs=None,
                  **kwargs):
 
         # override input shape
         if seq_length:
-            kwargs["input_shape"] = (seq_length, 4)
+            kwargs["input_shape"] = (seq_length, len(self.VOCAB))
             kwargs.pop("batch_input_shape", None)
 
-        super(ConvDNA, self).__init__(
+        super(ConvSequence, self).__init__(
             filters=filters,
             kernel_size=kernel_size,
             strides=strides,
@@ -159,72 +164,239 @@ class ConvDNA(Conv1D):
 
         self.seq_length = seq_length
 
-        if background_probs is None:
-            background_probs = DEFAULT_BASE_BACKGROUND
-        self.background_probs = background_probs
-
     def build(self, input_shape):
-        if input_shape[-1] is not 4:
-            raise ValueError("ConvDNA requires input_shape[-1] == 4")
-        return super(ConvDNA, self).build(input_shape)
+        if input_shape[-1] is not len(self.VOCAB):
+            raise ValueError("{cls} requires input_shape[-1] == {n}".
+                             format(cls=self.__class__.__name__, n=len(self.VOCAB)))
+        return super(ConvSequence, self).build(input_shape)
 
     def get_config(self):
-        config = super(ConvDNA, self).get_config()
+        config = super(ConvSequence, self).get_config()
         config["seq_length"] = self.seq_length
-        config["background_probs"] = self.background_probs
         return config
 
-    # def plotWeights(self):
-    #     """Plot weights as matrices
-    #     """
-    #     pass
+    def _plot_weights_heatmap(self, index=None, figsize=(6, 2), **kwargs):
+        """Plot weights as a heatmap
 
-    # plot_as_motif
-    # TODO - implement plotting in bits
-    def plotMotif(self, index, figsize=(10, 2)):
-
+        index = can be a particular index or a list of indicies
+        **kwargs - additional arguments to concise.utils.plot.heatmap
+        """
         W = self.get_weights()[0]
+        if index is None:
+            index = np.arange(W.shape[2])
 
-        assert isinstance(index, int)
-        assert index >= 0
-        assert index < W.shape[2]
+        fig = heatmap(np.swapaxes(W[:, :, index], 0, 1), plot_name="filter index: ",
+                      vocab=self.VOCAB, figsize=figsize, **kwargs)
+        plt.show()
+        return fig
 
-        pwm = pssm_array2pwm_array(W, self.background_probs)
+    def plot_weights(self, index=None, plot_type="heatmap", figsize=(6, 2), **kwargs):
+        """Plot weights as a heatmap
 
-        return viz_sequence.plot_weights(pwm[:, :, index], figsize=figsize)
-
-    # TODO - rename into plot_weights(index=None),
-    # plot_type="raw", "motif", "motif_info", "matrix" ???
-    def plotFilter(self, index, figsize=(10, 2)):
+        index = can be a particular index or a list of indicies
+        **kwargs - additional arguments to concise.utils.plot.heatmap
         """
 
-        Arguments:
-            index: Which motif to plot
-        """
+        if plot_type == "heatmap":
+            return self._plot_weights_heatmap(index=index, figsize=figsize, **kwargs)
+        else:
+            raise ValueError("plot_type needs to be from {\'heatmap\', \'raw\', \'pwm\', \'pwm_info'}")
 
-        W = self.get_weights()[0]
 
-        assert isinstance(index, int)
-        assert index >= 0
-        assert index < W.shape[2]
-        return viz_sequence.plot_weights(W[:, :, index], figsize=figsize)
+class ConvDNA(ConvSequence):
+    VOCAB = DNA
 
-    def plotFilters(self, figsize=(10, 2)):
-        """
-
-        Arguments:
-            indices: Index list which ones to choose
+    def plot_weights_motif(self, index, plot_type="motif_raw",
+                           background_probs=DEFAULT_BASE_BACKGROUND,
+                           figsize=(10, 2)):
+        """Index can only be a single int
         """
 
         W = self.get_weights()[0]
+        if index is None:
+            index = np.arange(W.shape[2])
 
-        for index in range(W.shape[2]):
-            print("filter index: {0}".format(index))
-            viz_sequence.plot_weights(W[:, :, index], figsize=figsize)
+        if isinstance(index, int):
+            index = [index]
+
+        for idx in index:
+            w = W[:, :, idx]
+            if plot_type == "motif_pwm":
+                arr = pssm_array2pwm_array(w, background_probs)
+            elif plot_type == "motif_raw":
+                arr = W
+            elif plot_type == "motif_pwm_info":
+                quasi_pwm = pssm_array2pwm_array(w[:, :, np.newaxis], background_probs)
+                arr = _pwm2pwm_info(np.squeeze(quasi_pwm, -1))
+            else:
+                raise ValueError("plot_type needs to be from {\'raw\', \'pwm\', \'pwm_info'}")
+
+            if len(index) > 1:
+                print("filter index: {0}".format(index))
+            return viz_sequence.plot_weights(arr, figsize=figsize)
+
+    def plot_weights(self, index=None, plot_type="heatmap", figsize=(6, 2), **kwargs):
+        """Plot weights as a heatmap
+
+        index = can be a particular index or a list of indicies
+        **kwargs - additional arguments to concise.utils.plot.heatmap
+        """
+
+        if plot_type == "heatmap":
+            return self._plot_weights_heatmap(index=index, figsize=figsize, **kwargs)
+        elif plot_type[:5] == "motif":
+            return self.plot_weights_motif(index=index, plot_type=plot_type, figsize=figsize, **kwargs)
+        else:
+            raise ValueError("plot_type needs to be from {\'heatmap\', \'raw\', \'pwm\', \'pwm_info'}")
 
     # TODO - improve the plotting functions for motifs - refactor the viz_sequence
     #        - mutliple panels with titles
     #        - save to file if needed
+
+
+class ConvRNA(ConvDNA):
+    # TODO - implement the letter U in for plotting
+    VOCAB = RNA
+
+
+class ConvAA(ConvSequence):
+    VOCAB = AMINO_ACIDS
+
+
+class ConvRNAStructure(ConvSequence):
+    VOCAB = RNAplfold_PROFILES
+
+
+class ConvCodon(ConvSequence):
+    VOCAB = CODONS
+
+    def build(self, input_shape):
+        if input_shape[-1] not in [len(CODONS), len(CODONS + STOP_CODONS)]:
+            raise ValueError("{cls} requires input_shape[-1] == {n} or {m}".
+                             format(cls=self.__class__.__name__,
+                                    n=len(CODONS),
+                                    m=len(CODONS + STOP_CODONS)))
+
+        if input_shape[-1] == len(CODONS + STOP_CODONS):
+            self.VOCAB = CODONS + STOP_CODONS
+
+        return super(ConvSequence, self).build(input_shape)
+
+# --------------------------------------------
+
+
+# class ConvDNA(Conv1D):
+#     """
+#     Convenience wrapper over keras.layers.Conv1D with 2 changes:
+#     - additional argument seq_length specifying input_shape
+#     - restriction in build method: input_shape[-1] needs to be 4
+#     """
+
+#     def __init__(self, filters,
+#                  kernel_size,
+#                  strides=1,
+#                  padding='valid',
+#                  dilation_rate=1,
+#                  activation=None,
+#                  use_bias=True,
+#                  kernel_initializer='glorot_uniform',
+#                  bias_initializer='zeros',
+#                  kernel_regularizer=None,
+#                  bias_regularizer=None,
+#                  activity_regularizer=None,
+#                  kernel_constraint=None,
+#                  bias_constraint=None,
+#                  seq_length=None,
+#                  background_probs=None,
+#                  **kwargs):
+
+#         # override input shape
+#         if seq_length:
+#             kwargs["input_shape"] = (seq_length, 4)
+#             kwargs.pop("batch_input_shape", None)
+
+#         super(ConvDNA, self).__init__(
+#             filters=filters,
+#             kernel_size=kernel_size,
+#             strides=strides,
+#             padding=padding,
+#             dilation_rate=dilation_rate,
+#             activation=activation,
+#             use_bias=use_bias,
+#             kernel_initializer=kernel_initializer,
+#             bias_initializer=bias_initializer,
+#             kernel_regularizer=kernel_regularizer,
+#             bias_regularizer=bias_regularizer,
+#             activity_regularizer=activity_regularizer,
+#             kernel_constraint=kernel_constraint,
+#             bias_constraint=bias_constraint,
+#             **kwargs)
+
+#         self.seq_length = seq_length
+
+#         if background_probs is None:
+#             background_probs = DEFAULT_BASE_BACKGROUND
+#         self.background_probs = background_probs
+
+#     def build(self, input_shape):
+#         if input_shape[-1] is not 4:
+#             raise ValueError("ConvDNA requires input_shape[-1] == 4")
+#         return super(ConvDNA, self).build(input_shape)
+
+#     def get_config(self):
+#         config = super(ConvDNA, self).get_config()
+#         config["seq_length"] = self.seq_length
+#         config["background_probs"] = self.background_probs
+#         return config
+
+#     # def plotWeights(self):
+#     #     """Plot weights as matrices
+#     #     """
+#     #     pass
+
+#     # plot_as_motif
+#     # TODO - implement plotting in bits
+#     def plotMotif(self, index, figsize=(10, 2)):
+
+#         W = self.get_weights()[0]
+
+#         assert isinstance(index, int)
+#         assert index >= 0
+#         assert index < W.shape[2]
+
+#         pwm = pssm_array2pwm_array(W, self.background_probs)
+
+#         return viz_sequence.plot_weights(pwm[:, :, index], figsize=figsize)
+
+#     # TODO - rename into plot_weights(index=None),
+#     # plot_type="raw", "motif", "motif_info", "matrix" ???
+#     def plotFilter(self, index, figsize=(10, 2)):
+#         """
+
+#         Arguments:
+#             index: Which motif to plot
+#         """
+
+#         W = self.get_weights()[0]
+
+#         assert isinstance(index, int)
+#         assert index >= 0
+#         assert index < W.shape[2]
+#         return viz_sequence.plot_weights(W[:, :, index], figsize=figsize)
+
+#     def plotFilters(self, figsize=(10, 2)):
+#         """
+
+#         Arguments:
+#             indices: Index list which ones to choose
+#         """
+
+#         W = self.get_weights()[0]
+
+#         for index in range(W.shape[2]):
+#             print("filter index: {0}".format(index))
+#             viz_sequence.plot_weights(W[:, :, index], figsize=figsize)
+
 
 ############################################
 # Smoothing layers
@@ -356,6 +528,8 @@ class GAMSmooth(Layer):
         plt.ylabel("Positional effect")
 
 
+SmoothPositionWeight = GAMSmooth
+
 # TODO - add the plotting functionality
 # TODO - rename the layer
 # additional arguments?
@@ -364,7 +538,7 @@ class GAMSmooth(Layer):
 #
 # TODO - use similar arguments to GAMSmooth (not as a thin wrapper around Conv1d)
 # TODO - fix & unit-test this layer
-class ConvDNAQuantitySplines(Conv1D):
+class ConvSplines(Conv1D):
     """
     Convenience wrapper over keras.layers.Conv1D with 2 changes:
     - additional argument seq_length specifying input_shape (as in ConvDNA)
@@ -386,16 +560,9 @@ class ConvDNAQuantitySplines(Conv1D):
                  kernel_constraint=None,
                  bias_constraint=None,
                  activity_regularizer=None,
-                 # seq_length=None,
                  **kwargs):
 
-        # override input shape
-        # if seq_length:
-        #     # TODO - is this fine?
-        #     kwargs["input_shape"] = (seq_length, n_bases)
-        #     kwargs["batch_input_shape"] = None
-
-        super(ConvDNAQuantitySplines, self).__init__(
+        super(ConvSplines, self).__init__(
             filters=filters,
             kernel_size=1,
             strides=1,
@@ -423,10 +590,10 @@ class ConvDNAQuantitySplines(Conv1D):
         # update the regularizer
         self.kernel_regularizer.n_bases = input_shape[2]
 
-        return super(ConvDNAQuantitySplines, self).build(input_shape)
+        return super(ConvSplines, self).build(input_shape)
 
     def get_config(self):
-        config = super(ConvDNAQuantitySplines, self).get_config()
+        config = super(ConvSplines, self).get_config()
         config.pop('kernel_size')
         config.pop('strides')
         config.pop('padding')
@@ -435,8 +602,21 @@ class ConvDNAQuantitySplines(Conv1D):
         return config
 
 
-AVAILABLE = ["InputDNA", "InputRNAStructure", "InputDNAQuantity", "InputDNAQuantitySplines",
-             "GlobalSumPooling1D", "ConvDNA", "GAMSmooth", "ConvDNAQuantitySplines"]
+# backcompatibility
+ConvDNAQuantitySplines = ConvSplines
+
+
+AVAILABLE = ["InputDNA", "ConvDNA",
+             "InputRNA", "ConvRNA",
+             "InputCodon", "ConvCodon",
+             "InputAA", "ConvAA",
+             "InputRNAStructure", "ConvRNAStructure",
+             "InputSplines", "ConvSplines",
+             "GlobalSumPooling1D",
+             "SmoothPositionWeight",
+             # legacy
+             "InputDNAQuantitySplines", "InputDNAQuantity",
+             "GAMSmooth", "ConvDNAQuantitySplines"]
 
 
 def get(name):

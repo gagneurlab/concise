@@ -116,9 +116,7 @@ class PWM(object):
     def plotPWMInfo(self, figsize=(10, 2)):
         pwm = self.pwm
 
-        H = - np.sum(pwm * np.log2(pwm), axis=1)
-        R = np.log2(4) - H
-        info = pwm * R.reshape([-1, 1])
+        info = _pwm2pwm_info(pwm)
         # TODO add ylab
         return viz_sequence.plot_weights(info, figsize=figsize)
 
@@ -130,6 +128,13 @@ class PWM(object):
     def plotPSSM(self, background_probs=DEFAULT_BASE_BACKGROUND, figsize=(10, 2)):
         pssm = self.get_pssm()
         return viz_sequence.plot_weights(pssm, figsize=figsize)
+
+
+def _pwm2pwm_info(pwm):
+    H = - np.sum(pwm * np.log2(pwm), axis=1)
+    R = np.log2(4) - H
+    info = pwm * R.reshape([-1, 1])
+    return info
 
 
 def _check_background_probs(background_probs):

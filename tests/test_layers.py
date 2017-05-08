@@ -1,9 +1,11 @@
 """
 test layer saving and loading
 """
-
+import pytest
 import numpy as np
-from concise.preprocessing import encodeDNA, encodeSplines
+from concise.preprocessing import (encodeDNA, encodeSplines,
+                                   encodeRNA, encodeAA, encodeCodon,
+                                   encodeRNAStructure)
 import concise.layers as cl
 import concise.initializers as ci
 import concise.regularizers as cr
@@ -47,18 +49,54 @@ def test_convDNA(tmpdir):
     m = load_model(filepath)
     assert isinstance(m, Model)
 
-def test_ConvDNAQuantitySplines(tmpdir):
+
+@pytest.mark.parametrize("seq, encodeSEQ, InputSEQ, ConvSEQ", [
+    (["ACTTGAATA"], encodeDNA, cl.InputDNA, cl.ConvDNA),
+    (["ACUUGAAUA"], encodeRNA, cl.InputRNA, cl.ConvRNA),
+    (["ACTTGAATA"], encodeCodon, cl.InputCodon, cl.ConvCodon),
+    (["ACTTGAATA"], encodeRNAStructure, cl.InputRNAStructure, cl.ConvRNAStructure),
+    (["ARNBCEQ"], encodeAA, cl.InputAA, cl.ConvAA),
+    (np.array([[1, 2, 3, 4, 5]]), encodeSplines, cl.InputSplines, cl.ConvSplines),
+])
+def test_all_layers(seq, encodeSEQ, InputSEQ, ConvSEQ, tmpdir):
+    seq_length = len(seq[0])
+
+    # pre-process
+    train_x = encodeSEQ(seq)
+    train_y = np.array([[1]])
+    print(train_x.shape)
+
+    # build model
+    inp = InputSEQ(seq_length=seq_length)
+    if ConvSEQ == cl.ConvSplines:
+        x = ConvSEQ(filters=1)(inp)
+    else:
+        x = ConvSEQ(filters=1, kernel_size=1)(inp)
+    x = cl.GlobalSumPooling1D()(x)
+    m = Model(inp, x)
+    m.summary()
+    m.compile("adam", loss="mse")
+
+    m.fit(train_x, train_y)
+
+    filepath = str(tmpdir.mkdir('data').join('test_keras.h5'))
+
+    print(tmpdir)
+    m.save(filepath)
+    m = load_model(filepath)
+    assert isinstance(m, Model)
+
+
+def test_ConvSplines(tmpdir):
 
     x_pos = np.vstack([np.arange(15), np.arange(15)])
     y = np.arange(2)
 
     x = encodeSplines(x_pos)
 
-    inl = cl.InputDNAQuantitySplines(15, 10)
-    # TODO - fix this unit-test - changed dimentions order?
-    o = cl.ConvDNAQuantitySplines(1,
-                                  kernel_regularizer=cr.GAMRegularizer(l2_smooth=.5),
-                                  )(inl)
+    inl = cl.InputSplines(15, 10)
+    o = cl.ConvSplines(1, kernel_regularizer=cr.GAMRegularizer(l2_smooth=.5),
+                       )(inl)
     o = cl.GlobalSumPooling1D()(o)
 
     model = Model(inl, o)
