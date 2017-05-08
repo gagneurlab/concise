@@ -45,9 +45,10 @@ def test_correct_initialization(kernel_initializer, bias_initializer):
     b
     assert b.shape == (128,)  # (filters,)
 
-    mean_larger_zero = np.mean(np.sum(np.mean(w, axis=1), axis=0) + b > 0)
-    assert mean_larger_zero > .3
-    assert mean_larger_zero < .7
+    if kernel_initializer == ci.PWMKernelInitializer:
+        mean_larger_zero = np.mean(np.sum(np.mean(w, axis=1), axis=0) + b > 0)
+        assert mean_larger_zero > .3
+        assert mean_larger_zero < .7
 
 
 @pytest.mark.parametrize("kernel_initializer,bias_initializer", [
