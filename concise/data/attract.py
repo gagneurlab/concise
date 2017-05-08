@@ -85,5 +85,5 @@ def get_pwm_list(pwm_id_list, pseudocountProb=0.0001):
     l = LoadedAttractMotifs(ATTRACT_PWM, pseudocountProb=pseudocountProb)
 
     # sidna_pwm_list = [l[m_id] for m_id in matrix_id_list]
-    pwm_list = [PWM(l.loadedMotifs[m_id].getRows(), name=m_id) for m_id in pwm_id_list]
+    pwm_list = [PWM(l.loadedMotifs[str(m_id)].getRows(), name=m_id) for m_id in pwm_id_list]
     return pwm_list
