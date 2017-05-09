@@ -26,7 +26,11 @@ def _check_pwm_list(pwm_list):
             raise TypeError("element {0} of pwm_list is not of type PWM".format(pwm))
     return True
 
-def _truncated_normal(mean, stddev, seed=None, normalize=True):
+def _truncated_normal(mean,
+                      stddev,
+                      seed=None,
+                      normalize=True,
+                      alpha=0.01):
     ''' Add noise with truncnorm from numpy.
     Bounded (0.001,0.999)
     '''
@@ -37,7 +41,9 @@ def _truncated_normal(mean, stddev, seed=None, normalize=True):
     if stddev == 0:
         X = mean
     else:
-        gen_X = truncnorm((0.01 - mean) / stddev, (0.99 - mean) / stddev, loc=mean, scale=stddev)
+        gen_X = truncnorm((alpha - mean) / stddev,
+                          ((1 - alpha) - mean) / stddev,
+                          loc=mean, scale=stddev)
         X = gen_X.rvs() + mean
         if normalize:
             # Normalize, column sum to 1
@@ -117,7 +123,7 @@ class PSSMKernelInitializer(Initializer):
 
     def __init__(self, pwm_list=[], stddev=0.05, seed=None,
                  background_probs=DEFAULT_BASE_BACKGROUND,
-                 addNoiseBeforePwm2Pssm=True):
+                 add_noise_before_Pwm2Pssm=True):
         if len(pwm_list) > 0 and isinstance(pwm_list[0], dict):
             pwm_list = [PWM.from_config(pwm) for pwm in pwm_list]
 
@@ -126,14 +132,14 @@ class PSSMKernelInitializer(Initializer):
         self.stddev = stddev
         self.seed = seed
         self.background_probs = background_probs
-        self.addNoiseBeforePwm2Pssm = addNoiseBeforePwm2Pssm
+        self.add_noise_before_Pwm2Pssm = add_noise_before_Pwm2Pssm
 
     def __call__(self, shape, dtype=None):
         # print("PWMKernelInitializer shape: ", shape)
 
         pwm = pwm_list2pwm_array(self.pwm_list, shape, dtype, self.background_probs)
 
-        if self.addNoiseBeforePwm2Pssm:
+        if self.add_noise_before_Pwm2Pssm:
             # add noise with numpy truncnorm function
             pwm = _truncated_normal(mean=pwm,
                                     stddev=self.stddev,
