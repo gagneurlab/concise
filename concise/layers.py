@@ -212,7 +212,10 @@ class ConvDNA(ConvSequence):
         """Index can only be a single int
         """
 
-        W = self.get_weights()[0]
+        w_all = self.get_weights()
+        if len(w_all) == 0:
+            raise Exception("Layer needs to be initialized first")
+        W = w_all[0]
         if index is None:
             index = np.arange(W.shape[2])
 
@@ -222,9 +225,9 @@ class ConvDNA(ConvSequence):
         for idx in index:
             w = W[:, :, idx]
             if plot_type == "motif_pwm":
-                arr = pssm_array2pwm_array(w, background_probs)
+                arr = pssm_array2pwm_array(w[:, :, np.newaxis], background_probs)
             elif plot_type == "motif_raw":
-                arr = W
+                arr = w
             elif plot_type == "motif_pwm_info":
                 quasi_pwm = pssm_array2pwm_array(w[:, :, np.newaxis], background_probs)
                 arr = _pwm2pwm_info(np.squeeze(quasi_pwm, -1))
@@ -235,7 +238,7 @@ class ConvDNA(ConvSequence):
                 print("filter index: {0}".format(index))
             viz_sequence.plot_weights(arr, figsize=figsize)
 
-    def plot_weights(self, index=None, plot_type="heatmap", figsize=(6, 2), **kwargs):
+    def plot_weights(self, index=None, plot_type="motif_raw", figsize=(6, 2), **kwargs):
         """Plot weights as a heatmap
 
         index = can be a particular index or a list of indicies
