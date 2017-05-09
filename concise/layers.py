@@ -233,7 +233,7 @@ class ConvDNA(ConvSequence):
 
             if len(index) > 1:
                 print("filter index: {0}".format(index))
-            return viz_sequence.plot_weights(arr, figsize=figsize)
+            viz_sequence.plot_weights(arr, figsize=figsize)
 
     def plot_weights(self, index=None, plot_type="heatmap", figsize=(6, 2), **kwargs):
         """Plot weights as a heatmap
