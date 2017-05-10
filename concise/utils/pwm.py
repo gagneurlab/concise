@@ -131,6 +131,11 @@ class PWM(object):
 
 
 def _pwm2pwm_info(pwm):
+    # normalize pwm to sum 1,
+    # otherwise pwm is not a valid distribution
+    # then info has negative values
+    col_sums = pwm.sum(1)
+    pwm = pwm / col_sums[:, np.newaxis]
     H = - np.sum(pwm * np.log2(pwm), axis=1)
     R = np.log2(4) - H
     info = pwm * R.reshape([-1, 1])
