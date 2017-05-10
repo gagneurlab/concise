@@ -148,6 +148,7 @@ class PSSMKernelInitializer(Initializer):
             pssm = pwm_array2pssm_array(pwm, background_probs=self.background_probs)
 
             # Force sttdev to be 0, because noise already added. May just use tf.Variable(pssm)
+            # return K.Variable(pssm) # this raise error
             return K.truncated_normal(shape,
                                       mean=pssm,
                                       stddev=0,
