@@ -4,6 +4,18 @@ Pre-processor for smooth tracks
 import numpy as np
 from concise.utils.splines import BSpline
 
+
+def _trunc(x, minval=None, maxval=None):
+    """Truncate vector values to have values on range [minval, maxval]
+    """
+    x = np.copy(x)
+    if minval is not None:
+        x[x < minval] = minval
+    if maxval is not None:
+        x[x > maxval] = maxval
+    return x
+
+
 # TODO - use as pre-processor function? - predict for the test set
 def encodeSplines(x, n_bases=10, spline_order=3, start=None, end=None):
     """Get B-spline base-function expansion
@@ -26,10 +38,21 @@ def encodeSplines(x, n_bases=10, spline_order=3, start=None, end=None):
         `np.ndarray` of shape `(x.shape[0], x.shape[1], n_bases)`
     """
 
+    if len(x.shape) == 1:
+        x = x.reshape((-1, 1))
+
     if start is None:
         start = np.nanmin(x)
+    else:
+        if x.min() < start:
+            print("WARNING, x.min() < start for some elements. Truncating them to start: x[x < start] = start")
+            x = _trunc(x, minval=start)
     if end is None:
         end = np.nanmax(x)
+    else:
+        if x.max() > end:
+            print("WARNING, x.max() > end for some elements. Truncating them to end: x[x > end] = end")
+            x = _trunc(x, maxval=end)
     bs = BSpline(start, end,
                  n_bases=n_bases,
                  spline_order=spline_order
