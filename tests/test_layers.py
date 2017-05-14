@@ -11,7 +11,7 @@ import concise.initializers as ci
 import concise.regularizers as cr
 import concise.metrics as cm
 from concise.utils import PWM
-from keras.models import Model
+from keras.models import Model, Sequential
 import keras.layers as kl
 from keras.models import load_model, Model
 
@@ -49,6 +49,11 @@ def test_convDNA(tmpdir):
     m = load_model(filepath)
     assert isinstance(m, Model)
 
+def test_convDNA_sequential():
+    m = Sequential([
+        cl.ConvDNA(filters=1, kernel_size=10, seq_length=100)
+    ])
+    m.compile("adam", loss="binary_crossentropy")
 
 @pytest.mark.parametrize("seq, encodeSEQ, InputSEQ, ConvSEQ", [
     (["ACTTGAATA"], encodeDNA, cl.InputDNA, cl.ConvDNA),

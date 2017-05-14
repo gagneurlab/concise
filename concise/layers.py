@@ -166,8 +166,8 @@ class ConvSequence(Conv1D):
 
     def build(self, input_shape):
         if input_shape[-1] is not len(self.VOCAB):
-            raise ValueError("{cls} requires input_shape[-1] == {n}".
-                             format(cls=self.__class__.__name__, n=len(self.VOCAB)))
+            raise ValueError("{cls} requires input_shape[-1] == {n}. Given: {s}".
+                             format(cls=self.__class__.__name__, n=len(self.VOCAB), s=input_shape[-1]))
         return super(ConvSequence, self).build(input_shape)
 
     def get_config(self):

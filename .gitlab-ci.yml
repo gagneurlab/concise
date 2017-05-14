@@ -4,9 +4,6 @@ image: avsecz/tox-mongo
 # image: python:3.5
 
 py.test:
-  only:
-    - master
-    - /^devel.*$/
   before_script:
     #- apt-get -y update
     #- apt-get install -y gfortran
