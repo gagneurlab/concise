@@ -6,7 +6,7 @@ from concise.utils.helper import get_from_module
 
 class GAMRegularizer(Regularizer):
 
-    def __init__(self, n_bases=10, spline_order=2, l2_smooth=0., l2=0.):
+    def __init__(self, n_bases=10, spline_order=3, l2_smooth=0., l2=0.):
         """Regularizer for GAM's
         # Arguments
             n_bases: number of b-spline bases

@@ -85,7 +85,7 @@ class BSpline():
 # core functions
 
 
-def get_gam_splines(start=0, end=100, n_bases=10, spline_order=2, add_intercept=True):
+def get_gam_splines(start=0, end=100, n_bases=10, spline_order=3, add_intercept=True):
     """Main function required by (TF)Concise class
     """
     # make sure n_bases is an int
@@ -106,7 +106,7 @@ def get_gam_splines(start=0, end=100, n_bases=10, spline_order=2, add_intercept=
 # helper functions
 # main resource:
 # https://github.com/cran/mgcv/blob/master/R/smooth.r#L1560
-def get_knots(start, end, n_bases=10, spline_order=2):
+def get_knots(start, end, n_bases=10, spline_order=3):
     """
     Arguments:
         x; np.array of dim 1
@@ -127,7 +127,7 @@ def get_knots(start, end, n_bases=10, spline_order=2):
 
 
 # - get knots as arguments
-def get_X_spline(x, knots, n_bases=10, spline_order=2, add_intercept=True):
+def get_X_spline(x, knots, n_bases=10, spline_order=3, add_intercept=True):
     """
     Returns:
         np.array of shape [len(x), n_bases + (add_intercept)]
@@ -159,7 +159,7 @@ def get_X_spline(x, knots, n_bases=10, spline_order=2, add_intercept=True):
     return X.astype(np.float32)
 
 
-def get_S(n_bases=10, spline_order=2, add_intercept=True):
+def get_S(n_bases=10, spline_order=3, add_intercept=True):
     # mvcv R-code
     # S<-diag(object$bs.dim);
     # if (m[2]) for (i in 1:m[2]) S <- diff(S)
