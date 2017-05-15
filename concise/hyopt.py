@@ -64,14 +64,17 @@ def test_fn(fn, hyper_params, n_train=1000, tmp_dir="/tmp/concise_hyopt_test/"):
     2. Correct save/load model to disk
 
     # Arguments
-
+        fn: CompileFN instance
+        hyper_params: pyll graph of hyper-parameters - as later provided to `hyperopt.fmin`
         n_train: int, number of training points
+        tmp_dir: Temporary path where to write the trained model.
     """
     def wrap_data_fn(data_fn, n_train=100):
         def new_data_fn(*args, **kwargs):
-            train, test = data_fn(*args, **kwargs)
-            train = subset(train, np.arange(n_train))
-            return train, test
+            data = data_fn(*args, **kwargs)
+            train = data[0]
+            train = subset(train, idx=np.arange(min(n_train, train[1].shape[0])))
+            return train, data[1]
         return new_data_fn
     start_time = datetime.now()
     fn = deepcopy(fn)
