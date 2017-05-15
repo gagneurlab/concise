@@ -86,8 +86,6 @@ def test_ism():
     #
     for p in param_sets:
         preds = ism(**p)
-        import pdb
-        pdb.set_trace()
         assert(isinstance(preds, dict))
         assert(np.all(np.in1d(["ism"], list(preds.keys()))))
         for k in preds:
