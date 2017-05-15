@@ -1,6 +1,6 @@
 """Train the models
 """
-from keras.callbacks import EarlyStopping, History, TensorBoard
+from keras.callbacks import EarlyStopping, History, TensorBoard, ModelCheckpoint
 from keras.models import load_model
 import hyperopt
 from hyperopt.utils import coarse_utcnow
@@ -80,7 +80,7 @@ def test_fn(fn, hyper_params, n_train=1000, tmp_dir="/tmp/concise_hyopt_test/"):
     fn = deepcopy(fn)
     hyper_params = deepcopy(hyper_params)
     fn.save_dir = tmp_dir
-    fn.save_model = True
+    fn.save_model = "best"
     fn.data_fn = wrap_data_fn(fn.data_fn, n_train)
 
     # sample from hyper_params
@@ -391,7 +391,7 @@ class CompileFN():
                  random_state=None,
                  # saving
                  use_tensorboard=False,
-                 save_model=True,
+                 save_model="best",
                  save_results=True,
                  save_dir=DEFAULT_SAVE_DIR,
                  ):
@@ -424,7 +424,9 @@ class CompileFN():
             stratified: boolean. If True, use stratified data splitting in train-validation split or cross-validation.
             random_state: Random seed for performing data-splits.
             use_tensorboard: If True, tensorboard callback is used. Each trial is written into a separate `log_dir`.
-            save_model: If True, the trained model is saved to the `save_dir` directory as hdf5 file.
+            save_model: It not None, the trained model is saved to the `save_dir` directory as hdf5 file.
+                        If save_model="best", save the best model using `keras.callbacks.ModelCheckpoint`, and
+                        if save_model="last", save the model after training it.
             save_results: If True, the return value is saved as .json to the `save_dir` directory.
             save_dir: Path to the save directory.
         """
@@ -437,6 +439,7 @@ class CompileFN():
             self.add_eval_metrics = {_to_string(fn_str): _get_ce_fun(fn_str)
                                      for fn_str in add_eval_metrics}
         assert isinstance(loss_metric, str)
+
         self.loss_metric = loss_metric
         assert loss_metric_mode in ["min", "max"]
         self.loss_metric_mode = loss_metric_mode
@@ -453,8 +456,15 @@ class CompileFN():
         # saving
         self.use_tensorboard = use_tensorboard
         self.save_dir = save_dir
-        self.save_model = save_model
+        self.save_model = save_model if save_model is not None else ""
         self.save_results = save_results
+
+        # backcompatibility
+        if self.save_model is True:
+            self.save_model = "last"
+        elif self.save_model is False:
+            self.save_model = ""
+        assert self.save_model in ["", "last", "best"]
 
     @property
     def save_dir_exp(self):
@@ -531,15 +541,21 @@ class CompileFN():
                 valid_data = subset(train, valid_idx)
             else:
                 train_data = train
+
+            c_callbacks = deepcopy(callbacks)
+            if self.save_model == "best":
+                c_callbacks += [ModelCheckpoint(model_path,
+                                                monitor=param["fit"]["early_stop_monitor"],
+                                                save_best_only=True)]
             eval_metrics, history = _train_and_eval_single(train=train_data,
                                                            valid=valid_data,
                                                            model=model,
                                                            epochs=param["fit"]["epochs"],
                                                            batch_size=param["fit"]["batch_size"],
                                                            use_weight=param["fit"].get("use_weight", False),
-                                                           callbacks=deepcopy(callbacks),
+                                                           callbacks=c_callbacks,
                                                            add_eval_metrics=self.add_eval_metrics)
-            if model_path:
+            if self.save_model == "last":
                 model.save(model_path)
         else:
             # cross-validation
@@ -552,19 +568,25 @@ class CompileFN():
                 logger.info("Fold {0}/{1}".format(i + 1, self.cv_n_folds))
                 model = get_model(self.model_fn, subset(train, train_idx), param)
                 self._assert_loss_metric(model)
+                c_model_path = model_path.replace(".h5", "_fold_{0}.h5".format(i))
+                c_callbacks = deepcopy(callbacks)
+                if self.save_model == "best":
+                    c_callbacks += [ModelCheckpoint(c_model_path,
+                                                    monitor=param["fit"]["early_stop_monitor"],
+                                                    save_best_only=True)]
                 eval_m, history_elem = _train_and_eval_single(train=subset(train, train_idx),
                                                               valid=subset(train, valid_idx),
                                                               model=model,
                                                               epochs=param["fit"]["epochs"],
                                                               batch_size=param["fit"]["batch_size"],
                                                               use_weight=param["fit"].get("use_weight", False),
-                                                              callbacks=deepcopy(callbacks),
+                                                              callbacks=c_callbacks,
                                                               add_eval_metrics=self.add_eval_metrics)
                 print("\n")
                 eval_metrics_list.append(eval_m)
                 history.append(history_elem)
-                if model_path:
-                    model.save(model_path.replace(".h5", "_fold_{0}.h5".format(i)))
+                if self.save_model == "last":
+                    model.save(c_model_path)
             # summarize metrics - take average accross folds
             eval_metrics = _mean_dict(eval_metrics_list)
 
