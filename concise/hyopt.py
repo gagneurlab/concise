@@ -340,7 +340,9 @@ def eval_model(model, test, add_eval_metrics={}):
     # evaluate the model
     logger.info("Evaluate...")
     # - model_metrics
-    model_metrics_values = model.evaluate(test[0], test[1], verbose=0)
+    model_metrics_values = model.evaluate(test[0], test[1], verbose=0,
+                                          batch_size=test[1].shape[0])
+    # evaluation is done in a single pass to have more precise metics
     model_metrics = dict(zip(_listify(model.metrics_names),
                              _listify(model_metrics_values)))
     # - eval_metrics
