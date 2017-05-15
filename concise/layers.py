@@ -4,6 +4,7 @@ from keras.engine.topology import Layer
 from keras import initializers
 from keras.layers.pooling import _GlobalPooling1D
 from keras.layers import Conv1D, Input
+from keras.layers.core import Dropout
 from deeplift.visualization import viz_sequence
 import matplotlib.pyplot as plt
 
@@ -491,6 +492,45 @@ class ConvSplines(Conv1D):
         # config["seq_length"] = self.seq_length
         return config
 
+class BiDropout(Dropout):
+    """Applies Dropout to the input, no matter if in learning phase or not.
+    """
+
+    def __init__(self, bi_dropout=True, **kwargs):
+        # __init__(self, rate, noise_shape=None, seed=None, **kwargs)
+        super(BiDropout, self).__init__(**kwargs)
+        self.bi_dropout = bi_dropout
+
+    #
+    def call(self, inputs, training=None):
+        if 0. < self.rate < 1.:
+            noise_shape = self._get_noise_shape(inputs)
+
+            #
+            def dropped_inputs():
+                return K.dropout(inputs, self.rate, noise_shape, seed=self.seed)
+
+            if self.bi_dropout:
+                # K.in_train_phase returns the first argument if in training phase otherwise the second
+                # return K.in_train_phase(dropped_inputs, inputs, training=training)
+                # Taken from keras.backend.tensorflow_backend
+                if callable(dropped_inputs):
+                    return dropped_inputs()
+                else:
+                    return dropped_inputs
+            else:
+                return K.in_train_phase(dropped_inputs, inputs,
+                                        training=training)
+        return inputs
+
+    #
+    @classmethod
+    def create_from_dropout(cls, dropout_obj):
+        if not isinstance(dropout_obj, Dropout):
+            raise Exception("Only Dropout objects can be converted this way!")
+        kwargs = dropout_obj.get_config()
+        # alternatively can we use "get_config" in combination with (Layer.__init__)allowed_kwargs?
+        return cls(**kwargs)
 
 # backcompatibility
 ConvDNAQuantitySplines = ConvSplines
@@ -506,7 +546,7 @@ AVAILABLE = ["InputDNA", "ConvDNA",
              "SmoothPositionWeight",
              # legacy
              "InputDNAQuantitySplines", "InputDNAQuantity",
-             "GAMSmooth", "ConvDNAQuantitySplines"]
+             "GAMSmooth", "ConvDNAQuantitySplines", "BiDropout"]
 
 
 def get(name):
