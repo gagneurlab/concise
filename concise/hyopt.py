@@ -220,6 +220,10 @@ class CMongoTrials(MongoTrials):
                 logger.info("Job deleted")
         self.refresh_tids(None)
 
+    # def delete_trial(self, tid):
+    #     trial = self.get_trial(tid)
+    #     return self.handle.delete(trial)
+
     def valid_tid(self):
         """List all valid tid's
         """
@@ -384,20 +388,25 @@ class CompileFN():
                  stratified=False,
                  random_state=None,
                  # saving
-                 use_tensorboard=True,
+                 use_tensorboard=False,
                  save_model=True,
                  save_results=True,
                  save_dir=DEFAULT_SAVE_DIR,
                  ):
         """
         # Arguments:
-            add_eval_metrics: additional list of (global) evaluation
-                metrics. Individual element can be
+            db_name: Database name of the CMongoTrials.
+            exp_name: Experiment name of the CMongoTrials.
+            data_fn: Tuple containing training data as the x,y pair at the first (index=0) element:
+                     `((train_x, test_y), ...)`. If `valid_split` and `cv_n_folds` are both `None`,
+                     the second (index=1) tuple is used as the validation dataset.
+            add_eval_metrics: Additional list of (global) evaluation
+                metrics. Individual elements can be
                 a string (referring to concise.eval_metrics)
-                or a function taking two numpy arrays: y_true, y_pred.
+                or a function taking two numpy arrays: `y_true`, `y_pred`.
                 These metrics are ment to supplement those specified in
                 `model.compile(.., metrics = .)`.
-            loss_metric: str, metric to monitor, must be in
+            loss_metric: str; Metric to monitor. Must be in
                 `add_eval_metrics` or `model.metrics_names`.
             loss_metric_mode: one of {min, max}. In `min` mode,
                 training will stop when the metric
@@ -406,6 +415,16 @@ class CompileFN():
                 monitored has stopped increasing; in `auto`
                 mode, the direction is automatically inferred
                 from the name of the monitored metric.
+            valid_split: Fraction of the training points to use for the validation. If set to None,
+                         the second element returned by data_fn is used as the validation dataset.
+            cv_n_folds: If not None, use cross-validation with `cv_n_folds`-folds instead of train, validation split.
+                        Overrides `valid_split` and `use_data_fn_valid`.
+            stratified: boolean. If True, use stratified data splitting in train-validation split or cross-validation.
+            random_state: Random seed for performing data-splits.
+            use_tensorboard: If True, tensorboard callback is used. Each trial is written into a separate `log_dir`.
+            save_model: If True, the trained model is saved to the `save_dir` directory as hdf5 file.
+            save_results: If True, the return value is saved as .json to the `save_dir` directory.
+            save_dir: Path to the save directory.
         """
         self.data_fn = data_fn
         self.model_fn = model_fn
@@ -419,16 +438,6 @@ class CompileFN():
         self.loss_metric = loss_metric
         assert loss_metric_mode in ["min", "max"]
         self.loss_metric_mode = loss_metric_mode
-
-        # TODO - implement auto
-        # if loss_metric_mode == "auto":
-        #     # TODO - check where they are comming from
-        #     if "acc" in loss_metric or \
-        #        loss_metric.startswith("fmeasure") or \
-        #        "var_explained" in loss_metric:
-        #         metric_mode = "max"
-        #     else:
-        #         metric_mode = "min"
 
         self.data_name = data_fn.__code__.co_name
         self.model_name = model_fn.__code__.co_name
@@ -498,7 +507,11 @@ class CompileFN():
 
         # get data
         logger.info("Load data...")
-        train, _ = get_data(self.data_fn, param)
+        data = get_data(self.data_fn, param)
+        train = data[0]
+        if self.cv_n_folds is None and self.valid_split is None:
+            valid_data = data[1]
+        del data
         time_data_loaded = datetime.now()
 
         # train & evaluate the model
@@ -507,12 +520,17 @@ class CompileFN():
             model = get_model(self.model_fn, train, param)
             print(_listify(model.metrics_names))
             self._assert_loss_metric(model)
-            train_idx, valid_idx = split_train_test_idx(train,
-                                                        self.valid_split,
-                                                        self.stratified,
-                                                        self.random_state)
-            eval_metrics, history = _train_and_eval_single(train=subset(train, train_idx),
-                                                           valid=subset(train, valid_idx),
+            if self.valid_split is not None:
+                train_idx, valid_idx = split_train_test_idx(train,
+                                                            self.valid_split,
+                                                            self.stratified,
+                                                            self.random_state)
+                train_data = subset(train, train_idx)
+                valid_data = subset(train, valid_idx)
+            else:
+                train_data = train
+            eval_metrics, history = _train_and_eval_single(train=train_data,
+                                                           valid=valid_data,
                                                            model=model,
                                                            epochs=param["fit"]["epochs"],
                                                            batch_size=param["fit"]["batch_size"],
