@@ -241,6 +241,10 @@ class CMongoTrials(MongoTrials):
             plt.legend(loc='best')
         return fig
 
+    def load_model(self, tid):
+        model_path = self.get_trial(tid)["result"]["path"]["model"]
+        return load_model(model_path)
+
     def get_ok_results(self, verbose=True):
         """Return a list of results with ok status
         """
