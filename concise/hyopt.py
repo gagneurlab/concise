@@ -241,7 +241,12 @@ class CMongoTrials(MongoTrials):
             plt.legend(loc='best')
         return fig
 
-    def load_model(self, tid):
+    def load_model(self, tid=None):
+        """Load the model. If tid = None, get the best model
+        """
+        if tid is None:
+            tid = self.best_trial_tid()
+
         model_path = self.get_trial(tid)["result"]["path"]["model"]
         return load_model(model_path)
 
