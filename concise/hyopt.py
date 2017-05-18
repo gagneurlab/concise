@@ -242,6 +242,11 @@ class CMongoTrials(MongoTrials):
         return fig
 
     def load_model(self, tid):
+        """Load saved keras model of the trial
+
+        Not applicable for trials ran in cross validion (i.e. not applicable
+        for `CompileFN.cv_n_folds is None`
+        """
         model_path = self.get_trial(tid)["result"]["path"]["model"]
         return load_model(model_path)
 
