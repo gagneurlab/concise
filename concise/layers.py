@@ -236,7 +236,7 @@ class ConvDNA(ConvSequence):
                 raise ValueError("plot_type needs to be from {\'raw\', \'pwm\', \'pwm_info'}")
 
             if len(index) > 1:
-                print("filter index: {0}".format(index))
+                print("filter index: {0}".format(idx))
             viz_sequence.plot_weights(arr, figsize=figsize)
 
     def plot_weights(self, index=None, plot_type="motif_raw", figsize=(6, 2), **kwargs):
