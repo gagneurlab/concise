@@ -10,6 +10,8 @@ from concise.losses import MASK_VALUE
 
 # adopted from:
 # https://github.com/cangermueller/deepcpg/blob/master/deepcpg/metrics.py
+#
+# TODO - add Christophs license here
 
 
 def contingency_table(y, z):
@@ -115,16 +117,16 @@ def cat_acc(y, z):
 # -----
 
 
-def mse(y, z, mask=MASK_VALUE):
-    weights = _sample_weights(y, mask)
-    _mse = K.sum(K.square(y - z) * weights) / K.sum(weights)
-    return _mse
+# def mse(y, z, mask=MASK_VALUE):
+#     weights = _sample_weights(y, mask)
+#     _mse = K.sum(K.square(y - z) * weights) / K.sum(weights)
+#     return _mse
 
 
-def mae(y, z, mask=MASK_VALUE):
-    weights = _sample_weights(y, mask)
-    _mae = K.sum(K.abs(y - z) * weights) / K.sum(weights)
-    return _mae
+# def mae(y, z, mask=MASK_VALUE):
+#     weights = _sample_weights(y, mask)
+#     _mae = K.sum(K.abs(y - z) * weights) / K.sum(weights)
+#     return _mae
 
 
 def var_explained(y_true, y_pred):
@@ -142,7 +144,7 @@ BINARY_CLASS = ["tpr", "tnr", "fpr", "fnr",
                 "precision", "fdr", "recall", "sensitivity", "specificity",
                 "f1", "mcc", "accuracy"]
 CATEGORY_CLASS = ["cat_acc"]
-REGRESSION = ["var_explained", "mse", "mae"]
+REGRESSION = ["var_explained"]  # , "mse", "mae"]
 AVAILABLE = BINARY_CLASS + CATEGORY_CLASS + REGRESSION
 
 # make sure all metrics have the same __name__ (targeting aliases)

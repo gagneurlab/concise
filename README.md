@@ -1,5 +1,7 @@
 # Concise: Keras extension for regulatory genomics
 
+## 
+
 Concise (CONvolutional neural networks for CIS-regulatory Elements) is a Keras extension for regulatory genomics. 
 
 If provides functions along all the modelling steps:
@@ -8,7 +10,8 @@ If provides functions along all the modelling steps:
 2. specify the keras model: concise provides custom `layers`, `initializers` and `regularizers` useful inregulatory genomics
 3. hyper-parameter tuning (`hyopt`): convenience functions for working with `hyperopt` package.
 4. interpretation: concise layers contain visualization methods
-5. share and re-use models: every concise component (layer, initializer, ...) is fully compatible with keras; saving, loading and reusing the models works out-of-the-box
+5. share and re-use models: every concise component (layer, initializer, regularizer, loss) is fully compatible with keras:
+    -  saving, loading and reusing the models works out-of-the-box
 
 <!-- TODO - include image of concise -->
 

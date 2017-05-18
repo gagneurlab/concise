@@ -3,6 +3,8 @@ from keras.optimizers import SGD, Adam
 import tensorflow as tf
 from concise.utils.helper import get_from_module
 
+# TODO - add copyright if MIT
+
 # from https://github.com/openai/weightnorm/blob/master/keras/weightnorm.py
 # Paper:
 # "Weight Normalization: A Simple Reparameterization to Accelerate Training of

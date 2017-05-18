@@ -14,7 +14,6 @@ from concise.metrics import MASK_VALUE
 
 
 # Binary classification
-# ----
 
 def _mask_nan(y, z):
     mask_array = ~np.isnan(y)
@@ -92,17 +91,18 @@ def f1(y, z, round=True):
 
 
 # Category classification
-# ----
 
 def cat_acc(y, z):
+    """Categorical accuracy
+    """
     return np.mean(y.argmax(axis=1) == z.argmax(axis=1))
 
 
 # Regression
-# ----
 
 def cor(y, z):
-    """Compute Pearson correlation coefficient."""
+    """Compute Pearson correlation coefficient.
+    """
     y, z = _mask_nan(y, z)
     return np.corrcoef(y, z)[0, 1]
 
@@ -151,8 +151,7 @@ def var_explained(y_true, y_pred):
     return 1 - var_resid / var_y_true
 
 
-# available eval metrics
-# ----
+# available eval metrics --------------------------------------------
 
 
 BINARY_CLASS = ["auc", "auprc", "accuracy", "tpr", "tnr", "f1", "mcc"]

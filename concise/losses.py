@@ -7,6 +7,20 @@ MASK_VALUE = -1
 
 
 def mask_loss(loss, mask_value=MASK_VALUE):
+    """Generates a new loss function that ignores values where `y_true == mask_value`.
+
+    # Arguments
+        loss: str; name of the keras loss function from `keras.losses`
+        mask_value: int; which values should be masked
+
+    # Returns
+        function; Masked version of the `loss`
+
+    # Example
+        ```python
+                categorical_crossentropy_masked = mask_loss("categorical_crossentropy")
+        ```
+    """
     loss_fn = kloss.deserialize(loss)
 
     def masked_loss_fn(y_true, y_pred):

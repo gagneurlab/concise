@@ -3,6 +3,8 @@ import keras.constraints as kc
 
 
 # TODO - write unit-tests for this unit
+#
+# TODO - move to a new branch?
 
 
 class PWMNorm(kc.MinMaxNorm):

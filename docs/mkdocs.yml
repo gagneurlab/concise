@@ -17,18 +17,18 @@ pages:
 #   - Guide to the Sequential model: getting-started/sequential-model-guide.md
 #   - Guide to the Functional API: getting-started/functional-api-guide.md
 #   - FAQ: getting-started/faq.md
-- Layers: layers.md # TODO - check
 - Preprocessing:
   - Genomic Sequence Preprocessing: preprocessing/sequence.md
   - RNA Structure Preprocessing: preprocessing/structure.md
   - Spline-position Preprocessing: preprocessing/splines.md
+- Layers: layers.md # TODO - check
+- Initializers: initializers.md
+- Regularizers: regularizers.md
 - Losses: losses.md
 - Metrics: metrics.md
 - Evaluation Metrics: eval_metrics.md
 - Optimizers: optimizers.md
-- Activations: activations.md
-- Initializers: initializers.md
-- Regularizers: regularizers.md
+# - Activations: activations.md
 - Hyper-parameter optimization: hyopt.md
 - Utils:
     - Fasta: utils/fasta.md

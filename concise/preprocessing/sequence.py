@@ -143,7 +143,7 @@ def encodeDNA(seq_vec, maxlen=None, seq_align="start"):
               [0 0 0 1]
               [0 0 0 1]
               [1 0 0 0]]]
-          ```
+        ```
     """
     return encodeSequence(seq_vec,
                           vocab=DNA,

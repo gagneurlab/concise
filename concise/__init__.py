@@ -20,7 +20,7 @@ from . import optimizers
 
 from .concise import Concise, ConciseCV
 from .legacy.get_data import prepare_data
-from .args_sampler import sample_params
+from .legacy.args_sampler import sample_params
 
 
 # Add all the custom objects to keras
