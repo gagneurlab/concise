@@ -61,7 +61,13 @@ def test_dropout():
         assert(isinstance(preds, dict))
         prefix = "do"
         assert(np.all(np.in1d(["%s_pv" % prefix, "%s_cvar" % prefix, "%s_diff" % prefix], list(preds.keys()))))
+        # Assert that the nan p-values coincide with 0 difference:
+        if preds["do_pv"].isnull().sum().sum() != 0:
+            for col in preds["do_pv"].columns:
+                assert((preds["do_diff"][col].loc[preds["do_pv"][col].isnull()]==0).all())
         for k in preds:
+            if k != "do_pv":
+                assert(pd.isnull(preds[k]).sum().sum()==0)
             assert(isinstance(preds[k], pd.DataFrame))
             if itr ==0:
                 assert(np.all(preds[k].columns.values == m["out_annotation"]))
@@ -85,6 +91,7 @@ def test_ism():
     param_sets = dict_grid(param_set)
     #
     for p in param_sets:
+        ### nans happen with log_odds because outputs are not bound to [0,1]
         preds = ism(**p)
         assert(isinstance(preds, dict))
         assert(np.all(np.in1d(["ism"], list(preds.keys()))))

@@ -3,19 +3,27 @@ def vcf_to_seq(vcf_path, fasta_path):
 
 def effect_from_model(model, ref, ref_rc, alt, alt_rc, methods, mutation_positions, out_annotation_all_outputs,
                       extra_args = None, **argv):
-    """
-    Predict the snp effects from a set of reference and alternative sequences. ref, alt, ref_rc, alt_rc sequences have
-    to be in the same order. Additional arguments will be passed to all methods in the list.
-    :param model: Keras model
-    :param ref: Reference sequence (1-hot)
-    :param alt: Alternative sequence (1-hot)
-    :param ref_rc: Reference sequence (1-hot)
-    :param alt_rc: Alternative sequence (1-hot)
-    :param methods: Methods to use for effect prediction
-    :param mutation_positions: Position of the mutation(s) per sequence
-    :param out_annotation_all_outputs: Labels of the outputs of the model. Must match output dimension.
-    :param extra_args: Arguments that should be supplied to the methods individually.
-    :return: A dict of vectors with the predicted scores. Keys are method names
+    """Convenience function to execute multiple effect predictions in one call
+    
+    # Arguments
+        model: Keras model
+        ref: Input sequence with the reference genotype in the mutation position
+        ref_rc: Reverse complement of the 'ref' argument
+        alt: Input sequence with the alternative genotype in the mutation position
+        alt_rc: Reverse complement of the 'alt' argument
+        methods: A list of prediction functions to be executed, e.g.: from concise.effects.ism.ism. Using the same
+            function more often than once (even with different parameters) will overwrite the results of the
+            previous calculation of that function.
+        mutation_positions: Position on which the mutation was placed in the forward sequences
+        out_annotation_all_outputs: Output labels of the model.
+        extra_args: None or a list of the same length as 'methods'. The elements of the list are dictionaries with
+            additional arguments that should be passed on to the respective functions in 'methods'. Arguments
+            defined here will overwrite arguments that are passed to all methods.
+        **argv: Additional arguments to be passed on to all methods, e.g,: out_annotation.
+    
+    # Returns
+        Dictionary containing the results of the individual calculations, the keys are the
+            names of the executed functions
     """
     assert isinstance(methods, list)
     if isinstance(extra_args, list):
