@@ -9,11 +9,11 @@ if sys.version_info[0] != 3:
     # sys.exit("Only Python 3 is supported")
     print("WARNING: Only Python 3 is supported")
 
-with open('README.rst') as readme_file:
+with open('README.md') as readme_file:
     readme = readme_file.read()
 
-with open('HISTORY.rst') as history_file:
-    history = history_file.read()
+# with open('HISTORY.rst') as history_file:
+#     history = history_file.read()
 
 requirements = [
     "numpy",
@@ -42,7 +42,7 @@ setup(
     name='concise',
     version='0.5.0',
     description="CONCISE (COnvolutional Neural for CIS-regulatory Elements) is a model for predicting PTR features like mRNA half-life from cis-regulatory elements using deep learning. ",
-    long_description=readme + '\n\n' + history,
+    long_description=readme,  # + '\n\n' + history,
     author="Žiga Avsec",
     author_email='avsec@in.tum.de',
     url='https://github.com/avsecz/concise',
