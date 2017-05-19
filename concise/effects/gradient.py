@@ -93,7 +93,37 @@ def __generate_direct_saliency_functions__(model, out_annotation_all_outputs, ou
 # The function called from outside
 def gradient_pred(model, ref, ref_rc, alt, alt_rc, mutation_positions, out_annotation_all_outputs,
         output_filter_mask=None, out_annotation=None):
+    """Gradient-based (saliency) variant effect prediction
 
+    Based on the idea of [saliency maps](https://arxiv.org/pdf/1312.6034.pdf) the gradient-based prediction of
+    variant effects uses the `gradient` function of the Keras backend to estimate the importance of a variant
+    for a given output. This value is then multiplied by the input, as recommended by
+    [Shrikumar et al., 2017](https://arxiv.org/pdf/1605.01713.pdf).
+
+    # Arguments
+        model: Keras model
+        ref: Input sequence with the reference genotype in the mutation position
+        ref_rc: Reverse complement of the 'ref' argument
+        alt: Input sequence with the alternative genotype in the mutation position
+        alt_rc: Reverse complement of the 'alt' argument
+        mutation_positions: Position on which the mutation was placed in the forward sequences
+        out_annotation_all_outputs: Output labels of the model.
+        output_filter_mask: Mask of boolean values indicating which model outputs should be used.
+            Use this or 'out_annotation'
+        out_annotation: List of outputs labels for which of the outputs (in case of a multi-task model) the
+            predictions should be calculated.
+        
+    # Returns
+        Dictionary with three different entries:
+            ref: Gradient * input at the mutation position using the reference sequence.
+                Forward or reverse-complement sequence is chose based on sequence direction caused
+                the bigger absolute difference ('diff')
+            alt: Gradient * input at the mutation position using the alternative sequence. Forward or
+                reverse-complement sequence is chose based on sequence direction caused the bigger
+                absolute difference ('diff')
+            diff: 'alt' - 'ref'. Forward or reverse-complement sequence is chose based on sequence
+                direction caused the bigger absolute difference.
+    """
     seqs = {"ref": ref, "ref_rc": ref_rc, "alt": alt, "alt_rc": alt_rc}
 
     assert np.all([np.array(ref.shape) == np.array(seqs[k].shape) for k in seqs.keys() if k != "ref"])
@@ -146,6 +176,6 @@ def gradient_pred(model, ref, ref_rc, alt, alt_rc, mutation_positions, out_annot
 
 
     return {"diff": pd.DataFrame(diff_ret_dGrad[k], columns = out_annotation),
-            "ref": pd.DataFrame(preds["ref"], columns = out_annotation),
-            "alt": pd.DataFrame(preds["alt"], columns = out_annotation)}
+            "ref": pd.DataFrame(pred_out["ref"], columns = out_annotation),
+            "alt": pd.DataFrame(pred_out["alt"], columns = out_annotation)}
 

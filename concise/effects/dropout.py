@@ -100,6 +100,38 @@ def test_overwite_by():
 # The function called from outside
 def dropout_pred(model, ref, ref_rc, alt, alt_rc, mutation_positions, out_annotation_all_outputs,
                  output_filter_mask = None,out_annotation= None, dropout_iterations = 30):
+    """Dropout-based variant effect prediction
+
+        This method is based on the ideas in [Gal et al.](https://arxiv.org/pdf/1506.02142.pdf) where dropout
+        layers are also actived in the model prediction phase in order to estimate model uncertainty. The
+        advantage of this method is that instead of a point estimate of the model output the distribution of
+        the model output is estimated.
+
+        # Arguments
+            model: Keras model
+            ref: Input sequence with the reference genotype in the mutation position
+            ref_rc: Reverse complement of the 'ref' argument
+            alt: Input sequence with the alternative genotype in the mutation position
+            alt_rc: Reverse complement of the 'alt' argument
+            mutation_positions: Position on which the mutation was placed in the forward sequences
+            out_annotation_all_outputs: Output labels of the model.
+            output_filter_mask: Mask of boolean values indicating which model outputs should be used.
+                Use this or 'out_annotation'
+            out_annotation: List of outputs labels for which of the outputs (in case of a multi-task model) the
+                predictions should be calculated.
+            dropout_iterations: Number of prediction iterations to be performed in order to estimate the
+                output distribution. Values greater than 30 are recommended to get a reliable p-value.
+
+        # Returns
+            Dictionary with a set of measures of the model uncertainty in the variant position. The ones of interest are:
+                do_{ref, alt}_mean: Mean of the model predictions given the respective input sequence and dropout.
+                    Forward or reverse-complement sequences are chosen as for 'do_pv'.
+                do_{ref, alt}_var: Variance of the model predictions given the respective input sequence and dropout.
+                    Forward or reverse-complement sequences are chosen as for 'do_pv'.
+                do_diff: 'do_alt_mean' - 'do_alt_mean', which is an estimate similar to ISM using diff_type "diff".
+                do_pv: P-value of a paired t-test, comparing the predictions of ref with the ones of alt. Forward or
+                    reverse-complement sequences are chosen based on which pair has the lower p-value.
+        """
     prefix = "do"
 
     seqs = {"ref": ref, "ref_rc": ref_rc, "alt": alt, "alt_rc": alt_rc}
