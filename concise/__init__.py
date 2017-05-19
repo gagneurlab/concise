@@ -18,10 +18,7 @@ from . import regularizers
 from . import hyopt
 from . import optimizers
 
-from .concise import Concise, ConciseCV
 from .legacy.get_data import prepare_data
-from .legacy.args_sampler import sample_params
-
 
 # Add all the custom objects to keras
 from keras.utils.generic_utils import get_custom_objects

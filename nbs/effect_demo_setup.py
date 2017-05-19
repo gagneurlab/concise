@@ -36,3 +36,4 @@ def load_example_data(trim_seq_len=200, standardize_features=False, num_tasks=1,
     return param, X_feat, X_seq, y, id_vec
 
 concise_demo_data_path = "/".join(concise.__path__[0].split("/")[:-1])
+concise_demo_data_path = "./../"
