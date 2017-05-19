@@ -25,6 +25,7 @@ Optimizers
 Activations
 Initializers
 Regularizers
+- effects
 - Utils
     fasta
     model_data
@@ -67,6 +68,7 @@ from concise import layers
 from concise import losses
 from concise import optimizers
 from concise import regularizers
+from concise import effects
 
 
 EXCLUDE = {
@@ -157,6 +159,15 @@ PAGES = [
     {
         'page': 'activations.md',
         'all_module_functions': [activations],
+    },
+    {
+        'page': 'effects.md',
+        'functions': [
+            effects.effect_from_model,
+            effects.gradient_pred,
+            effects.dropout_pred,
+            effects.ism,
+        ]
     },
     {
         'page': 'utils/fasta.md',

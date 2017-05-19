@@ -30,6 +30,7 @@ pages:
 - Optimizers: optimizers.md
 # - Activations: activations.md
 - Hyper-parameter optimization: hyopt.md
+- SNP effect estimation (effects): effects.md
 - Utils:
     - Fasta: utils/fasta.md
     - Model Data: utils/model_data.md

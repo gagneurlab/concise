@@ -1,10 +1,11 @@
 def vcf_to_seq(vcf_path, fasta_path):
     pass
 
+
 def effect_from_model(model, ref, ref_rc, alt, alt_rc, methods, mutation_positions, out_annotation_all_outputs,
-                      extra_args = None, **argv):
+                      extra_args=None, **argv):
     """Convenience function to execute multiple effect predictions in one call
-    
+
     # Arguments
         model: Keras model
         ref: Input sequence with the reference genotype in the mutation position
@@ -20,7 +21,7 @@ def effect_from_model(model, ref, ref_rc, alt, alt_rc, methods, mutation_positio
             additional arguments that should be passed on to the respective functions in 'methods'. Arguments
             defined here will overwrite arguments that are passed to all methods.
         **argv: Additional arguments to be passed on to all methods, e.g,: out_annotation.
-    
+
     # Returns
         Dictionary containing the results of the individual calculations, the keys are the
             names of the executed functions
@@ -29,11 +30,11 @@ def effect_from_model(model, ref, ref_rc, alt, alt_rc, methods, mutation_positio
     if isinstance(extra_args, list):
         assert(len(extra_args) == len(methods))
     else:
-        extra_args = [None]*len(methods)
+        extra_args = [None] * len(methods)
 
-    main_args = {"model":model, "ref":ref, "ref_rc":ref_rc, "alt":alt, "alt_rc":alt_rc,
-                     "mutation_positions":mutation_positions,
-                     "out_annotation_all_outputs":out_annotation_all_outputs}
+    main_args = {"model": model, "ref": ref, "ref_rc": ref_rc, "alt": alt, "alt_rc": alt_rc,
+                 "mutation_positions": mutation_positions,
+                 "out_annotation_all_outputs": out_annotation_all_outputs}
 
     pred_results = {}
     for method, xargs in zip(methods, extra_args):

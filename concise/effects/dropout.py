@@ -4,27 +4,29 @@ import pandas as pd
 from scipy.stats.stats import ttest_rel
 
 
-
-## TODO: Move to layer definition:
+# TODO: Move to layer definition:
 from keras.layers.core import Dropout
 import keras.backend as K
 class BiDropout(Dropout):
     """Applies Dropout to the input, no matter if in learning phase or not.
     """
-    def __init__(self, bi_dropout = True, **kwargs):
-        #__init__(self, rate, noise_shape=None, seed=None, **kwargs)
+
+    def __init__(self, bi_dropout=True, **kwargs):
+        # __init__(self, rate, noise_shape=None, seed=None, **kwargs)
         super(BiDropout, self).__init__(**kwargs)
         self.bi_dropout = bi_dropout
     #
+
     def call(self, inputs, training=None):
         if 0. < self.rate < 1.:
             noise_shape = self._get_noise_shape(inputs)
             #
+
             def dropped_inputs():
                 return K.dropout(inputs, self.rate, noise_shape, seed=self.seed)
             if self.bi_dropout:
                 # K.in_train_phase returns the first argument if in training phase otherwise the second
-                #return K.in_train_phase(dropped_inputs, inputs, training=training)
+                # return K.in_train_phase(dropped_inputs, inputs, training=training)
                 # Taken from keras.backend.tensorflow_backend
                 if callable(dropped_inputs):
                     return dropped_inputs()
@@ -35,6 +37,7 @@ class BiDropout(Dropout):
                                         training=training)
         return inputs
     #
+
     @classmethod
     def create_from_dropout(cls, dropout_obj):
         if not isinstance(dropout_obj, Dropout):
@@ -42,6 +45,7 @@ class BiDropout(Dropout):
         kwargs = dropout_obj.get_config()
         # alternatively can we use "get_config" in combination with (Layer.__init__)allowed_kwargs?
         return cls(**kwargs)
+
 
 def replace_dict_values(in_dict, from_value, to_value):
     out_dict = {}
@@ -76,30 +80,33 @@ def pred_do(model, input_data, output_filter_mask, dropout_iterations):
 
 def subset_array_by_index(arr, idx):
     assert (np.all(np.array(arr.shape[1:]) == np.array(idx.shape[1:])))
-    assert (arr.shape[0]/2 == idx.shape[0])
+    assert (arr.shape[0] / 2 == idx.shape[0])
     pred_out_sel = []
     for c in range(arr.shape[1]):
         sel_idxs = np.arange(arr.shape[0] / 2) * 2 + idx[:, c]
         pred_out_sel.append(arr[sel_idxs, c])
     return np.array(pred_out_sel).T
 
+
 def overwite_by(main_arr, alt_arr, idx):
     assert (np.all(np.array(main_arr.shape[1:]) == np.array(idx.shape[1:])))
     assert (main_arr.shape[0] == idx.shape[0])
     assert (alt_arr.shape[0] == idx.shape[0])
     for c in range(main_arr.shape[1]):
-        main_arr[idx[:, c], c] = alt_arr[idx[:, c],c]
+        main_arr[idx[:, c], c] = alt_arr[idx[:, c], c]
     return main_arr
+
 
 def test_overwite_by():
     a = np.array([[1, 2], [4, 5]])
     b = np.array([[1, 8], [4, 5]])
-    overwite_by(a,b,a < b)
-    assert(a[0,1]==8)
+    overwite_by(a, b, a < b)
+    assert(a[0, 1] == 8)
+
 
 # The function called from outside
 def dropout_pred(model, ref, ref_rc, alt, alt_rc, mutation_positions, out_annotation_all_outputs,
-                 output_filter_mask = None,out_annotation= None, dropout_iterations = 30):
+                 output_filter_mask=None, out_annotation=None, dropout_iterations=30):
     """Dropout-based variant effect prediction
 
         This method is based on the ideas in [Gal et al.](https://arxiv.org/pdf/1506.02142.pdf) where dropout
@@ -123,14 +130,16 @@ def dropout_pred(model, ref, ref_rc, alt, alt_rc, mutation_positions, out_annota
                 output distribution. Values greater than 30 are recommended to get a reliable p-value.
 
         # Returns
+
             Dictionary with a set of measures of the model uncertainty in the variant position. The ones of interest are:
-                do_{ref, alt}_mean: Mean of the model predictions given the respective input sequence and dropout.
-                    Forward or reverse-complement sequences are chosen as for 'do_pv'.
-                do_{ref, alt}_var: Variance of the model predictions given the respective input sequence and dropout.
-                    Forward or reverse-complement sequences are chosen as for 'do_pv'.
-                do_diff: 'do_alt_mean' - 'do_alt_mean', which is an estimate similar to ISM using diff_type "diff".
-                do_pv: P-value of a paired t-test, comparing the predictions of ref with the ones of alt. Forward or
-                    reverse-complement sequences are chosen based on which pair has the lower p-value.
+
+            - do_{ref, alt}_mean: Mean of the model predictions given the respective input sequence and dropout.
+                - Forward or reverse-complement sequences are chosen as for 'do_pv'.
+            - do_{ref, alt}_var: Variance of the model predictions given the respective input sequence and dropout.
+                - Forward or reverse-complement sequences are chosen as for 'do_pv'.
+            - do_diff: 'do_alt_mean' - 'do_alt_mean', which is an estimate similar to ISM using diff_type "diff".
+            - do_pv: P-value of a paired t-test, comparing the predictions of ref with the ones of alt. Forward or
+                - reverse-complement sequences are chosen based on which pair has the lower p-value.
         """
     prefix = "do"
 
@@ -154,7 +163,6 @@ def dropout_pred(model, ref, ref_rc, alt, alt_rc, mutation_positions, out_annota
     model_config = model._updated_config()
     alt_config = replace_dict_values(model_config, u"Dropout", u"BiDropout")
 
-
     # Custom objects have to be added before correctly!
     alt_model = keras.layers.deserialize(alt_config)
 
@@ -165,7 +173,7 @@ def dropout_pred(model, ref, ref_rc, alt, alt_rc, mutation_positions, out_annota
     # predict
     preds = {}
     for k in seqs:
-        preds[k] = pred_do(alt_model, seqs[k], output_filter_mask=output_filter_mask, dropout_iterations = dropout_iterations)
+        preds[k] = pred_do(alt_model, seqs[k], output_filter_mask=output_filter_mask, dropout_iterations=dropout_iterations)
 
     t, prob = ttest_rel(preds["ref"], preds["alt"], axis=0)
     t_rc, prob_rc = ttest_rel(preds["ref_rc"], preds["alt_rc"], axis=0)
@@ -195,18 +203,14 @@ def dropout_pred(model, ref, ref_rc, alt, alt_rc, mutation_positions, out_annota
     ref_var = overwite_by(pred_vars["ref"], pred_vars["ref_rc"], sel)
     alt_var = overwite_by(pred_vars["alt"], pred_vars["alt_rc"], sel)
 
-    out_dict["%s_ref_mean" % prefix] = pd.DataFrame(ref_mean,columns=out_annotation)
-    out_dict["%s_alt_mean" % prefix] = pd.DataFrame(alt_mean,columns=out_annotation)
+    out_dict["%s_ref_mean" % prefix] = pd.DataFrame(ref_mean, columns=out_annotation)
+    out_dict["%s_alt_mean" % prefix] = pd.DataFrame(alt_mean, columns=out_annotation)
 
-    out_dict["%s_ref_var" % prefix] = pd.DataFrame(ref_var,columns=out_annotation)
-    out_dict["%s_alt_var" % prefix] = pd.DataFrame(alt_var,columns=out_annotation)
+    out_dict["%s_ref_var" % prefix] = pd.DataFrame(ref_var, columns=out_annotation)
+    out_dict["%s_alt_var" % prefix] = pd.DataFrame(alt_var, columns=out_annotation)
 
-    out_dict["%s_cvar" % prefix] = pd.DataFrame(mean_cvar,columns=out_annotation)
+    out_dict["%s_cvar" % prefix] = pd.DataFrame(mean_cvar, columns=out_annotation)
 
     out_dict["%s_diff" % prefix] = out_dict["%s_alt_mean" % prefix] - out_dict["%s_ref_mean" % prefix]
 
     return out_dict
-
-
-
-
