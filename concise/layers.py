@@ -421,6 +421,7 @@ class GAMSmooth(Layer):
 
 
 SmoothPositionWeight = GAMSmooth
+# SplineWeight ?
 
 # TODO - add the plotting functionality
 # TODO - rename the layer
