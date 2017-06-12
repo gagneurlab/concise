@@ -1,6 +1,6 @@
 from keras import layers as kl
 from keras import regularizers as kr
-from keras.initializers import Initializer
+from keras.initializers import Initializer, _compute_fans
 from keras import backend as K
 import concise
 from concise.utils.pwm import PWM, pwm_list2pwm_array, pwm_array2pssm_array, DEFAULT_BASE_BACKGROUND
@@ -54,7 +54,8 @@ def _truncated_normal(mean,
 
 class PSSMBiasInitializer(Initializer):
 
-    def __init__(self, pwm_list=[], kernel_size=None, mean_max_scale=0., background_probs=DEFAULT_BASE_BACKGROUND):
+    def __init__(self, pwm_list=[], kernel_size=None, mean_max_scale=0.,
+                 background_probs=DEFAULT_BASE_BACKGROUND):
         """Bias initializer
 
         By defult, it will initialize all weights to 0.
@@ -108,6 +109,15 @@ class PSSMBiasInitializer(Initializer):
             "background_probs": self.background_probs,
         }
 
+# TODO - specify the fraction of noise?
+# stddev_pwm
+# stddev_frac_pssm
+#
+
+# scale_glorot feature:
+# TODO - add shift_mean_max_scale - this allows you to drop the bias initializer?
+# TODO - write some unit tests checking the initialization scale
+# TODO - finish the PWM initialization example notebook
 
 class PSSMKernelInitializer(Initializer):
     """truncated normal distribution shifted by a PSSM
@@ -119,10 +129,13 @@ class PSSMKernelInitializer(Initializer):
         seed: A Python integer. Used to seed the random generator.
         background_probs: A dictionary of background probabilities.
                   Default: `{'A': .25, 'C': .25, 'G': .25, 'T': .25}`
+        scale_glorot: boolean; If True, the resulting PWM's are centered and rescaled
+                     to match glorot_normal distribution.
     """
 
     def __init__(self, pwm_list=[], stddev=0.05, seed=None,
                  background_probs=DEFAULT_BASE_BACKGROUND,
+                 scale_glorot=True,
                  add_noise_before_Pwm2Pssm=True):
         if len(pwm_list) > 0 and isinstance(pwm_list[0], dict):
             pwm_list = [PWM.from_config(pwm) for pwm in pwm_list]
@@ -133,32 +146,31 @@ class PSSMKernelInitializer(Initializer):
         self.seed = seed
         self.background_probs = background_probs
         self.add_noise_before_Pwm2Pssm = add_noise_before_Pwm2Pssm
+        self.scale_glorot = scale_glorot
 
     def __call__(self, shape, dtype=None):
-        # print("PWMKernelInitializer shape: ", shape)
-
+        print("shape: ", shape)
         pwm = pwm_list2pwm_array(self.pwm_list, shape, dtype, self.background_probs)
 
         if self.add_noise_before_Pwm2Pssm:
-            # add noise with numpy truncnorm function
+            # adding noise on the pwm level
             pwm = _truncated_normal(mean=pwm,
                                     stddev=self.stddev,
                                     seed=self.seed)
-
-            pssm = pwm_array2pssm_array(pwm, background_probs=self.background_probs)
-
-            # Force sttdev to be 0, because noise already added. May just use tf.Variable(pssm)
-            # return K.Variable(pssm) # this raise error
-            return K.truncated_normal(shape,
-                                      mean=pssm,
-                                      stddev=0,
-                                      dtype=dtype, seed=self.seed)
+            stddev_after = 0  # don't need to add any further noise on the PSSM level
         else:
-            pssm = pwm_array2pssm_array(pwm, background_probs=self.background_probs)
-            return K.truncated_normal(shape,
-                                      mean=pssm,
-                                      stddev=self.stddev,
-                                      dtype=dtype, seed=self.seed)
+            stddev_after = self.stddev
+        # Force sttdev to be 0, because noise already added. May just use tf.Variable(pssm)
+        pssm = pwm_array2pssm_array(pwm, background_probs=self.background_probs)
+        pssm = _truncated_normal(mean=pssm,
+                                 stddev=stddev_after,
+                                 seed=self.seed)
+        if self.scale_glorot:
+            min_max_range = pssm.max(axis=1).max(0) - pssm.min(axis=1).min(0)
+            alpha = _glorot_uniform_scale(shape) * 2 / min_max_range
+            pssm = alpha * pssm
+
+        return K.constant(pssm, dtype=dtype)
 
     def get_config(self):
         return {
@@ -219,6 +231,7 @@ class PWMBiasInitializer(Initializer):
         }
 
 
+# TODO pack everything into a single initializer without the bias init?
 class PWMKernelInitializer(Initializer):
     """truncated normal distribution shifted by a PWM
 
@@ -251,6 +264,16 @@ class PWMKernelInitializer(Initializer):
             'stddev': self.stddev,
             'seed': self.seed,
         }
+
+
+# util functions
+
+
+def _glorot_uniform_scale(shape):
+    """Compute the glorot_uniform scale
+    """
+    fan_in, fan_out = _compute_fans(shape)
+    return np.sqrt(2 * 3.0 / max(1., float(fan_in + fan_out)))
 
 
 AVAILABLE = ["PWMBiasInitializer", "PWMKernelInitializer",
