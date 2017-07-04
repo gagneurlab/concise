@@ -1,4 +1,4 @@
-# <img src="docs/img/concise_logo.png" alt="Concise logo" height="42" width="42"> Concise: Keras extension for regulatory genomics
+# <img src="docs/img/concise_logo.png" alt="Concise logo" height="30" width="30">oncise: Keras extension for regulatory genomics
 
 ## 
 
