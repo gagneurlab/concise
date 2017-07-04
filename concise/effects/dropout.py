@@ -1,7 +1,9 @@
 import keras
 import numpy as np
 import pandas as pd
-from scipy.stats.stats import ttest_rel
+from scipy.stats.stats import ttest_ind
+from scipy.special import logit
+from concise.effects.util import *
 
 
 # TODO: Move to layer definition:
@@ -103,6 +105,60 @@ def test_overwite_by():
     overwite_by(a, b, a < b)
     assert(a[0, 1] == 8)
 
+def get_range(input_data):
+    vals = {"max": [], "min": []}
+
+    def add_vals(new_vals):
+        for k2 in new_vals:
+            vals[k2].append(new_vals[k2])
+
+    if isinstance(input_data, (list, tuple)):
+        for el in input_data:
+            add_vals(get_range(el))
+    elif isinstance(input_data, dict):
+        for k in input_data:
+            add_vals(get_range(input_data[k]))
+    elif isinstance(input_data, np.ndarray):
+        return {"max": input_data.max(), "min": input_data.min()}
+    else:
+        raise ValueError("Input can only be of type: list, dict or np.ndarray")
+    vals["max"] = max(vals["max"])
+    vals["min"] = min(vals["min"])
+    return vals
+
+def apply_over_single(input_data, apply_func, select_return_elm=None, **kwargs):
+    if isinstance(input_data, (list, tuple)):
+        return [apply_over_single(el, apply_func, select_return_elm, **kwargs) for el in input_data]
+    elif isinstance(input_data, dict):
+        out = {}
+        for k in input_data:
+            out[k] = apply_over_single(input_data[k], apply_func, select_return_elm, **kwargs)
+        return out
+    elif isinstance(input_data, np.ndarray):
+        ret = apply_func(input_data, **kwargs)
+        if select_return_elm is not None:
+            ret = ret[select_return_elm]
+        return ret
+    else:
+        raise ValueError("Input can only be of type: list, dict or np.ndarray")
+
+def apply_over_double(input_data_a, input_data_b, apply_func, select_return_elm=None, **kwargs):
+    if isinstance(input_data_a, (list, tuple)):
+        return [apply_over_double(el_a, el_b, apply_func, select_return_elm, **kwargs) for el_a, el_b in
+                zip(input_data_a, input_data_b)]
+    elif isinstance(input_data_a, dict):
+        out = {}
+        for k in input_data_a:
+            out[k] = apply_over_double(input_data_a[k], input_data_b[k], apply_func, select_return_elm, **kwargs)
+        return out
+    elif isinstance(input_data_a, np.ndarray):
+        ret = apply_func(input_data_a, input_data_b, **kwargs)
+        if select_return_elm is not None:
+            ret = ret[select_return_elm]
+        return ret
+    else:
+        raise ValueError("Input can only be of type: list, dict or np.ndarray")
+
 
 # The function called from outside
 def dropout_pred(model, ref, ref_rc, alt, alt_rc, mutation_positions, out_annotation_all_outputs,
@@ -145,8 +201,8 @@ def dropout_pred(model, ref, ref_rc, alt, alt_rc, mutation_positions, out_annota
 
     seqs = {"ref": ref, "ref_rc": ref_rc, "alt": alt, "alt_rc": alt_rc}
 
-    assert np.all([np.array(ref.shape) == np.array(seqs[k].shape) for k in seqs.keys() if k != "ref"])
-    assert ref.shape[0] == mutation_positions.shape[0]
+    assert np.all([np.array(get_seq_len(ref)) == np.array(get_seq_len(seqs[k])) for k in seqs.keys() if k != "ref"])
+    assert get_seq_len(ref)[0] == mutation_positions.shape[0]
     assert len(mutation_positions.shape) == 1
 
     # determine which outputs should be selected
@@ -175,9 +231,20 @@ def dropout_pred(model, ref, ref_rc, alt, alt_rc, mutation_positions, out_annota
     for k in seqs:
         preds[k] = pred_do(alt_model, seqs[k], output_filter_mask=output_filter_mask, dropout_iterations=dropout_iterations)
 
-    t, prob = ttest_rel(preds["ref"], preds["alt"], axis=0)
-    t_rc, prob_rc = ttest_rel(preds["ref_rc"], preds["alt_rc"], axis=0)
+    t, prob = ttest_ind(preds["ref"], preds["alt"], axis=0)
+    t_rc, prob_rc = ttest_ind(preds["ref_rc"], preds["alt_rc"], axis=0)
 
+    logit_prob = None
+    logit_prob_rc = None
+    pred_range = get_range(preds)
+    # In case the predictions are bound to [0,1] it might make sense to use logit on the data, as the model output
+    # could be probalilities
+    if np.all([(pred_range[k] >= 0) and (pred_range[k] <= 1) for k in pred_range]):
+        logit_preds = apply_over_single(preds, logit)
+        logit_prob = apply_over_double(logit_preds["ref"], logit_preds["alt"], apply_func=ttest_ind,
+                                       select_return_elm=1, axis=0)
+        logit_prob_rc = apply_over_double(logit_preds["ref_rc"], logit_preds["alt_rc"], apply_func=ttest_ind,
+                                       select_return_elm=1, axis=0)
     # fwd and rc are independent here... so this can be done differently here...
 
     sel = (np.abs(prob) > np.abs(prob_rc)).astype(np.int)  # Select the LOWER p-value among fwd and rc
@@ -185,6 +252,10 @@ def dropout_pred(model, ref, ref_rc, alt, alt_rc, mutation_positions, out_annota
     out_dict = {}
 
     out_dict["%s_pv" % prefix] = pd.DataFrame(overwite_by(prob, prob_rc, sel), columns=out_annotation)
+
+    if logit_prob is not None:
+        logit_sel = (np.abs(logit_prob) > np.abs(logit_prob_rc)).astype(np.int)
+        out_dict["%s_logit_pv" % prefix] = pd.DataFrame(overwite_by(logit_prob, logit_prob_rc, logit_sel), columns=out_annotation)
 
     pred_means = {}
     pred_vars = {}
@@ -214,3 +285,6 @@ def dropout_pred(model, ref, ref_rc, alt, alt_rc, mutation_positions, out_annota
     out_dict["%s_diff" % prefix] = out_dict["%s_alt_mean" % prefix] - out_dict["%s_ref_mean" % prefix]
 
     return out_dict
+
+
+

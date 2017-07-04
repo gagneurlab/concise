@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 import warnings
+from concise.effects.util import *
 
 
 # Perhaps the diff type should be returned as a dict instead?!
@@ -42,11 +43,10 @@ def ism(model, ref, ref_rc, alt, alt_rc, mutation_positions, out_annotation_all_
     """
 
     seqs = {"ref": ref, "ref_rc": ref_rc, "alt": alt, "alt_rc": alt_rc}
-
     assert diff_type in ["log_odds", "diff"]
     assert rc_handling in ["average", "maximum"]
-    assert np.all([np.array(ref.shape) == np.array(seqs[k].shape) for k in seqs.keys() if k != "ref"])
-    assert ref.shape[0] == mutation_positions.shape[0]
+    assert np.all([np.array(get_seq_len(ref)) == np.array(get_seq_len(seqs[k])) for k in seqs.keys() if k != "ref"])
+    assert get_seq_len(ref)[0] == mutation_positions.shape[0]
     assert len(mutation_positions.shape) == 1
 
     # determine which outputs should be selected
