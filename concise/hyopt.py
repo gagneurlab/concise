@@ -295,8 +295,10 @@ class CMongoTrials(MongoTrials):
 # --------------------------------------------
 def _train_and_eval_single(train, valid, model,
                            batch_size=32, epochs=300, use_weight=False,
-                           callbacks=[], add_eval_metrics={}):
+                           callbacks=[], eval_best=False, add_eval_metrics={}):
     """Fit and evaluate a keras model
+
+    eval_best: if True, load the checkpointed model for evaluation
     """
     def _format_keras_history(history):
         """nicely format keras history
@@ -319,7 +321,15 @@ def _train_and_eval_single(train, valid, model,
               verbose=2,
               callbacks=[history] + callbacks)
 
-    return eval_model(model, valid, add_eval_metrics), _format_keras_history(history)
+    # get history
+    hist = _format_keras_history(history)
+    # load and eval the best model
+    if eval_best:
+        mcp = [x for x in callbacks if isinstance(x, ModelCheckpoint)]
+        assert len(mcp) == 1
+        model = load_model(mcp[0].filepath)
+
+    return eval_model(model, valid, add_eval_metrics), hist
 
 
 def eval_model(model, test, add_eval_metrics={}):
@@ -540,6 +550,7 @@ class CompileFN():
                                                            batch_size=param["fit"]["batch_size"],
                                                            use_weight=param["fit"].get("use_weight", False),
                                                            callbacks=c_callbacks,
+                                                           eval_best=self.save_model == "best",
                                                            add_eval_metrics=self.add_eval_metrics)
             if self.save_model == "last":
                 model.save(model_path)
@@ -567,6 +578,7 @@ class CompileFN():
                                                               batch_size=param["fit"]["batch_size"],
                                                               use_weight=param["fit"].get("use_weight", False),
                                                               callbacks=c_callbacks,
+                                                              eval_best=self.save_model == "best",
                                                               add_eval_metrics=self.add_eval_metrics)
                 print("\n")
                 eval_metrics_list.append(eval_m)
