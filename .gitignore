@@ -69,3 +69,4 @@ target/
 # pycharm
 .idea
 .ipynb_checkpoints
+logfile.txt
