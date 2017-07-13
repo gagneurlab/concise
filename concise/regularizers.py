@@ -4,6 +4,68 @@ from concise.utils.splines import get_S
 from concise.utils.helper import get_from_module
 
 
+# TODO - do we really need to specify n_bases?
+#        - can we cache S matrix or compute it using a for-loop?
+#          - set n_bases after the thing has been called
+#
+# TODO - allow w to be of any dimension, regularize only the last dimension
+# TODO - write unit-tests for it
+class SplineSmoother(Regularizer):
+
+    def __init__(self, n_bases=10, diff_order=2, l2_smooth=0., l2=0.):
+        """Regularizer for spline transformation
+
+        # Arguments
+            n_bases: number of b-spline bases
+            diff_order: neighbouring coefficient difference order
+               (2 for second-order differences)
+            l2_smooth: float; Non-smoothness penalty (penalize w' * S * w)
+            l2: float; L2 regularization factor - overall weights regularizer
+        """
+        # convert S to numpy-array if it's a list
+
+        self.n_bases = n_bases
+        self.diff_order = diff_order
+        self.l2_smooth = K.cast_to_floatx(l2_smooth)
+        self.l2 = K.cast_to_floatx(l2)
+
+        # convert to K.constant
+        self.S = K.constant(
+            K.cast_to_floatx(
+                get_S(n_bases, diff_order + 1, add_intercept=False)
+            ))
+
+    def __call__(self, x):
+        # x.shape = (n_bases, n_spline_tracks)
+        # from conv: (kernel_width=1, n_bases, n_spline_tracks)
+        from_conv = len(K.int_shape(x)) == 3
+        if from_conv:
+            x = K.squeeze(x, 0)
+
+        n_spline_tracks = K.cast_to_floatx(K.int_shape(x)[1])
+
+        regularization = 0.
+
+        if self.l2:
+            regularization += K.sum(self.l2 * K.square(x)) / n_spline_tracks
+
+        if self.l2_smooth:
+            # https://keras.io/backend/#batch_dot
+            # equivalent to mean( diag(x' * S * x) )
+            regularization += self.l2_smooth * K.mean(K.batch_dot(x, K.dot(self.S, x), axes=1))
+
+        return regularization
+
+    def get_config(self):
+        # convert S to list()
+        return {'n_bases': self.n_bases,
+                'diff_order': self.diff_order,
+                'l2_smooth': float(self.l2_smooth),
+                'l2': float(self.l2),
+                }
+
+
+# OLD - to be deprecated
 class GAMRegularizer(Regularizer):
 
     def __init__(self, n_bases=10, spline_order=3, l2_smooth=0., l2=0.):
@@ -57,7 +119,7 @@ class GAMRegularizer(Regularizer):
                 }
 
 
-AVAILABLE = ["GAMRegularizer"]
+AVAILABLE = ["GAMRegularizer", "SplineSmoother"]
 
 
 def get(name):

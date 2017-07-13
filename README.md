@@ -12,7 +12,7 @@ Concise (CONvolutional neural networks for CIS-regulatory Elements) is a Keras e
 If provides functions along all the modelling steps:
 
 1. pre-process (convert list of sequences into numpy arrays)
-2. specify the keras model: concise provides custom `layers`, `initializers` and `regularizers` useful inregulatory genomics
+2. specify the keras model: concise provides custom `layers`, `initializers` and `regularizers` useful for regulatory genomics
 3. tune the hyper-parameters (`hyopt`): convenience functions for working with `hyperopt` package.
 4. interpret: concise layers contain visualization methods
 5. share and re-use models: every concise component (layer, initializer, regularizer, loss) is fully compatible with keras:
@@ -31,4 +31,4 @@ pip install --process-dependency-links concise
 
 Note the `--process-dependency-links` is required in order to properly install the following github packages: [deeplift](https://github.com/kundajelab/deeplift) and [simdna](https://github.com/kundajelab/simdna/tarball/0.2#egg=simdna-0.2).
 
-Make sure your keras is installed properly and configured with the backend of choice.
+<!-- Make sure your keras is installed properly and configured with the backend of choice. -->

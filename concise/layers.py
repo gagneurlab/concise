@@ -97,6 +97,7 @@ def InputDNAQuantitySplines(seq_length, n_bases=10, name="DNASmoothPosition", **
 
 # --------------------------------------------
 
+
 class GlobalSumPooling1D(_GlobalPooling1D):
     """Global average pooling operation for temporal data.
     # Input shape
@@ -109,8 +110,6 @@ class GlobalSumPooling1D(_GlobalPooling1D):
     def call(self, inputs):
         return K.sum(inputs, axis=1)
 
-
-# TODO how to write a generic class for it?
 
 class ConvSequence(Conv1D):
     """Convenience wrapper over keras.layers.Conv1D with 3 changes:
@@ -291,11 +290,20 @@ class ConvCodon(ConvSequence):
 ############################################
 # Smoothing layers
 
+
 # TODO - add X_spline as non-trainable weights
-class GAMSmooth(Layer):
+# TODO - rename into SplineTrPooling1D
+# SplineWeightedSumPooling1D - ? check how Avanti calls it... - WeightedSum1D
+# ConvSplineTr
+# encodeSplines
+# SplineTrRegularizer
+#
+# SmoothPosWeight
+# SplineTWeight1D
+class SmoothPositionWeight(Layer):
 
     def __name__(self):
-        return "GAMSmooth"
+        return "SmoothPositionWeight"
 
     def __init__(self,
                  # spline type
@@ -331,7 +339,7 @@ class GAMSmooth(Layer):
         self.use_bias = use_bias
         self.bias_initializer = initializers.get(bias_initializer)
 
-        super(GAMSmooth, self).__init__(**kwargs)
+        super(SmoothPositionWeight, self).__init__(**kwargs)
 
     def build(self, input_shape):
         # input_shape = (None, steps, filters)
@@ -372,7 +380,7 @@ class GAMSmooth(Layer):
                                         name='bias',
                                         regularizer=None)
 
-        super(GAMSmooth, self).build(input_shape)  # Be sure to call this somewhere!
+        super(SmoothPositionWeight, self).build(input_shape)  # Be sure to call this somewhere!
 
     def call(self, x):
 
@@ -405,7 +413,7 @@ class GAMSmooth(Layer):
             'use_bias': self.use_bias,
             'bias_initializer': initializers.serialize(self.bias_initializer),
         }
-        base_config = super(GAMSmooth, self).get_config()
+        base_config = super(SmoothPositionWeight, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
     def positional_effect(self):
@@ -420,8 +428,11 @@ class GAMSmooth(Layer):
         plt.ylabel("Positional effect")
 
 
-SmoothPositionWeight = GAMSmooth
+GAMSmooth = SmoothPositionWeight
+# TODO - yes - and don't do x + f(x), just f(x). The person can figure out on its own what to do.
+# ResSplineWeight
 # SplineWeight ?
+# WeightedSum1D
 
 # TODO - add the plotting functionality
 # TODO - rename the layer
@@ -431,6 +442,10 @@ SmoothPositionWeight = GAMSmooth
 #
 # TODO - use similar arguments to GAMSmooth (not as a thin wrapper around Conv1d)
 # TODO - fix & unit-test this layer
+
+# ConvSplineTr1D
+# DenseSplineTr
+# SplineTr
 class ConvSplines(Conv1D):
     """Convenience wrapper over `keras.layers.Conv1D` with 2 changes:
     - additional argument seq_length specifying input_shape (as in ConvDNA)
@@ -493,6 +508,7 @@ class ConvSplines(Conv1D):
         # config["seq_length"] = self.seq_length
         return config
 
+
 class BiDropout(Dropout):
     """Applies Dropout to the input, no matter if in learning phase or not.
     """
@@ -532,6 +548,7 @@ class BiDropout(Dropout):
         kwargs = dropout_obj.get_config()
         # alternatively can we use "get_config" in combination with (Layer.__init__)allowed_kwargs?
         return cls(**kwargs)
+
 
 # backcompatibility
 ConvDNAQuantitySplines = ConvSplines
