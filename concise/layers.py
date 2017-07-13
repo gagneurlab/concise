@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 from concise.utils.pwm import DEFAULT_BASE_BACKGROUND, pssm_array2pwm_array, _pwm2pwm_info
 import concise.regularizers as cr
-from concise.regularizers import GAMRegularizer
+from concise.regularizers import GAMRegularizer, SplineSmoother
 from concise.utils.splines import BSpline
 from concise.utils.helper import get_from_module
 from concise.utils.plot import heatmap
@@ -291,19 +291,182 @@ class ConvCodon(ConvSequence):
 # Smoothing layers
 
 
-# TODO - add X_spline as non-trainable weights
-# TODO - rename into SplineTrPooling1D
-# SplineWeightedSumPooling1D - ? check how Avanti calls it... - WeightedSum1D
-# ConvSplineTr
-# encodeSplines
-# SplineTrRegularizer
-#
-# SmoothPosWeight
-# SplineTWeight1D
-class SmoothPositionWeight(Layer):
+# TODO - SplineWeight1D - use new API and update
+class SplineWeight1D(Layer):
 
     def __name__(self):
-        return "SmoothPositionWeight"
+        return "SplineWeight1D"
+
+    def __init__(self,
+                 # spline type
+                 n_bases=10,
+                 spline_degree=3,
+                 share_splines=False,
+                 spline_exp=False,
+                 # regularization
+                 l2_smooth=1e-5,
+                 l2=1e-5,
+                 use_bias=False,
+                 bias_initializer='zeros',
+                 **kwargs):
+        """Up- or down-weight positions in the activation array of 1D convolutions:
+        $$x^{out}_{ijk} = x^{in}_{ijk} + f_S^k(j) \;,$$
+        where f_S is spline transformation.
+
+        # Arguments:
+            n_bases int: Number of spline bases used for the positional effect.
+            spline_exp (bool): If True, the positional bias score is observed
+                by: `np.exp(spline_score)`,
+                where `spline_score` is the linear combination of B-spline basis functions.
+                If False, `np.exp(spline_score + 1)` is used.
+            l2_smooth (float): L2 regularization strength for the second
+                order differences in positional bias' smooth splines.
+            (GAM smoothing regularization)
+            l2 (float): L2 regularization strength for the spline base coefficients.
+            use_bias: boolean; should we add a bias to the transition
+            bias_initializer; bias initializer - from `keras.initializers`
+        """
+        self.n_bases = n_bases
+        self.spline_degree = spline_degree
+        self.share_splines = share_splines
+        self.spline_exp = spline_exp
+        self.l2 = l2
+        self.l2_smooth = l2_smooth
+        self.use_bias = use_bias
+        self.bias_initializer = initializers.get(bias_initializer)
+
+        super(SplineWeight1D, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        # input_shape = (None, steps, filters)
+
+        start = 0
+        end = input_shape[1]
+        filters = input_shape[2]
+
+        if self.share_splines:
+            n_spline_tracks = 1
+        else:
+            n_spline_tracks = filters
+
+        # setup the bspline object
+        self.bs = BSpline(start, end - 1,
+                          n_bases=self.n_bases,
+                          spline_order=self.spline_degree
+                          )
+
+        # create X_spline,
+        self.positions = np.arange(end)
+        self.X_spline = self.bs.predict(self.positions, add_intercept=False)  # shape = (end, self.n_bases)
+
+        # convert to the right precision and K.constant
+        self.X_spline_K = K.constant(K.cast_to_floatx(self.X_spline))
+
+        # add weights - all set to 0
+        self.kernel = self.add_weight(shape=(self.n_bases, n_spline_tracks),
+                                      initializer='zeros',
+                                      name='kernel',
+                                      regularizer=GAMRegularizer(self.n_bases, self.spline_degree,
+                                                                 self.l2_smooth, self.l2),
+                                      trainable=True)
+
+        if self.use_bias:
+            self.bias = self.add_weight((n_spline_tracks, ),
+                                        initializer=self.bias_initializer,
+                                        name='bias',
+                                        regularizer=None)
+
+        super(SplineWeight1D, self).build(input_shape)  # Be sure to call this somewhere!
+
+    def call(self, x):
+
+        spline_track = K.dot(self.X_spline_K, self.kernel)
+
+        if self.use_bias:
+            spline_track = K.bias_add(spline_track, self.bias)
+
+        if self.spline_exp:
+            spline_track = K.exp(spline_track)
+        else:
+            spline_track = spline_track + 1
+
+        # multiply together the two coefficients
+        output = spline_track * x
+
+        return output
+
+    def compute_output_shape(self, input_shape):
+        return input_shape
+
+    def get_config(self):
+        config = {
+            'n_bases': self.n_bases,
+            'spline_degree': self.spline_degree,
+            'share_splines': self.share_splines,
+            'spline_exp': self.spline_exp,
+            'l2_smooth': self.l2_smooth,
+            'l2': self.l2,
+            'use_bias': self.use_bias,
+            'bias_initializer': initializers.serialize(self.bias_initializer),
+        }
+        base_config = super(SplineWeight1D, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    def positional_effect(self):
+        w = self.get_weights()[0]
+        pos_effect = np.dot(self.X_spline, w)
+        return {"positional_effect": pos_effect, "positions": self.positions}
+
+    def plot(self, *args, **kwargs):
+        pe = self.positional_effect()
+        plt.plot(pe["positions"], pe["positional_effect"], *args, **kwargs)
+        plt.xlabel("Position")
+        plt.ylabel("Positional effect")
+
+
+# SplineT -> use just locally-connected layers
+# SplineT1D -> wrap ConvSplines -> However,
+# It's better if we use just matrix multiplications.
+# - We can have more control over the inputs
+# - I think it's better to explicitly state the dimensions: 1D or so.
+class SplineT(Layer):
+
+    def __name__(self):
+        return "SplineT"
+
+    def __init__(self,
+                 # regularization
+                 units=1,
+                 share_splines=False,
+                 kernel_regularizer=None,
+                 activation=None,
+                 use_bias=False,
+                 kernel_initializer='glorot_uniform',
+                 bias_initialier='zeros'
+                 # TODO - input shape?
+                 ):
+        """
+        # Arguments
+
+            units: How many output values per feature to compute
+            share_splines: bool, if True spline coefficients
+                are shared across different features
+            kernel_regularizer: use `concise.regularizers.SplineSmoother`
+        """
+        self.units = units
+
+        # TODO - use convolutions
+
+    def get_config(self):
+        pass
+
+    # TODO - add X_spline as non-trainable weights
+
+    # Deprecated
+class GAMSmooth(Layer):
+
+    def __name__(self):
+        return "GAMSmooth"
 
     def __init__(self,
                  # spline type
@@ -339,7 +502,7 @@ class SmoothPositionWeight(Layer):
         self.use_bias = use_bias
         self.bias_initializer = initializers.get(bias_initializer)
 
-        super(SmoothPositionWeight, self).__init__(**kwargs)
+        super(GAMSmooth, self).__init__(**kwargs)
 
     def build(self, input_shape):
         # input_shape = (None, steps, filters)
@@ -380,7 +543,7 @@ class SmoothPositionWeight(Layer):
                                         name='bias',
                                         regularizer=None)
 
-        super(SmoothPositionWeight, self).build(input_shape)  # Be sure to call this somewhere!
+        super(GAMSmooth, self).build(input_shape)  # Be sure to call this somewhere!
 
     def call(self, x):
 
@@ -413,7 +576,7 @@ class SmoothPositionWeight(Layer):
             'use_bias': self.use_bias,
             'bias_initializer': initializers.serialize(self.bias_initializer),
         }
-        base_config = super(SmoothPositionWeight, self).get_config()
+        base_config = super(GAMSmooth, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
     def positional_effect(self):
@@ -428,8 +591,6 @@ class SmoothPositionWeight(Layer):
         plt.ylabel("Positional effect")
 
 
-GAMSmooth = SmoothPositionWeight
-# TODO - yes - and don't do x + f(x), just f(x). The person can figure out on its own what to do.
 # ResSplineWeight
 # SplineWeight ?
 # WeightedSum1D
@@ -561,7 +722,7 @@ AVAILABLE = ["InputDNA", "ConvDNA",
              "InputRNAStructure", "ConvRNAStructure",
              "InputSplines", "ConvSplines",
              "GlobalSumPooling1D",
-             "SmoothPositionWeight",
+             "SplineWeight1D",
              # legacy
              "InputDNAQuantitySplines", "InputDNAQuantity",
              "GAMSmooth", "ConvDNAQuantitySplines", "BiDropout"]

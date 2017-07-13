@@ -10,13 +10,18 @@ from concise.utils.helper import get_from_module
 #
 # TODO - allow w to be of any dimension, regularize only the last dimension
 # TODO - write unit-tests for it
+
+# TODO - is there a build method for the regularizer?
+#        - google if there exists a better methods for computing m-th order differences
+#        than matrix
+
+# TODO - test if this works...
 class SplineSmoother(Regularizer):
 
-    def __init__(self, n_bases=10, diff_order=2, l2_smooth=0., l2=0.):
+    def __init__(self, diff_order=2, l2_smooth=0., l2=0.):
         """Regularizer for spline transformation
 
         # Arguments
-            n_bases: number of b-spline bases
             diff_order: neighbouring coefficient difference order
                (2 for second-order differences)
             l2_smooth: float; Non-smoothness penalty (penalize w' * S * w)
@@ -24,21 +29,23 @@ class SplineSmoother(Regularizer):
         """
         # convert S to numpy-array if it's a list
 
-        self.n_bases = n_bases
         self.diff_order = diff_order
         self.l2_smooth = K.cast_to_floatx(l2_smooth)
         self.l2 = K.cast_to_floatx(l2)
 
         # convert to K.constant
-        self.S = K.constant(
-            K.cast_to_floatx(
-                get_S(n_bases, diff_order + 1, add_intercept=False)
-            ))
+        self.S = None
 
     def __call__(self, x):
         # x.shape = (n_bases, n_spline_tracks)
         # from conv: (kernel_width=1, n_bases, n_spline_tracks)
         from_conv = len(K.int_shape(x)) == 3
+        if self.S is None:
+            self.S = K.constant(
+                K.cast_to_floatx(
+                    get_S(K.int_shape(x)[-1], self.diff_order + 1, add_intercept=False)
+                ))
+
         if from_conv:
             x = K.squeeze(x, 0)
 
@@ -58,8 +65,7 @@ class SplineSmoother(Regularizer):
 
     def get_config(self):
         # convert S to list()
-        return {'n_bases': self.n_bases,
-                'diff_order': self.diff_order,
+        return {'diff_order': self.diff_order,
                 'l2_smooth': float(self.l2_smooth),
                 'l2': float(self.l2),
                 }
