@@ -1,5 +1,6 @@
 from keras import backend as K
-from keras.regularizers import Regularizer
+import keras.regularizers as kr
+from keras.regularizers import Regularizer, serialize, deserialize
 from concise.utils.splines import get_S
 from concise.utils.helper import get_from_module
 
@@ -16,6 +17,8 @@ from concise.utils.helper import get_from_module
 #        than matrix
 
 # TODO - test if this works...
+# TODO - maybe add axis argument -> along which axis to regularize...
+
 class SplineSmoother(Regularizer):
 
     def __init__(self, diff_order=2, l2_smooth=0., l2=0.):
@@ -37,13 +40,16 @@ class SplineSmoother(Regularizer):
         self.S = None
 
     def __call__(self, x):
+        # import pdb
+        # pdb.set_trace()
+
         # x.shape = (n_bases, n_spline_tracks)
         # from conv: (kernel_width=1, n_bases, n_spline_tracks)
         from_conv = len(K.int_shape(x)) == 3
         if self.S is None:
             self.S = K.constant(
                 K.cast_to_floatx(
-                    get_S(K.int_shape(x)[-1], self.diff_order + 1, add_intercept=False)
+                    get_S(K.int_shape(x)[-2], self.diff_order + 1, add_intercept=False)
                 ))
 
         if from_conv:
@@ -129,4 +135,7 @@ AVAILABLE = ["GAMRegularizer", "SplineSmoother"]
 
 
 def get(name):
-    return get_from_module(name, globals())
+    try:
+        return kr.get(name)
+    except ValueError:
+        return get_from_module(name, globals())

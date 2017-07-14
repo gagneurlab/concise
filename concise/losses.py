@@ -102,4 +102,7 @@ kullback_leibler_divergence_masked = mask_loss("kullback_leibler_divergence")
 
 
 def get(name):
-    return get_from_module(name, globals())
+    try:
+        return kloss.get(name)
+    except ValueError:
+        return get_from_module(name, globals())

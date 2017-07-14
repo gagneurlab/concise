@@ -1,6 +1,7 @@
 from keras import layers as kl
 from keras import regularizers as kr
-from keras.initializers import Initializer
+import keras.initializers as ki
+from keras.initializers import Initializer, serialize, deserialize
 from keras import backend as K
 import concise
 from concise.utils.pwm import PWM, pwm_list2pwm_array, pwm_array2pssm_array, DEFAULT_BASE_BACKGROUND
@@ -258,4 +259,7 @@ AVAILABLE = ["PWMBiasInitializer", "PWMKernelInitializer",
 
 
 def get(name):
-    return get_from_module(name, globals())
+    try:
+        return ki.get(name)
+    except ValueError:
+        return get_from_module(name, globals())

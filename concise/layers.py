@@ -1,15 +1,18 @@
 import numpy as np
 from keras import backend as K
 from keras.engine.topology import Layer
-from keras import initializers
 from keras.layers.pooling import _GlobalPooling1D
-from keras.layers import Conv1D, Input
+from keras.layers import Conv1D, Input, LocallyConnected1D
 from keras.layers.core import Dropout
 from deeplift.visualization import viz_sequence
 import matplotlib.pyplot as plt
+from keras.engine import InputSpec
 
 from concise.utils.pwm import DEFAULT_BASE_BACKGROUND, pssm_array2pwm_array, _pwm2pwm_info
-import concise.regularizers as cr
+from keras import activations
+from keras import constraints
+from concise import initializers
+from concise import regularizers
 from concise.regularizers import GAMRegularizer, SplineSmoother
 from concise.utils.splines import BSpline
 from concise.utils.helper import get_from_module
@@ -291,7 +294,10 @@ class ConvCodon(ConvSequence):
 # Smoothing layers
 
 
+# TODO - re-write SplineWeight1D with SplineT layer
 # TODO - SplineWeight1D - use new API and update
+#        - think how to call share_splines...?
+#        - use a regularizer rather than just
 class SplineWeight1D(Layer):
 
     def __name__(self):
@@ -302,7 +308,6 @@ class SplineWeight1D(Layer):
                  n_bases=10,
                  spline_degree=3,
                  share_splines=False,
-                 spline_exp=False,
                  # regularization
                  l2_smooth=1e-5,
                  l2=1e-5,
@@ -315,10 +320,6 @@ class SplineWeight1D(Layer):
 
         # Arguments:
             n_bases int: Number of spline bases used for the positional effect.
-            spline_exp (bool): If True, the positional bias score is observed
-                by: `np.exp(spline_score)`,
-                where `spline_score` is the linear combination of B-spline basis functions.
-                If False, `np.exp(spline_score + 1)` is used.
             l2_smooth (float): L2 regularization strength for the second
                 order differences in positional bias' smooth splines.
             (GAM smoothing regularization)
@@ -329,7 +330,6 @@ class SplineWeight1D(Layer):
         self.n_bases = n_bases
         self.spline_degree = spline_degree
         self.share_splines = share_splines
-        self.spline_exp = spline_exp
         self.l2 = l2
         self.l2_smooth = l2_smooth
         self.use_bias = use_bias
@@ -385,10 +385,10 @@ class SplineWeight1D(Layer):
         if self.use_bias:
             spline_track = K.bias_add(spline_track, self.bias)
 
-        if self.spline_exp:
-            spline_track = K.exp(spline_track)
-        else:
-            spline_track = spline_track + 1
+        # if self.spline_exp:
+        #     spline_track = K.exp(spline_track)
+        # else:
+        spline_track = spline_track + 1
 
         # multiply together the two coefficients
         output = spline_track * x
@@ -403,7 +403,7 @@ class SplineWeight1D(Layer):
             'n_bases': self.n_bases,
             'spline_degree': self.spline_degree,
             'share_splines': self.share_splines,
-            'spline_exp': self.spline_exp,
+            # 'spline_exp': self.spline_exp,
             'l2_smooth': self.l2_smooth,
             'l2': self.l2,
             'use_bias': self.use_bias,
@@ -429,40 +429,111 @@ class SplineWeight1D(Layer):
 # It's better if we use just matrix multiplications.
 # - We can have more control over the inputs
 # - I think it's better to explicitly state the dimensions: 1D or so.
-class SplineT(Layer):
 
-    def __name__(self):
-        return "SplineT"
+
+class SplineT(Layer):
 
     def __init__(self,
                  # regularization
-                 units=1,
-                 share_splines=False,
+                 shared_weights=False,
                  kernel_regularizer=None,
-                 activation=None,
                  use_bias=False,
                  kernel_initializer='glorot_uniform',
-                 bias_initialier='zeros'
+                 bias_initializer='zeros',
+                 **kwargs
                  # TODO - input shape?
                  ):
         """
         # Arguments
 
-            units: How many output values per feature to compute
-            share_splines: bool, if True spline coefficients
+            shared_weights: bool, if True spline transformation weights
                 are shared across different features
             kernel_regularizer: use `concise.regularizers.SplineSmoother`
-        """
-        self.units = units
 
-        # TODO - use convolutions
+        Input: N x ... x channels x n_bases
+        Output: N x ... x channels
+        """
+        super(SplineT, self).__init__(**kwargs)  # Be sure to call this somewhere!
+
+        self.shared_weights = shared_weights
+        self.kernel_regularizer = regularizers.get(kernel_regularizer)
+        self.use_bias = use_bias
+        self.kernel_initializer = initializers.get(kernel_initializer)
+        self.bias_initializer = initializers.get(bias_initializer)
+
+        self.input_spec = InputSpec(min_ndim=3)
+
+    def build(self, input_shape):
+        assert len(input_shape) >= 3
+
+        n_bases = input_shape[-1]
+        n_features = input_shape[-2]
+
+        # self.input_shape = input_shape
+        self.inp_shape = input_shape
+        self.n_features = n_features
+        self.n_bases = n_bases
+
+        if self.shared_weights:
+            use_n_features = 1
+        else:
+            use_n_features = self.n_features
+
+        # print("n_bases: {0}".format(n_bases))
+        # print("n_features: {0}".format(n_features))
+
+        self.kernel = self.add_weight(shape=(n_bases, use_n_features),
+                                      initializer=self.kernel_initializer,
+                                      name='kernel',
+                                      regularizer=self.kernel_regularizer,
+                                      trainable=True)
+
+        if self.use_bias:
+            self.bias = self.add_weight((n_features, ),
+                                        initializer=self.bias_initializer,
+                                        name='bias',
+                                        regularizer=None)
+
+        self.built = True
+        super(SplineT, self).build(input_shape)  # Be sure to call this somewhere!
+
+    def compute_output_shape(self, input_shape):
+        return input_shape[:-1]
+
+    def call(self, inputs):
+        N = len(self.inp_shape)
+        # put -2 axis (features) to the front
+        # import pdb
+        # pdb.set_trace()
+
+        if self.shared_weights:
+            return K.squeeze(K.dot(inputs, self.kernel), -1)
+
+        output = K.permute_dimensions(inputs, (N - 2, ) + tuple(range(N - 2)) + (N - 1,))
+
+        output_reshaped = K.reshape(output, (self.n_features, -1, self.n_bases))
+        bd_output = K.batch_dot(output_reshaped, K.transpose(self.kernel))
+        output = K.reshape(bd_output, (self.n_features, -1) + self.inp_shape[1:(N - 2)])
+        # move axis 0 (features) to back
+        output = K.permute_dimensions(output, tuple(range(1, N - 1)) + (0,))
+        if self.use_bias:
+            output = K.bias_add(output, self.bias, data_format="channels_last")
+        return output
 
     def get_config(self):
-        pass
+        config = {
+            'shared_weights': self.shared_weights,
+            'kernel_regularizer': regularizers.serialize(self.kernel_regularizer),
+            'use_bias': self.use_bias,
+            'kernel_initializer': initializers.serialize(self.kernel_initializer),
+            'bias_initializer': initializers.serialize(self.bias_initializer)
+        }
+        base_config = super(SplineT, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
 
     # TODO - add X_spline as non-trainable weights
 
-    # Deprecated
+# Deprecated
 class GAMSmooth(Layer):
 
     def __name__(self):
@@ -647,7 +718,7 @@ class ConvSplines(Conv1D):
             bias_constraint=bias_constraint,
             **kwargs)
 
-        if not isinstance(self.kernel_regularizer, cr.GAMRegularizer):
+        if not isinstance(self.kernel_regularizer, regularizers.GAMRegularizer):
             raise ValueError("Regularizer has to be of type concise.regularizers.GAMRegularizer. " +
                              "Current type: " + str(type(self.kernel_regularizer)),
                              "\nObject: " + str(self.kernel_regularizer))
@@ -723,6 +794,7 @@ AVAILABLE = ["InputDNA", "ConvDNA",
              "InputSplines", "ConvSplines",
              "GlobalSumPooling1D",
              "SplineWeight1D",
+             "SplineT",
              # legacy
              "InputDNAQuantitySplines", "InputDNAQuantity",
              "GAMSmooth", "ConvDNAQuantitySplines", "BiDropout"]
