@@ -17,16 +17,17 @@ def _trunc(x, minval=None, maxval=None):
 
 
 class EncodeSplines(object):
-    """Compute B-spline basis function values.
+    """Transformer (class) for computing the B-spline basis values.
 
     Pre-processing step for spline transformation (`SplineT`) layer.
     This transformer works on arrays that are either N x D or N x L x D dimensional.
     Last dimension encodes different features (D) and first dimension different examples.
     Knot placement is specific for each feature individually,
     unless `share_knots` is set `True`.
-    The final result is an array with new dimension:
-    `N x D -> N x D x n_bases`
-    `N x L x D -> N x L x D x n_bases`
+    The final result is an array with a new axis:
+
+    - `N x D -> N x D x n_bases`
+    - `N x L x D -> N x L x D x n_bases`
 
     # Arguments
         n_bases: int; Number of basis functions.
@@ -89,7 +90,8 @@ class EncodeSplines(object):
 
 # TODO - use as pre-processor function? - predict for the test set
 def encodeSplines(x, n_bases=10, spline_order=3, start=None, end=None):
-    """Get B-spline base-function expansion
+    """**Deprecated**. Function version of the transformer class `EncodeSplines`.
+    Get B-spline base-function expansion
 
     # Details
         First, the knots for B-spline basis functions are placed

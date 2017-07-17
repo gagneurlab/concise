@@ -311,16 +311,15 @@ class SplineWeight1D(Layer):
     """Up- or down-weight positions in the activation array of 1D convolutions:
 
     `x^{out}_{ijk} = x^{in}_{ijk} + f_S^k(j) \;,`
-    where f_S is spline transformation.
+    where f_S is the spline transformation.
 
     # Arguments
-        n_bases int: Number of spline bases used for the positional effect.
-        l2_smooth (float): L2 regularization strength for the second
-            order differences in positional bias' smooth splines.
-        (GAM smoothing regularization)
-        l2 (float): L2 regularization strength for the spline base coefficients.
+        n_bases: int; Number of spline bases used for the positional effect.
+        l2_smooth: (float) L2 regularization strength for the second
+    order differences in positional bias' smooth splines. (GAM smoothing regularization)
+        l2: (float) L2 regularization strength for the spline base coefficients.
         use_bias: boolean; should we add a bias to the transition
-        bias_initializer; bias initializer - from `keras.initializers`
+        bias_initializer: bias initializer - from `keras.initializers`
     """
 
     def __name__(self):
@@ -442,15 +441,19 @@ class SplineWeight1D(Layer):
 
 
 class SplineT(Layer):
-    """
+    """Spline transformation layer.
+
+    As input, it needs an array of scalars pre-processed by `concise.preprocessing.EncodeSplines`
+    Specifically, the input/output dimensions are:
+
+    - Input: N x ... x channels x n_bases
+    - Output: N x ... x channels
+
     # Arguments
-
         shared_weights: bool, if True spline transformation weights
-            are shared across different features
+    are shared across different features
         kernel_regularizer: use `concise.regularizers.SplineSmoother`
-
-    Input: N x ... x channels x n_bases
-    Output: N x ... x channels
+        other arguments: See `keras.layers.Dense`
     """
 
     def __init__(self,

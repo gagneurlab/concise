@@ -84,12 +84,12 @@ PAGES = [
     {
         'page': 'preprocessing/sequence.md',
         'functions': [
+            sequence.encodeSequence,
+            sequence.pad_sequences,
             sequence.encodeDNA,
             sequence.encodeRNA,
             sequence.encodeCodon,
             sequence.encodeAA,
-            sequence.pad_sequences,
-            sequence.encodeSequence,
         ]
     },
     {

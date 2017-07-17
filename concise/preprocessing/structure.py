@@ -113,6 +113,7 @@ def encodeRNAStructure(seq_vec, maxlen=None, seq_align="start",
 
     # Note
         Recommended parameters:
+
         - for human, mouse use W, L, u : 240, 160, 1
         - for fly, yeast   use W, L, u :  80,  40, 1
 

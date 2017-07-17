@@ -20,7 +20,7 @@ from concise.utils.helper import get_from_module
 # TODO - maybe add axis argument -> along which axis to regularize...
 
 class SplineSmoother(Regularizer):
-    """Regularizer for spline transformation
+    """Regularizer for the spline transformation
 
     # Arguments
         diff_order: neighbouring coefficient difference order
