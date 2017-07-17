@@ -23,7 +23,7 @@ requirements = [
     "matplotlib",
     "tensorflow",
     # "glmnet",
-    "keras>=2.0.1",
+    "keras>=2.0.2",
     'deeplift>=0.4',
     'simdna==0.2',
     'hyperopt',
