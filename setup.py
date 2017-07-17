@@ -41,11 +41,11 @@ test_requirements = [
 setup(
     name='concise',
     version='0.6.0',
-    description="CONCISE (COnvolutional Neural for CIS-regulatory Elements) is a model for predicting PTR features like mRNA half-life from cis-regulatory elements using deep learning. ",
+    description="CONCISE (COnvolutional Neural for CIS-regulatory Elements)",
     long_description=readme,  # + '\n\n' + history,
     author="Žiga Avsec",
     author_email='avsec@in.tum.de',
-    url='https://github.com/avsecz/concise',
+    url='https://github.com/gagneurlab/concise',
     packages=find_packages(),
     package_data={'concise.resources': ['attract_metadata.txt', 'attract_pwm.txt'],
                   'concise.resources.RNAplfold': ["H_RNAplfold", "I_RNAplfold", "M_RNAplfold", "E_RNAplfold"]},

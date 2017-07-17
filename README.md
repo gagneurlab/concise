@@ -23,13 +23,18 @@ If allows you to:
 
 ## Installation
 
-Concise is available for python versions greater than 3.4 and can be installed from PyPI using `pip`:
+Concise is available for python versions greater than 3.4 and can be installed from source using pip:<!-- PyPI using `pip`: -->
 
 ```sh
-pip install --process-dependency-links concise
+git clone https://github.com/gagneurlab/concise
+pip install --process-dependency-links concise/
 ```
 
-`--process-dependency-links` is required in order to properly install the following github packages: [deeplift](https://github.com/kundajelab/deeplift) and [simdna](https://github.com/kundajelab/simdna/tarball/0.2#egg=simdna-0.2).
+`--process-dependency-links` and cloning the source is required in order to properly install the following github packages: [deeplift](https://github.com/kundajelab/deeplift) and [simdna](https://github.com/kundajelab/simdna/tarball/0.2#egg=simdna-0.2). PyPI version is also available, but the github packages might not get installed properly:
+
+```sh
+pip install concise
+```
 
 <!-- Make sure your keras is installed properly and configured with the backend of choice. -->
 
