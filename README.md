@@ -32,3 +32,9 @@ pip install --process-dependency-links concise
 `--process-dependency-links` is required in order to properly install the following github packages: [deeplift](https://github.com/kundajelab/deeplift) and [simdna](https://github.com/kundajelab/simdna/tarball/0.2#egg=simdna-0.2).
 
 <!-- Make sure your keras is installed properly and configured with the backend of choice. -->
+
+## Documentation
+
+- <https://i12g-gagneurweb.in.tum.de/public/docs/concise/>
+
+
