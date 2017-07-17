@@ -5,20 +5,6 @@ from concise.utils.splines import get_S
 from concise.utils.helper import get_from_module
 
 
-# TODO - do we really need to specify n_bases?
-#        - can we cache S matrix or compute it using a for-loop?
-#          - set n_bases after the thing has been called
-#
-# TODO - allow w to be of any dimension, regularize only the last dimension
-# TODO - write unit-tests for it
-
-# TODO - is there a build method for the regularizer?
-#        - google if there exists a better methods for computing m-th order differences
-#        than matrix
-
-# TODO - test if this works...
-# TODO - maybe add axis argument -> along which axis to regularize...
-
 class SplineSmoother(Regularizer):
     """Regularizer for the spline transformation
 
