@@ -3,20 +3,10 @@ theme: readthedocs
 theme_dir: theme_dir
 # extra_css: [extra.css]
 docs_dir: sources
-repo_url: http://github.com/avsecz/concise
-# TODO
-site_url: http://concise.io/
-site_description: 'Documentation for Concise, Keras extension for regulatory genomics.'
+repo_url: http://github.com/gagneurlab/concise
+site_url: https://i12g-gagneurweb.in.tum.de/public/docs/concise/
+site_description: 'Documentation of Concise, Keras extension for regulatory genomics.'
 
-markdown_extensions:
-  - extra
-  - tables
-  - fenced_code
-extra_javascript:
-  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
-  - mathjaxhelper.js
-
-    
 dev_addr: '0.0.0.0:8000'
 # TODO
 google_analytics: ["TODO" , 'concise.TODO']
