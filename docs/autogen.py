@@ -22,7 +22,6 @@ Losses
 Metrics
 Eval metrics
 Optimizers
-Activations
 Initializers
 Regularizers
 - effects
@@ -56,9 +55,8 @@ from concise.utils import splines
 from concise.data import encode
 from concise.data import attract
 from concise.preprocessing import sequence
-from concise.preprocessing import smooth
+from concise.preprocessing import splines
 from concise.preprocessing import structure
-from concise import activations
 from concise import constraints
 from concise import eval_metrics
 from concise import metrics
@@ -96,8 +94,11 @@ PAGES = [
     },
     {
         'page': 'preprocessing/splines.md',
+        'classes': [
+            splines.EncodeSplines,
+        ],
         'functions': [
-            smooth.encodeSplines,
+            splines.encodeSplines,
         ]
     },
     {
@@ -117,13 +118,15 @@ PAGES = [
             layers.InputSplines,
         ],
         'classes': [
+            layers.SplineT,
+            layers.SplineWeight1D,
+            layers.ConvSequence,
             layers.ConvDNA,
             layers.ConvRNA,
             layers.ConvRNAStructure,
             layers.ConvAA,
             layers.ConvCodon,
-            layers.ConvSplines,
-            layers.SmoothPositionWeight,
+            # layers.ConvSplines,
             layers.GlobalSumPooling1D,
         ],
     },
@@ -146,8 +149,11 @@ PAGES = [
     },
     {
         'page': 'regularizers.md',
-        'all_module_functions': [regularizers],
-        'all_module_classes': [regularizers],
+        # 'all_module_functions': [regularizers],
+        # 'all_module_classes': [regularizers],
+        'classes': [
+            regularizers.SplineSmoother,
+        ]
     },
     {
         'page': 'optimizers.md',
@@ -155,10 +161,6 @@ PAGES = [
         'functions': [
             optimizers.data_based_init
         ]
-    },
-    {
-        'page': 'activations.md',
-        'all_module_functions': [activations],
     },
     {
         'page': 'effects.md',

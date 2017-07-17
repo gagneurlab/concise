@@ -20,16 +20,16 @@ from concise.utils.helper import get_from_module
 # TODO - maybe add axis argument -> along which axis to regularize...
 
 class SplineSmoother(Regularizer):
+    """Regularizer for spline transformation
+
+    # Arguments
+        diff_order: neighbouring coefficient difference order
+           (2 for second-order differences)
+        l2_smooth: float; Non-smoothness penalty (penalize w' * S * w)
+        l2: float; L2 regularization factor - overall weights regularizer
+    """
 
     def __init__(self, diff_order=2, l2_smooth=0., l2=0.):
-        """Regularizer for spline transformation
-
-        # Arguments
-            diff_order: neighbouring coefficient difference order
-               (2 for second-order differences)
-            l2_smooth: float; Non-smoothness penalty (penalize w' * S * w)
-            l2: float; L2 regularization factor - overall weights regularizer
-        """
         # convert S to numpy-array if it's a list
 
         self.diff_order = diff_order

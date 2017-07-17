@@ -17,26 +17,30 @@ def _trunc(x, minval=None, maxval=None):
 
 
 class EncodeSplines(object):
+    """Compute B-spline basis function values.
+
+    Pre-processing step for spline transformation (`SplineT`) layer.
+    This transformer works on arrays that are either N x D or N x L x D dimensional.
+    Last dimension encodes different features (D) and first dimension different examples.
+    Knot placement is specific for each feature individually,
+    unless `share_knots` is set `True`.
+    The final result is an array with new dimension:
+    `N x D -> N x D x n_bases`
+    `N x L x D -> N x L x D x n_bases`
+
+    # Arguments
+        n_bases: int; Number of basis functions.
+        degree: int; 2 for quadratic, 3 for qubic splines
+        share_knots: bool; if True, the spline knots are
+            shared across all the features (last-dimension)
+
+    # Methods
+        fit: Calculate the knot placement from the values ranges.
+        transform: Obtain the transformed values
+        fit_transform: fit and transform.
+    """
 
     def __init__(self, n_bases=10, degree=3, share_knots=False):
-        """Compute B-spline basis function values.
-
-        Pre-processing step for spline transformation (`SplineT`) layer.
-        This transformer works on arrays that are either N x D or N x L x D dimensional.
-        Last dimension encodes different features (D) and first dimension different examples.
-        Knot placement is specific for each feature individually,
-        unless `share_knots` is set `True`.
-        The final result is an array with new dimension:
-        `N x D -> N x D x n_bases`
-        `N x L x D -> N x L x D x n_bases`
-
-        # Arguments
-            n_bases: int; Number of basis functions.
-            degree: int; 2 for quadratic, 3 for qubic splines
-            share_knots: bool; if True, the spline knots are
-                shared across all the features (last-dimension)
-        """
-
         self.n_bases = n_bases
         self.degree = degree
         self.share_knots = share_knots

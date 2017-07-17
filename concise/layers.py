@@ -73,7 +73,16 @@ def InputRNAStructure(seq_length, name=None, **kwargs):
     return Input((seq_length, len(RNAplfold_PROFILES)), name=name, **kwargs)
 
 
+# deprecated
 def InputSplines(seq_length, n_bases=10, name=None, **kwargs):
+    """Input placeholder for array returned by `encodeSplines`
+
+    Wrapper for: `keras.layers.Input((seq_length, n_bases), name=name, **kwargs)`
+    """
+    return Input((seq_length, n_bases), name=name, **kwargs)
+
+
+def InputSplines1D(seq_length, n_bases=10, name=None, **kwargs):
     """Input placeholder for array returned by `encodeSplines`
 
     Wrapper for: `keras.layers.Input((seq_length, n_bases), name=name, **kwargs)`
@@ -299,6 +308,20 @@ class ConvCodon(ConvSequence):
 #        - think how to call share_splines...?
 #        - use a regularizer rather than just
 class SplineWeight1D(Layer):
+    """Up- or down-weight positions in the activation array of 1D convolutions:
+
+    `x^{out}_{ijk} = x^{in}_{ijk} + f_S^k(j) \;,`
+    where f_S is spline transformation.
+
+    # Arguments
+        n_bases int: Number of spline bases used for the positional effect.
+        l2_smooth (float): L2 regularization strength for the second
+            order differences in positional bias' smooth splines.
+        (GAM smoothing regularization)
+        l2 (float): L2 regularization strength for the spline base coefficients.
+        use_bias: boolean; should we add a bias to the transition
+        bias_initializer; bias initializer - from `keras.initializers`
+    """
 
     def __name__(self):
         return "SplineWeight1D"
@@ -314,19 +337,6 @@ class SplineWeight1D(Layer):
                  use_bias=False,
                  bias_initializer='zeros',
                  **kwargs):
-        """Up- or down-weight positions in the activation array of 1D convolutions:
-        $$x^{out}_{ijk} = x^{in}_{ijk} + f_S^k(j) \;,$$
-        where f_S is spline transformation.
-
-        # Arguments:
-            n_bases int: Number of spline bases used for the positional effect.
-            l2_smooth (float): L2 regularization strength for the second
-                order differences in positional bias' smooth splines.
-            (GAM smoothing regularization)
-            l2 (float): L2 regularization strength for the spline base coefficients.
-            use_bias: boolean; should we add a bias to the transition
-            bias_initializer; bias initializer - from `keras.initializers`
-        """
         self.n_bases = n_bases
         self.spline_degree = spline_degree
         self.share_splines = share_splines
@@ -432,6 +442,16 @@ class SplineWeight1D(Layer):
 
 
 class SplineT(Layer):
+    """
+    # Arguments
+
+        shared_weights: bool, if True spline transformation weights
+            are shared across different features
+        kernel_regularizer: use `concise.regularizers.SplineSmoother`
+
+    Input: N x ... x channels x n_bases
+    Output: N x ... x channels
+    """
 
     def __init__(self,
                  # regularization
@@ -441,18 +461,7 @@ class SplineT(Layer):
                  kernel_initializer='glorot_uniform',
                  bias_initializer='zeros',
                  **kwargs
-                 # TODO - input shape?
                  ):
-        """
-        # Arguments
-
-            shared_weights: bool, if True spline transformation weights
-                are shared across different features
-            kernel_regularizer: use `concise.regularizers.SplineSmoother`
-
-        Input: N x ... x channels x n_bases
-        Output: N x ... x channels
-        """
         super(SplineT, self).__init__(**kwargs)  # Be sure to call this somewhere!
 
         self.shared_weights = shared_weights
@@ -553,7 +562,7 @@ class GAMSmooth(Layer):
                  **kwargs):
         """
 
-        # Arguments:
+        # Arguments
             n_splines int: Number of splines used for the positional bias.
             spline_exp (bool): If True, the positional bias score is observed by: `np.exp(spline_score)`,
                where `spline_score` is the linear combination of B-spline basis functions.
