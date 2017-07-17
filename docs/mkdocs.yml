@@ -8,20 +8,31 @@ repo_url: http://github.com/avsecz/concise
 site_url: http://concise.io/
 site_description: 'Documentation for Concise, Keras extension for regulatory genomics.'
 
+markdown_extensions:
+  - extra
+  - tables
+  - fenced_code
+extra_javascript:
+  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML
+  - mathjaxhelper.js
+
+    
 dev_addr: '0.0.0.0:8000'
 # TODO
 google_analytics: ["TODO" , 'concise.TODO']
 
 pages:
 - Home: index.md
-- Getting started: getting-started/simple_concise_model.md
+- Getting started:
+  - getting-started/simple_concise_model.md
+  - getting-started/spline_transformation.md
 #   - Guide to the Sequential model: getting-started/sequential-model-guide.md
 #   - Guide to the Functional API: getting-started/functional-api-guide.md
 #   - FAQ: getting-started/faq.md
 - Preprocessing:
   - Genomic Sequence Preprocessing: preprocessing/sequence.md
   - RNA Structure Preprocessing: preprocessing/structure.md
-  - Spline-position Preprocessing: preprocessing/splines.md
+  - Spline transformation Preprocessing: preprocessing/splines.md
 - Layers: layers.md # TODO - check
 - Initializers: initializers.md
 - Regularizers: regularizers.md
