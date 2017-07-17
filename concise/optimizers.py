@@ -1,4 +1,5 @@
 from keras import backend as K
+import keras.optimizers as ko
 from keras.optimizers import SGD, Adam
 import tensorflow as tf
 from concise.utils.helper import get_from_module
@@ -226,4 +227,7 @@ AVAILABLE = ["SGDWithWeightnorm", "AdamWithWeightnorm"]
 
 
 def get(name):
-    return get_from_module(name, globals())
+    try:
+        return ko.get(name)
+    except ValueError:
+        return get_from_module(name, globals())

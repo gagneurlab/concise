@@ -10,7 +10,6 @@ import keras.regularizers as kr
 # concise modules
 from concise import initializers as ci
 from concise import layers as cl
-from concise import activations as ca
 from concise.utils import PWM
 
 
@@ -54,7 +53,6 @@ def single_layer_pos_effect(pooling_layer="sum",  # 'sum', 'max' or 'mean'
                             # splines
                             n_splines=None,
                             share_splines=False,  # should the positional bias be shared across motifs
-                            spline_exp=False,     # use the exponential function
                             # regularization
                             lamb=1e-5,            # overall motif coefficient regularization
                             motif_lamb=1e-5,
@@ -78,10 +76,7 @@ def single_layer_pos_effect(pooling_layer="sum",  # 'sum', 'max' or 'mean'
         kernel_initializer = ki.RandomNormal(stddev=init_sd_motif)
         bias_initializer = ki.Constant(value=init_motif_bias)
 
-    if nonlinearity is "exp":
-        activation = ca.exponential
-    else:
-        activation = nonlinearity  # supports 'relu' out-of-the-box
+    activation = nonlinearity  # supports 'relu' out-of-the-box
 
     # define the model
     # ----------------
@@ -99,7 +94,6 @@ def single_layer_pos_effect(pooling_layer="sum",  # 'sum', 'max' or 'mean'
     if n_splines:
         xseq = cl.GAMSmooth(n_bases=n_splines,
                             share_splines=share_splines,
-                            spline_exp=spline_exp,
                             l2_smooth=spline_lamb,
                             l2=spline_param_lamb,
                             )(xseq)
