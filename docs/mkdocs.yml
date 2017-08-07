@@ -14,6 +14,7 @@ google_analytics: ["TODO" , 'concise.TODO']
 pages:
 - Home: index.md
 - Getting started:
+  - getting-started/getting_started.md
   - getting-started/simple_concise_model.md
   - getting-started/spline_transformation.md
 #   - Guide to the Sequential model: getting-started/sequential-model-guide.md
