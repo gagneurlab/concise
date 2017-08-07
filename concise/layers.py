@@ -250,6 +250,7 @@ class ConvDNA(ConvSequence):
                 print("filter index: {0}".format(idx))
             viz_sequence.plot_weights(arr, figsize=figsize)
 
+    # TODO - plot using facets rather than independent plots and a for loop...
     def plot_weights(self, index=None, plot_type="motif_raw", figsize=(6, 2), **kwargs):
         """Plot weights as a heatmap
 
@@ -331,8 +332,8 @@ class SplineWeight1D(Layer):
                  spline_degree=3,
                  share_splines=False,
                  # regularization
-                 l2_smooth=1e-5,
-                 l2=1e-5,
+                 l2_smooth=0,
+                 l2=0,
                  use_bias=False,
                  bias_initializer='zeros',
                  **kwargs):
