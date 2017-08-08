@@ -5,7 +5,7 @@ __pycache__/
 
 docs/site/*
 docs/sources/*
-
+docs/theme_dir/img/ipynb/*
 
 # emacs
 *~
@@ -69,3 +69,4 @@ target/
 # pycharm
 .idea
 .ipynb_checkpoints
+logfile.txt

@@ -1,11 +1,11 @@
 site_name: Concise Documentation
 theme: readthedocs
-#theme_dir: theme
+theme_dir: theme_dir
+extra_css: [css/extra.css]
 docs_dir: sources
-repo_url: http://github.com/avsecz/concise
-# TODO
-site_url: http://concise.io/
-site_description: 'Documentation for Concise, Keras extension for regulatory genomics.'
+repo_url: http://github.com/gagneurlab/concise
+site_url: https://i12g-gagneurweb.in.tum.de/public/docs/concise/
+site_description: 'Documentation of Concise, Keras extension for regulatory genomics.'
 
 dev_addr: '0.0.0.0:8000'
 # TODO
@@ -13,14 +13,20 @@ google_analytics: ["TODO" , 'concise.TODO']
 
 pages:
 - Home: index.md
-- Getting started: getting-started/simple_concise_model.md
+- Tutorials:
+  # ipynb's
+  - tutorials/getting_started.md
+  - tutorials/PWM_initialization.md
+  - tutorials/spline_transformation.md
+  - tutorials/effect_prediction.md
+  - tutorials/hyper-parameter_optimization.md  
 #   - Guide to the Sequential model: getting-started/sequential-model-guide.md
 #   - Guide to the Functional API: getting-started/functional-api-guide.md
 #   - FAQ: getting-started/faq.md
 - Preprocessing:
   - Genomic Sequence Preprocessing: preprocessing/sequence.md
   - RNA Structure Preprocessing: preprocessing/structure.md
-  - Spline-position Preprocessing: preprocessing/splines.md
+  - Spline transformation Preprocessing: preprocessing/splines.md
 - Layers: layers.md # TODO - check
 - Initializers: initializers.md
 - Regularizers: regularizers.md

@@ -71,8 +71,10 @@ def encodeSequence(seq_vec, vocab, neutral_vocab, maxlen=None,
 
     # Returns
         Array with shape for encode_type:
+
             - "one_hot": (len(seq_vec), maxlen, len(vocab))
             - "token": (len(seq_vec), maxlen)
+
         If maxlen is None, it gets the value of the longest sequence length from seq_vec.
     """
     if isinstance(neutral_vocab, str):
@@ -223,8 +225,8 @@ def pad_sequences(sequence_vec, maxlen=None, align="end", value="N"):
     """Pad and/or trim a list of sequences to have common length
 
     Procedure:
-    1. Pad the sequence with N's or any other string or list element (`value`)
-    2. Subset the sequence
+        1. Pad the sequence with N's or any other string or list element (`value`)
+        2. Subset the sequence
 
     # Note
         See also: https://keras.io/preprocessing/sequence/

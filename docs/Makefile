@@ -9,6 +9,7 @@ help:
 
 build:
 	python autogen.py
+	./render_ipynb.bash
 	mkdocs build
 	@echo "Build finished"
 
@@ -19,4 +20,6 @@ clean:
 	rm -r site sources
 
 push:
-	rsync -r site/ /s/public_webshare/project/concise
+	rsync -r site/ /s/public_webshare/public/docs/concise
+
+

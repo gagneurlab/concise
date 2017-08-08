@@ -1,7 +1,7 @@
 import h5py
 from keras.models import model_from_json
 from tests.setup_concise_load_data import load_example_data
-from concise.models import single_layer_pos_effect as concise_model
+from concise.legacy.models import single_layer_pos_effect as concise_model
 import numpy as np
 
 def get_list_input_model():
@@ -45,7 +45,7 @@ def get_list_input_model():
     n2.add(Dense(nf_fc, activation='relu', kernel_initializer=winit))
 
     merged = concatenate([n1.output, n2.output])
-    out =  Dense(n_output, activation='sigmoid', kernel_initializer=winit)(merged)
+    out = Dense(n_output, activation='sigmoid', kernel_initializer=winit)(merged)
 
     merged_model = Model(inputs=[n1.input, n2.input], outputs=out)
     merged_model.compile(optimizer=opt, loss=ls, metrics=ls_metrics)
@@ -55,7 +55,7 @@ def get_list_input_model():
 
 
 def get_concise_model():
-    param, X_feat, X_seq, y, id_vec = load_example_data(trim_seq_len = 1000)
+    param, X_feat, X_seq, y, id_vec = load_example_data(trim_seq_len=1000)
     dc = concise_model(pooling_layer="sum",
                        init_motifs=["TGCGAT", "TATTTAT"],
                        n_splines=10,
@@ -85,7 +85,7 @@ def get_model():
     with open(model_path + "/a.json", "rt") as f:
         model = model_from_json(f.read())
     model.load_weights(model_path + "/best_w.h5")
-    return {"model":model, "out_annotation":output_labels}
+    return {"model": model, "out_annotation": output_labels}
 
 def get_example_data():
     dataset_path = "./data/sample_hqtl_res.hdf5"
@@ -95,12 +95,12 @@ def get_example_data():
     alt = ifh["test_in_alt"].value
     dirs = ifh["test_out"]["seq_direction"].value
     assert(dirs[0] == b"fwd")
-    dataset["ref"] = ref[::2,...]
-    dataset["alt"] = alt[::2,...]
-    dataset["ref_rc"] = ref[1::2,...]
-    dataset["alt_rc"] = alt[1::2,...]
+    dataset["ref"] = ref[::2, ...]
+    dataset["alt"] = alt[::2, ...]
+    dataset["ref_rc"] = ref[1::2, ...]
+    dataset["alt_rc"] = alt[1::2, ...]
     dataset["y"] = ifh["test_out"]["type"].value[::2]
-    dataset["mutation_position"] = np.array([500]*dataset["ref"].shape[0])
+    dataset["mutation_position"] = np.array([500] * dataset["ref"].shape[0])
     ifh.close()
     return dataset
 

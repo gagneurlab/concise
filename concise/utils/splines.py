@@ -7,6 +7,7 @@ import scipy.interpolate as si
 #               - That way you don't have to hash the X_spline in memory.
 
 
+# TODO - set default range to 0,1
 class BSpline():
 
     def __init__(self, start=0, end=101, n_bases=10, spline_order=3):
