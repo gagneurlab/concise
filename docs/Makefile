@@ -9,6 +9,7 @@ help:
 
 build:
 	python autogen.py
+	./render_ipynb.bash
 	mkdocs build
 	@echo "Build finished"
 

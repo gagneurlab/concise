@@ -6,6 +6,7 @@ from concise.utils.pwm import PWM
 import pandas as pd
 
 
+# TODO - rename the columns into pwm_id - should be consistent with attract
 def get_metadata():
     loadedMotifs = LoadedEncodeMotifs(ENCODE_MOTIFS_PATH, pseudocountProb=0.001)
 

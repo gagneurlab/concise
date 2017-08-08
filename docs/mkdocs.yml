@@ -13,10 +13,13 @@ google_analytics: ["TODO" , 'concise.TODO']
 
 pages:
 - Home: index.md
-- Getting started:
-  - getting-started/getting_started.md
-  - getting-started/simple_concise_model.md
-  - getting-started/spline_transformation.md
+- Tutorials:
+  # ipynb's
+  - tutorials/getting_started.md
+  - tutorials/PWM_initialization.md
+  - tutorials/spline_transformation.md
+  - tutorials/effect_prediction.md
+  - tutorials/hyper-parameter_optimization.md  
 #   - Guide to the Sequential model: getting-started/sequential-model-guide.md
 #   - Guide to the Functional API: getting-started/functional-api-guide.md
 #   - FAQ: getting-started/faq.md
