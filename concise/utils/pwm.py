@@ -2,6 +2,8 @@ import numpy as np
 import copy
 from concise.preprocessing.sequence import DNA, _get_vocab_dict
 from deeplift.visualization import viz_sequence
+from io import StringIO
+import gzip
 
 DEFAULT_LETTER_TO_INDEX = _get_vocab_dict(DNA)
 DEFAULT_INDEX_TO_LETTER = dict((DEFAULT_LETTER_TO_INDEX[x], x)
@@ -217,3 +219,54 @@ def pssm_array2pwm_array(arr, background_probs=DEFAULT_BASE_BACKGROUND):
     b = background_probs2array(background_probs)
     b = b.reshape([1, 4, 1])
     return (np.exp(arr) * b).astype(arr.dtype)
+
+
+def load_motif_db(filename, skipn_matrix=0):
+    """Read the motif file in the following format
+
+    >motif_name
+    <skip n>0.1<delim>0.2<delim>0.5<delim>0.6
+    ...
+    >motif_name2
+    ....
+
+    # Arguments
+        filename: str, file path
+        skipn_matrix: integer, number of characters to skip when reading
+    the numeric matrix (for Encode = 2)
+
+    # Returns
+        Dictionary of numpy arrays
+
+    Delim can be anything supported by np.loadtxt
+    """
+
+    # read-lines
+    if filename.endswith(".gz"):
+        f = gzip.open(filename, 'rt', encoding='utf-8')
+    else:
+        f = open(filename, 'r')
+    lines = f.readlines()
+    f.close()
+
+    motifs_dict = {}
+    motif_lines = ""
+    motif_name = None
+
+    def lines2matrix(lines):
+        return np.loadtxt(StringIO(lines))
+
+    for line in lines:
+        if line.startswith(">"):
+            if motif_lines:
+                # lines -> matrix
+                motifs_dict[motif_name] = lines2matrix(motif_lines)
+            motif_name = line[1:].strip()
+            motif_lines = ""
+        else:
+            motif_lines += line[skipn_matrix:]
+
+    if motif_lines and motif_name is not None:
+        motifs_dict[motif_name] = lines2matrix(motif_lines)
+
+    return motifs_dict

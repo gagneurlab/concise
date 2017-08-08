@@ -25,13 +25,11 @@ requirements = [
     # "glmnet",
     "keras>=2.0.4",
     'deeplift>=0.4',
-    'simdna==0.2',
     'hyperopt',
 ]
 
 dependency_links = [
     "https://github.com/kundajelab/deeplift/tarball/v0.4.0-alpha#egg=deeplift-0.4",
-    "https://github.com/kundajelab/simdna/tarball/0.2#egg=simdna-0.2",
 ]
 
 test_requirements = [
@@ -47,7 +45,9 @@ setup(
     author_email='avsec@in.tum.de',
     url='https://github.com/gagneurlab/concise',
     packages=find_packages(),
-    package_data={'concise.resources': ['attract_metadata.txt', 'attract_pwm.txt'],
+    package_data={'concise.resources': ['attract_metadata.txt', 'attract_pwm.txt',
+                                        'encode_motifs.txt.gz',
+                                        'HOCOMOCOv10_pcms_HUMAN_mono.txt'],
                   'concise.resources.RNAplfold': ["H_RNAplfold", "I_RNAplfold", "M_RNAplfold", "E_RNAplfold"]},
     include_package_data=True,
     # setup_requires=['numpy'],

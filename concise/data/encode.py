@@ -1,27 +1,44 @@
-# 0.4
-# from simdna.synthetic.loadedmotifs import LoadedEncodeMotifs
-from simdna.synthetic import LoadedEncodeMotifs
-from simdna import ENCODE_MOTIFS_PATH
-from concise.utils.pwm import PWM
+from concise.utils.pwm import PWM, load_motif_db
 import pandas as pd
 
+from pkg_resources import resource_filename
+ENCODE_PWM = resource_filename('concise', 'encode_motifs.txt.gz')
 
-# TODO - rename the columns into pwm_id - should be consistent with attract
+# TODO - move the stuff to concise.data.pwm
+
+
+def _load_motifs():
+    return load_motif_db(ENCODE_PWM, skipn_matrix=2)
+
+
 def get_metadata():
-    loadedMotifs = LoadedEncodeMotifs(ENCODE_MOTIFS_PATH, pseudocountProb=0.001)
+    """Get pandas.DataFrame with metadata about the PWM's.
 
-    motifs = sorted(list(loadedMotifs.loadedMotifs.keys()))
-    consensus = [loadedMotifs.loadedMotifs[motif].bestPwmHit for motif in motifs]
-    dt = pd.DataFrame({"motif_name": motifs, "consensus": consensus},
-                      columns=["motif_name", "consensus"]
-                      )
+    # TODO - provide the citation + database link 
+    Database: AtT
 
-    return dt
+    Columns:
+        PWM_id (id of the PWM - pass to get_pwm_list() for getting the pwm
+        info1 - additional information about the motifs
+        info2
+        consensus: PWM consensus sequence
+    """
+    motifs = _load_motifs()
+
+    motif_names = sorted(list(motifs.keys()))
+    df = pd.Series(motif_names).str.split(expand=True)
+    df.rename(columns={0: "PWM_id", 1: "info1", 2: "info2"}, inplace=True)
+
+    # compute the consensus
+    consensus = pd.Series([PWM(motifs[m]).get_consensus() for m in motif_names])
+    df["consensus"] = consensus
+    return df
 
 
 def get_pwm_list(motif_name_list, pseudocountProb=0.0001):
-    l = LoadedEncodeMotifs(ENCODE_MOTIFS_PATH, pseudocountProb=pseudocountProb)
-
-    # sidna_pwm_list = [l[m_id] for m_id in matrix_id_list]
-    pwm_list = [PWM(l.loadedMotifs[m_id].getRows(), name=m_id) for m_id in motif_name_list]
+    """ TODO -
+    """
+    l = _load_motifs()
+    l = {k.split()[0]: v for k, v in l.items()}
+    pwm_list = [PWM(l[m] + pseudocountProb, name=m) for m in motif_name_list]
     return pwm_list
