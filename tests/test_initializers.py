@@ -124,3 +124,5 @@ def test_empty_pwm_list(kernel_initializer, bias_initializer):
                        batch_input_shape=input_shape,
                        )
 
+
+# TODO - write the test for glorot_normal

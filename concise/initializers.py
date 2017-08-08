@@ -4,7 +4,6 @@ from keras.initializers import Initializer, _compute_fans
 from keras import backend as K
 import concise
 from concise.utils.pwm import PWM, pwm_list2pwm_array, pwm_array2pssm_array, DEFAULT_BASE_BACKGROUND
-from keras.utils.generic_utils import get_custom_objects
 
 import numpy as np
 from scipy.stats import truncnorm
@@ -25,6 +24,7 @@ def _check_pwm_list(pwm_list):
         if not isinstance(pwm, PWM):
             raise TypeError("element {0} of pwm_list is not of type PWM".format(pwm))
     return True
+
 
 def _truncated_normal(mean,
                       stddev,
@@ -116,21 +116,43 @@ class PSSMBiasInitializer(Initializer):
 
 # scale_glorot feature:
 # TODO - add shift_mean_max_scale - this allows you to drop the bias initializer?
+#        - how to call this argument better?
 # TODO - write some unit tests checking the initialization scale
 # TODO - finish the PWM initialization example notebook
 
+
+# TODO - why glorot normal and not uniform?
+# TODO - can we have just a single initializer for both, pwm and pssm?
+
+# IDEA - draw first a dirichlet distributed pwm (sums to 1) and then transform it to the pssm
+#        - how to choose the parameters of the dirichlet distribution?
+#           - create a histogram of all pwm values (for each base)
+#
+# related papers: http://web.stanford.edu/~hmishfaq/cs273b.pdf
+
+# alpha * random + (1 - alpha) * motif
+
+
 class PSSMKernelInitializer(Initializer):
-    """truncated normal distribution shifted by a PSSM
+    """Initializer that generates tensors with a
+    truncated normal initializer shifted by
+    a position specific scoring matrix (PSSM)
 
     # Arguments
-        pwm_list: a list of PWM's or motifs
+        pwm_list: a list of `concise.utils.pwm.PWM`'s
         stddev: a python scalar or a scalar tensor. Standard deviation of the
-          random values to generate.
+    random values to generate.
         seed: A Python integer. Used to seed the random generator.
         background_probs: A dictionary of background probabilities.
-                  Default: `{'A': .25, 'C': .25, 'G': .25, 'T': .25}`
-        scale_glorot: boolean; If True, the resulting PWM's are centered and rescaled
-                     to match glorot_normal distribution.
+    Default: `{'A': .25, 'C': .25, 'G': .25, 'T': .25}`
+        scale_glorot: boolean; If True, each generated filter is min-max scaled to match 
+
+    resulting PWM's are centered and rescaled
+    to match glorot_normal distribution.
+        add_noise_before_Pwm2Pssm: boolean; if True, add random noise before the
+    pwm->pssm transformation
+
+    # TODO - write down the exact formula for this initialization
     """
 
     def __init__(self, pwm_list=[], stddev=0.05, seed=None,
@@ -161,12 +183,17 @@ class PSSMKernelInitializer(Initializer):
         else:
             stddev_after = self.stddev
         # Force sttdev to be 0, because noise already added. May just use tf.Variable(pssm)
+
+        # TODO - could be problematic if any pwm < 0
         pssm = pwm_array2pssm_array(pwm, background_probs=self.background_probs)
         pssm = _truncated_normal(mean=pssm,
                                  stddev=stddev_after,
                                  seed=self.seed)
         if self.scale_glorot:
+            # max, min for each motif individually
             min_max_range = pssm.max(axis=1).max(0) - pssm.min(axis=1).min(0)
+            # TODO - wrong! [1, 2] range will just get rescaled but not centered
+            # i.e. *2 will do : [2, 4] and not [-1, 1]
             alpha = _glorot_uniform_scale(shape) * 2 / min_max_range
             pssm = alpha * pssm
 
