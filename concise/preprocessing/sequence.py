@@ -16,8 +16,27 @@ CODONS = ["AAA", "AAC", "AAG", "AAT", "ACA", "ACC", "ACG", "ACT", "AGA",
 STOP_CODONS = ["TAG", "TAA", "TGA"]
 
 
+# TODO - implement one_hot -> token
+
 def _get_vocab_dict(vocab):
     return {l: i for i, l in enumerate(vocab)}
+
+
+def _get_index_dict(vocab):
+    return {i: l for i, l in enumerate(vocab)}
+
+
+def one_hot2token(arr):
+    return arr.argmax(axis=2)
+
+# TODO - take into account the neutral vocab
+def one_hot2string(arr, vocab):
+    """Convert a one-hot encoded array back to string
+    """
+    tokens = one_hot2token(arr)
+    indexToLetter = _get_index_dict(vocab)
+
+    return [''.join([indexToLetter[x] for x in row]) for row in tokens]
 
 
 def tokenize(seq, vocab, neutral_vocab=[]):
