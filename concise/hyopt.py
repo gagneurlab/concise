@@ -6,7 +6,7 @@ import hyperopt
 from hyperopt.utils import coarse_utcnow
 from hyperopt.mongoexp import MongoTrials
 import concise.eval_metrics as ce
-from concise.utils.helper import write_json, merge_dicts
+from concise.utils.helper import write_json, merge_dicts, _to_string
 from concise.utils.model_data import (subset, split_train_test_idx, split_KFold_idx)
 from datetime import datetime, timedelta
 from uuid import uuid4
@@ -288,7 +288,7 @@ class CMongoTrials(MongoTrials):
             df_epoch = self.train_history().groupby("tid")["epoch"].max().reset_index()
             df_epoch.rename(columns={"epoch": "n_epoch"}, inplace=True)
             return pd.merge(df, df_epoch, on="tid", how="left")
-            
+
         results = self.get_ok_results(verbose=verbose)
         rp = [_flatten_dict(_delete_keys(add_eval(x), ignore_vals), separator) for x in results]
         df = pd.DataFrame.from_records(rp)
@@ -679,15 +679,6 @@ def _listify(arg):
     if hasattr(type(arg), '__len__'):
         return arg
     return [arg, ]
-
-
-def _to_string(fn_str):
-    if isinstance(fn_str, str):
-        return fn_str
-    elif callable(fn_str):
-        return fn_str.__name__
-    else:
-        raise ValueError("fn_str has to be callable or str")
 
 
 def _get_ce_fun(fn_str):
