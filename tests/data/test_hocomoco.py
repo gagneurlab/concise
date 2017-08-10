@@ -7,6 +7,6 @@ def test_hocomoco():
     pwm_list = hocomoco.get_pwm_list(dt[-5:]["PWM_id"])
 
     assert isinstance(pwm_list[0], PWM)
-    assert dt[-1:]["Motif"].values[0].replace("U", "T") == pwm_list[-1].get_consensus()
+    assert dt[-1:]["consensus"].values[0] == pwm_list[-1].get_consensus()
 
     pwm_list_all = hocomoco.get_pwm_list(dt["PWM_id"].unique())

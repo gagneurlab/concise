@@ -2,7 +2,7 @@ from concise.utils.pwm import PWM, load_motif_db
 import pandas as pd
 
 from pkg_resources import resource_filename
-ENCODE_PWM = resource_filename('concise', 'encode_motifs.txt.gz')
+ENCODE_PWM = resource_filename('concise', 'resources/encode_motifs.txt.gz')
 
 # TODO - move the stuff to concise.data.pwm
 
