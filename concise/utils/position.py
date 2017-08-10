@@ -12,7 +12,7 @@ def read_gtf(path):
                         header=None,
                         comment="#",
                         index_col=False,
-                        names=["seqname", "source", "feature", "start", "end", "score", "strand", "frame"],
+                        names=["seqnames", "source", "feature", "start", "end", "score", "strand", "frame", "info"],
                         skip_blank_lines=True)
     return gtf
 
@@ -28,7 +28,7 @@ def extract_landmarks(gtf, landmarks=ALL_LANDMARKS):
 
     # Arguments
         gtf: File path or a loaded `pd.DataFrame` with columns:
-    seqname, feature, start, end, strand
+    seqnames, feature, start, end, strand
         landmarks: list or a dictionary of landmark extractors (function or name)
 
     # Note
@@ -37,12 +37,14 @@ def extract_landmarks(gtf, landmarks=ALL_LANDMARKS):
 
     # Returns
         Dictionary of pd.DataFrames with landmark positions
-    (columns: seqname, position, strand)
+    (columns: seqnames, position, strand)
     """
     if isinstance(gtf, str):
-        _logger.info("Reading gtf file")
+        _logger.info("Reading gtf file..")
         gtf = read_gtf(gtf)
+        _logger.info("Done")
 
+    _logger.info("Running landmark extractors..")
     # landmarks to a dictionary with a function
     assert isinstance(landmarks, (list, tuple, set, dict))
     if isinstance(landmarks, dict):
@@ -51,19 +53,21 @@ def extract_landmarks(gtf, landmarks=ALL_LANDMARKS):
         landmarks = {_to_string(fn_str): _get_fun(fn_str)
                      for fn_str in landmarks}
 
-    return {k: _validate_pos(v(gtf)) for k, v in landmarks.items()}
+    r = {k: _validate_pos(v(gtf)) for k, v in landmarks.items()}
+    _logger.info("Done!")
+    return r
 
 
 def range_start(gtf):
     position = np.where(gtf.strand == "-", gtf.end, gtf.start)
-    return pd.DataFrame.from_items([("seqname", gtf.seqname),
+    return pd.DataFrame.from_items([("seqnames", gtf.seqnames),
                                     ("position", position),
                                     ("strand", gtf.strand)])
 
 
 def range_end(gtf):
     position = np.where(gtf.strand == "-", gtf.start, gtf.end)
-    return pd.DataFrame.from_items([("seqname", gtf.seqname),
+    return pd.DataFrame.from_items([("seqnames", gtf.seqnames),
                                     ("position", position),
                                     ("strand", gtf.strand)])
 
@@ -138,10 +142,10 @@ def _validate_pos(df):
     """Validates the returned positional object
     """
     assert isinstance(df, pd.DataFrame)
-    assert ["seqname", "position", "strand"] == df.columns.tolist()
+    assert ["seqnames", "position", "strand"] == df.columns.tolist()
     assert df.position.dtype == np.dtype("int64")
     assert df.strand.dtype == np.dtype("O")
-    assert df.seqname.dtype == np.dtype("O")
+    assert df.seqnames.dtype == np.dtype("O")
     return df
 
 

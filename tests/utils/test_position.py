@@ -12,14 +12,14 @@ def gtf():
     # from concise.preprocessing.landmarks import read_gtf
     # gtf_path = "/s/genomes/human/hg38/GRCh38.p7/gencode.v25.annotation.gtf"
     # gtf = read_gtf(gtf_path)
-    # gtf_small = gtf[gtf.seqname == "chr22"]
+    # gtf_small = gtf[gtf.seqnames == "chr22"]
     # gtf_small.to_pickle("data/gencode_v25_chr22.gtf.pkl.gz")  # 116k
     return pd.read_pickle("data/gencode_v25_chr22.gtf.pkl.gz")
 
 
 @pytest.fixture
 def gtf_simple():
-    gtfs = pd.DataFrame({"seqname": "chr22",
+    gtfs = pd.DataFrame({"seqnames": "chr22",
                          "feature": ["exon", "exon", "transcript", "transcript"],
                          "start": [100, 300, 100, 150],
                          "end": [200, 400, 200, 250],
