@@ -13,8 +13,8 @@ def gtf():
     # gtf_path = "/s/genomes/human/hg38/GRCh38.p7/gencode.v25.annotation.gtf"
     # gtf = read_gtf(gtf_path)
     # gtf_small = gtf[gtf.seqname == "chr22"]
-    # gtf_small.to_pickle("data/gencode_v25_chr22.gtf.pkl.xz")  # 116k
-    return pd.read_pickle("data/gencode_v25_chr22.gtf.pkl.xz")
+    # gtf_small.to_pickle("data/gencode_v25_chr22.gtf.pkl.gz")  # 116k
+    return pd.read_pickle("data/gencode_v25_chr22.gtf.pkl.gz")
 
 
 @pytest.fixture
