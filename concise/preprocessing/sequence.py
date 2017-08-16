@@ -47,7 +47,7 @@ def tokenize(seq, vocab, neutral_vocab=[]):
        vocab: Vocabulary to use
        neutral_vocab: Neutral vocabulary -> assign those values to -1
 
-    # Returns:
+    # Returns
        List of length `len(seq)` with integers from `-1` to `len(vocab) - 1`
     """
     # Req: all vocabs have the same length

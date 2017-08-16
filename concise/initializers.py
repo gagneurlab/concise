@@ -27,6 +27,7 @@ def _check_pwm_list(pwm_list):
             raise TypeError("element {0} of pwm_list is not of type PWM".format(pwm))
     return True
 
+
 def _truncated_normal(mean,
                       stddev,
                       seed=None,
@@ -54,20 +55,20 @@ def _truncated_normal(mean,
 
 
 class PSSMBiasInitializer(Initializer):
+    """Bias initializer
+
+    By defult, it will initialize all weights to 0.
+
+    # Arguments
+        pwm_list: list of PWM's
+        kernel_size: Has to be the same as kernel_size in kl.Conv1D
+        mean_max_scale: float; factor for convex conbination between
+                                mean pwm match (mean_max_scale = 0.) and
+                                max pwm match (mean_max_scale = 1.)
+        background_probs: A dictionary of background probabilities. Default: `{'A': .25, 'C': .25, 'G': .25, 'T': .25}`
+    """
 
     def __init__(self, pwm_list=[], kernel_size=None, mean_max_scale=0., background_probs=DEFAULT_BASE_BACKGROUND):
-        """Bias initializer
-
-        By defult, it will initialize all weights to 0.
-
-        # Arguments
-            pwm_list: list of PWM's
-            kernel_size: Has to be the same as kernel_size in kl.Conv1D
-            mean_max_scale: float; factor for convex conbination between
-                                    mean pwm match (mean_max_scale = 0.) and
-                                    max pwm match (mean_max_scale = 1.)
-            background_probs: A dictionary of background probabilities. Default: `{'A': .25, 'C': .25, 'G': .25, 'T': .25}`
-        """
 
         # handle pwm_list as a dictionary
         if len(pwm_list) > 0 and isinstance(pwm_list[0], dict):
@@ -171,18 +172,18 @@ class PSSMKernelInitializer(Initializer):
 
 
 class PWMBiasInitializer(Initializer):
+    """Bias initializer
+
+    # Arguments
+        pwm_list: list of PWM's
+        kernel_size: Has to be the same as kernel_size in kl.Conv1D
+        mean_max_scale: float; factor for convex conbination between
+                                mean pwm match (mean_max_scale = 0.) and
+                                max pwm match (mean_max_scale = 1.)
+    """
     # TODO - automatically determined kernel_size
 
     def __init__(self, pwm_list=[], kernel_size=None, mean_max_scale=0.):
-        """Bias initializer
-
-        # Arguments
-            pwm_list: list of PWM's
-            kernel_size: Has to be the same as kernel_size in kl.Conv1D
-            mean_max_scale: float; factor for convex conbination between
-                                    mean pwm match (mean_max_scale = 0.) and
-                                    max pwm match (mean_max_scale = 1.)
-        """
         # handle pwm_list as a dictionary
         if len(pwm_list) > 0 and isinstance(pwm_list[0], dict):
             pwm_list = [PWM.from_config(pwm) for pwm in pwm_list]
