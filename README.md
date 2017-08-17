@@ -23,24 +23,16 @@ If allows you to:
 
 ## Installation
 
-Concise is available for python versions greater than 3.4 and can be installed from source using pip:<!-- PyPI using `pip`: -->
-
-shapely package requires libgeos library. Install it with:
-
-- Ubuntu: `sudo apt-get install -y libgeos-dev`
-- Red-hat/CentOS: `sudo yum install geos-devel`
-
-
-```sh
-git clone https://github.com/gagneurlab/concise
-pip install --process-dependency-links concise/
-```
-
-`--process-dependency-links` and cloning the source is required in order to properly install the following github packages: [deeplift](https://github.com/kundajelab/deeplift) and [simdna](https://github.com/kundajelab/simdna/tarball/0.2#egg=simdna-0.2). PyPI version is also available, but the github packages might not get installed properly:
+Concise is available for Python versions greater than 3.4 and can be installed from [PyPI](pypi.python.org) using `pip`:
 
 ```sh
 pip install concise
 ```
+
+To successfully use concise plotting functionality, please also install the libgeos library required by the `shapely` package:
+
+- Ubuntu: `sudo apt-get install -y libgeos-dev`
+- Red-hat/CentOS: `sudo yum install geos-devel`
 
 <!-- Make sure your keras is installed properly and configured with the backend of choice. -->
 
