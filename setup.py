@@ -26,6 +26,8 @@ requirements = [
     "keras>=2.0.4",
     'deeplift>=0.4',
     'hyperopt',
+    'descartes'
+    'shapely'
 ]
 
 dependency_links = [

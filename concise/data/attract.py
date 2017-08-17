@@ -39,5 +39,5 @@ def get_metadata():
 def get_pwm_list(pwm_id_list, pseudocountProb=0.0001):
     l = load_motif_db(ATTRACT_PWM)
     l = {k.split()[0]: v for k, v in l.items()}
-    pwm_list = [PWM(l[m] + pseudocountProb, name=m) for m in pwm_id_list]
+    pwm_list = [PWM(l[str(m)] + pseudocountProb, name=m) for m in pwm_id_list]
     return pwm_list
