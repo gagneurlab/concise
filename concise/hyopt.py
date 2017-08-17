@@ -478,8 +478,8 @@ class CompileFN():
         assert loss_metric_mode in ["min", "max"]
         self.loss_metric_mode = loss_metric_mode
 
-        self.data_name = data_fn.__code__.co_name
-        self.model_name = model_fn.__code__.co_name
+        self.data_name = data_fn.__name__
+        self.model_name = model_fn.__name__
         self.db_name = db_name
         self.exp_name = exp_name
         # validation

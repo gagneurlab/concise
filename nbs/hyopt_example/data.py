@@ -1,10 +1,16 @@
 from concise.preprocessing import encodeDNA
 import pandas as pd
 import numpy as np
+
 import os
 
 DATA_DIR = "../../data/RBP/"
 
+# to enable memoization, uncomment the following three lines of code
+#
+# from joblib import Memory
+# memory = Memory(cachedir="/tmp/data_fn", verbose=0)
+# @memory.cache
 def data(seq_length=101):
 
     def load(split="train"):
