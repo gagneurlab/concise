@@ -25,7 +25,7 @@ requirements = [
     # "glmnet",
     "keras>=2.0.4",
     'hyperopt',
-    'descartes'
+    'descartes',
     'shapely'
 ]
 
