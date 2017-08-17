@@ -2,7 +2,7 @@
 
 __author__ = 'Žiga Avsec'
 __email__ = 'avsec@in.tum.de'
-__version__ = '0.6.2'
+__version__ = '0.6.3'
 
 from . import layers
 from . import preprocessing
