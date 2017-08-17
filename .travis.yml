@@ -2,7 +2,9 @@ language: python
 sudo: required
 dist: trusty
 
-# TODO - add the mongo-db service
+services:
+  - mongodb
+  
 branches:
   only:
   - master
@@ -19,10 +21,10 @@ matrix:
 
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y gfortran
+  - sudo apt-get install libgeos-dev
 install:
-  - pip install -U tox
   - pip install -U pip
+  - pip install -U tox
 script: tox -e ${TOXENV}
 deploy:
   provider: pypi

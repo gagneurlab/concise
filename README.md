@@ -25,6 +25,12 @@ If allows you to:
 
 Concise is available for python versions greater than 3.4 and can be installed from source using pip:<!-- PyPI using `pip`: -->
 
+shapely package requires libgeos library. Install it with:
+
+- Ubuntu: `sudo apt-get install -y libgeos-dev`
+- Red-hat/CentOS: `sudo yum install geos-devel`
+
+
 ```sh
 git clone https://github.com/gagneurlab/concise
 pip install --process-dependency-links concise/
