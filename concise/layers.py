@@ -4,7 +4,7 @@ from keras.engine.topology import Layer
 from keras.layers.pooling import _GlobalPooling1D
 from keras.layers import Conv1D, Input, LocallyConnected1D
 from keras.layers.core import Dropout
-from deeplift.visualization import viz_sequence
+from concise.utils.plot import seqlogo, seqlogo_fig
 import matplotlib.pyplot as plt
 from keras.engine import InputSpec
 
@@ -20,11 +20,7 @@ from concise.utils.plot import heatmap
 from concise.preprocessing.sequence import (DNA, RNA, AMINO_ACIDS,
                                             CODONS, STOP_CODONS)
 from concise.preprocessing.structure import RNAplfold_PROFILES
-# TODO - improve the naming
-# TODO - unit-tests for the general case of smoothing: encodeSplines
-# TODO - write unit-tests - use synthetic dataset from motifp - check both cases encodeSplines
 
-############################################
 
 # --------------------------------------------
 # Input()
@@ -197,34 +193,20 @@ class ConvSequence(Conv1D):
         if index is None:
             index = np.arange(W.shape[2])
 
-        fig = heatmap(np.swapaxes(W[:, :, index], 0, 1), plot_name="filter index: ",
+        fig = heatmap(np.swapaxes(W[:, :, index], 0, 1), plot_name="filter: ",
                       vocab=self.VOCAB, figsize=figsize, **kwargs)
         plt.show()
         return fig
 
-    def plot_weights(self, index=None, plot_type="heatmap", figsize=(6, 2), **kwargs):
-        """Plot weights as a heatmap
-
-        index = can be a particular index or a list of indicies
-        **kwargs - additional arguments to concise.utils.plot.heatmap
-        """
-
-        if plot_type == "heatmap":
-            return self._plot_weights_heatmap(index=index, figsize=figsize, **kwargs)
-        else:
-            raise ValueError("plot_type needs to be from {\'heatmap\', \'raw\', \'pwm\', \'pwm_info'}")
-
-
-class ConvDNA(ConvSequence):
-    VOCAB = DNA
-
-    def plot_weights_motif(self, index, plot_type="motif_raw",
-                           background_probs=DEFAULT_BASE_BACKGROUND,
-                           figsize=(10, 2)):
+    def _plot_weights_motif(self, index, plot_type="motif_raw",
+                            background_probs=DEFAULT_BASE_BACKGROUND,
+                            ncol=1,
+                            figsize=(10, 2)):
         """Index can only be a single int
         """
 
         w_all = self.get_weights()
+
         if len(w_all) == 0:
             raise Exception("Layer needs to be initialized first")
         W = w_all[0]
@@ -233,58 +215,64 @@ class ConvDNA(ConvSequence):
 
         if isinstance(index, int):
             index = [index]
+        fig = plt.figure(figsize=figsize)
 
-        for idx in index:
-            w = W[:, :, idx]
-            if plot_type == "motif_pwm":
-                arr = pssm_array2pwm_array(w[:, :, np.newaxis], background_probs)
-            elif plot_type == "motif_raw":
-                arr = w
-            elif plot_type == "motif_pwm_info":
-                quasi_pwm = pssm_array2pwm_array(w[:, :, np.newaxis], background_probs)
-                arr = _pwm2pwm_info(np.squeeze(quasi_pwm, -1))
-            else:
-                raise ValueError("plot_type needs to be from {\'raw\', \'pwm\', \'pwm_info'}")
+        if plot_type == "motif_pwm" and plot_type in self.AVAILABLE_PLOTS:
+            arr = pssm_array2pwm_array(W, background_probs)
+        elif plot_type == "motif_raw" and plot_type in self.AVAILABLE_PLOTS:
+            arr = W
+        elif plot_type == "motif_pwm_info" and plot_type in self.AVAILABLE_PLOTS:
+            quasi_pwm = pssm_array2pwm_array(W, background_probs)
+            arr = _pwm2pwm_info(quasi_pwm)
+        else:
+            raise ValueError("plot_type needs to be from {0}".format(self.AVAILABLE_PLOTS))
 
-            if len(index) > 1:
-                print("filter index: {0}".format(idx))
-            viz_sequence.plot_weights(arr, figsize=figsize)
+        fig = seqlogo_fig(arr, vocab=self.VOCAB_name, figsize=figsize, ncol=ncol, plot_name="filter: ")
+        fig.show()
+        return fig
 
-    # TODO - plot using facets rather than independent plots and a for loop...
-    def plot_weights(self, index=None, plot_type="motif_raw", figsize=(6, 2), **kwargs):
-        """Plot weights as a heatmap
+    def plot_weights(self, index=None, plot_type="motif_raw", figsize=(6, 2), ncol=1, **kwargs):
+        """Plot filters as heatmap or motifs
 
         index = can be a particular index or a list of indicies
         **kwargs - additional arguments to concise.utils.plot.heatmap
         """
 
-        if plot_type == "heatmap":
-            return self._plot_weights_heatmap(index=index, figsize=figsize, **kwargs)
+        if "heatmap" in self.AVAILABLE_PLOTS and plot_type == "heatmap":
+            return self._plot_weights_heatmap(index=index, figsize=figsize, ncol=ncol, **kwargs)
         elif plot_type[:5] == "motif":
-            return self.plot_weights_motif(index=index, plot_type=plot_type, figsize=figsize, **kwargs)
+            return self._plot_weights_motif(index=index, plot_type=plot_type, figsize=figsize, ncol=ncol, **kwargs)
         else:
-            raise ValueError("plot_type needs to be from {\'heatmap\', \'raw\', \'pwm\', \'pwm_info'}")
+            raise ValueError("plot_type needs to be from {0}".format(self.AVAILABLE_PLOTS))
 
-    # TODO - improve the plotting functions for motifs - refactor the viz_sequence
-    #        - mutliple panels with titles
-    #        - save to file if needed
+
+class ConvDNA(ConvSequence):
+    VOCAB = DNA
+    VOCAB_name = "DNA"
+    AVAILABLE_PLOTS = ["heatmap", "motif_raw", "motif_pwm", "motif_pwm_info"]
 
 
 class ConvRNA(ConvDNA):
-    # TODO - implement the letter U in for plotting
     VOCAB = RNA
+    VOCAB_name = "RNA"
+    AVAILABLE_PLOTS = ["heatmap", "motif_raw", "motif_pwm", "motif_pwm_info"]
 
 
-class ConvAA(ConvSequence):
+class ConvAA(ConvDNA):
     VOCAB = AMINO_ACIDS
+    VOCAB_name = "AA"
+    AVAILABLE_PLOTS = ["heatmap", "motif_raw"]
 
 
-class ConvRNAStructure(ConvSequence):
+class ConvRNAStructure(ConvDNA):
     VOCAB = RNAplfold_PROFILES
+    VOCAB_name = "RNAStruct"
+    AVAILABLE_PLOTS = ["heatmap", "motif_raw"]
 
 
 class ConvCodon(ConvSequence):
     VOCAB = CODONS
+    AVAILABLE_PLOTS = ["heatmap"]
 
     def build(self, input_shape):
         if input_shape[-1] not in [len(CODONS), len(CODONS + STOP_CODONS)]:

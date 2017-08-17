@@ -1,9 +1,11 @@
 import numpy as np
 import copy
 from concise.preprocessing.sequence import DNA, _get_vocab_dict
-from deeplift.visualization import viz_sequence
 from io import StringIO
 import gzip
+from concise.utils.plot import seqlogo, seqlogo_fig
+import matplotlib.pyplot as plt
+
 
 DEFAULT_LETTER_TO_INDEX = _get_vocab_dict(DNA)
 DEFAULT_INDEX_TO_LETTER = dict((DEFAULT_LETTER_TO_INDEX[x], x)
@@ -112,15 +114,14 @@ class PWM(object):
     def plotPWM(self, figsize=(10, 2)):
 
         pwm = self.pwm
-
-        return viz_sequence.plot_weights(pwm, figsize=figsize)
+        return seqlogo_fig(pwm, vocab="DNA", figsize=figsize)
 
     def plotPWMInfo(self, figsize=(10, 2)):
         pwm = self.pwm
 
         info = _pwm2pwm_info(pwm)
         # TODO add ylab
-        return viz_sequence.plot_weights(info, figsize=figsize)
+        return seqlogo_fig(info, vocab="DNA", figsize=figsize)
 
     def get_pssm(self, background_probs=DEFAULT_BASE_BACKGROUND):
         b = background_probs2array(background_probs)
@@ -129,7 +130,7 @@ class PWM(object):
 
     def plotPSSM(self, background_probs=DEFAULT_BASE_BACKGROUND, figsize=(10, 2)):
         pssm = self.get_pssm()
-        return viz_sequence.plot_weights(pssm, figsize=figsize)
+        return seqlogo_fig(pssm, vocab="DNA", figsize=figsize)
 
 
 def _pwm2pwm_info(pwm):
@@ -140,7 +141,7 @@ def _pwm2pwm_info(pwm):
     pwm = pwm / col_sums[:, np.newaxis]
     H = - np.sum(pwm * np.log2(pwm), axis=1)
     R = np.log2(4) - H
-    info = pwm * R.reshape([-1, 1])
+    info = pwm * R[:, np.newaxis, ...]
     return info
 
 
