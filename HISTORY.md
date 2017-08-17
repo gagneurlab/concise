@@ -58,7 +58,8 @@
 
 - fix: required version keras>=2.0.2
 
-## 0.6.2 (2017-07-16)
+## 0.6.2 (2017-08-17)
+## 0.6.3 (2017-08-16)
 
 - added more documentation
 - ipynb -> docs compilation
