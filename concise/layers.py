@@ -108,11 +108,11 @@ def InputDNAQuantitySplines(seq_length, n_bases=10, name="DNASmoothPosition", **
 
 class GlobalSumPooling1D(_GlobalPooling1D):
     """Global average pooling operation for temporal data.
-    # Input shape
-        3D tensor with shape: `(batch_size, steps, features)`.
-    # Output shape
-        2D tensor with shape:
-        `(batch_size, channels)`
+
+    # Note
+      - Input shape: 3D tensor with shape: `(batch_size, steps, features)`.
+      - Output shape: 2D tensor with shape: `(batch_size, channels)`
+
     """
 
     def call(self, inputs):
@@ -120,12 +120,23 @@ class GlobalSumPooling1D(_GlobalPooling1D):
 
 
 class ConvSequence(Conv1D):
-    """Convenience wrapper over keras.layers.Conv1D with 3 changes:
+    """Convenience wrapper over `keras.layers.Conv1D` with 3 changes:
 
-    - plotting method: plot_weights
-    - additional argument seq_length instead of input_shape
-    - restriction in build method: input_shape[-1] needs to be the
-    same as the vocabulary size
+    - additional plotting method: `plot_weights(index=None, plot_type="motif_raw", figsize=None, ncol=1)`
+            - **index**: can be a particular index or a list of indicies
+            - **plot_type**: Can be one of `"heatmap"`, `"motif_raw"`, `"motif_pwm"` or `"motif_pwm_info"`.
+            - **figsize**: tuple, Figure size
+            - **ncol**: Number of axis columns
+    - additional argument `seq_length` instead of `input_shape`
+    - restriction in build method: `input_shape[-1]` needs to the match the vocabulary size
+
+    Clasess `Conv*` all inherit from `ConvSequence` and define the corresponding vocabulary:
+
+    - ConvDNA
+    - ConvRNA
+    - ConvRNAStructure
+    - ConvAA
+    - ConvCodon
     """
 
     VOCAB = DNA

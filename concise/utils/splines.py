@@ -7,18 +7,31 @@ import scipy.interpolate as si
 #               - That way you don't have to hash the X_spline in memory.
 
 
-# TODO - set default range to 0,1
 class BSpline():
+    """Class for computing the B-spline funcions b_i(x) and
+    constructing the penality matrix S.
 
-    def __init__(self, start=0, end=101, n_bases=10, spline_order=3):
-        """Class for predicting BSpline functionality
+    # Arguments
+        start: float or int; start of the region
+        end: float or int; end of the region
+        n_bases: int; number of spline bases
+        spline_order: int; spline order
 
-        Arguments:
-            start: float or int; start of the region
-            end: float or int; end of the region
-            n_bases: int; number of spline bases
-            spline_order: int; spline order
-        """
+    # Methods
+        - **getS(add_intercept=False)** - Get the penalty matrix S
+              - Arguments
+                     - **add_intercept**: bool. If true, intercept column is added to the returned matrix.
+              - Returns
+                     - `np.array`, of shape `(n_bases + add_intercept, n_bases + add_intercept)`
+        - **predict(x, add_intercept=False)** - For some x, predict the bn(x) for each base
+              - Arguments
+                     - **x**: np.array; Vector of dimension 1
+                     - **add_intercept**: bool; If True, intercept column is added to the to the final array
+              - Returns
+                     - `np.array`, of shape `(len(x), n_bases + (add_intercept))`
+    """
+
+    def __init__(self, start=0, end=1, n_bases=10, spline_order=3):
 
         self.start = start
         self.end = end

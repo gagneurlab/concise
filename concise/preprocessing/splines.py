@@ -20,7 +20,7 @@ class EncodeSplines(object):
     """Transformer (class) for computing the B-spline basis values.
 
     Pre-processing step for spline transformation (`SplineT`) layer.
-    This transformer works on arrays that are either N x D or N x L x D dimensional.
+    This transformer works on arrays that are either `N x D` or `N x L x D` dimensional.
     Last dimension encodes different features (D) and first dimension different examples.
     Knot placement is specific for each feature individually,
     unless `share_knots` is set `True`.

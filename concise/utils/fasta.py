@@ -2,30 +2,28 @@ from itertools import groupby
 from collections import OrderedDict
 
 
-def write_fasta(file_path, seq_list, name_list=None):
-    """Write fasta to file
+def read_fasta(file_path):
+    """Read the fasta file as `OrderedDict`
     """
-    if name_list is None:
-        name_list = [str(i) for i in range(len(seq_list))]
-
-    # needs to be dict or seq
-    with open(file_path, "w") as f:
-        for i in range(len(seq_list)):
-            f.write(">" + name_list[i] + "\n" + seq_list[i] + "\n")
+    return OrderedDict([x for x in iter_fasta(file_path)])
 
 
 def iter_fasta(file_path):
     """Returns an iterator over the fasta file
 
+    Given a fasta file. yield tuples of header, sequence
 
-    modified from Brent Pedersen
-    Correct Way To Parse A Fasta File In Python
-    given a fasta file. yield tuples of header, sequence
+    Code modified from Brent Pedersen's:
+    "Correct Way To Parse A Fasta File In Python"
 
-    # Usage:
-    > fasta = fasta_iter("hg19.fa")
-    > for header, seq in fasta:
-    >   print(header)
+
+    # Example
+
+        ```python
+            fasta = fasta_iter("hg19.fa")
+            for header, seq in fasta:
+               print(header)
+        ```
     """
     fh = open(file_path)
 
@@ -41,7 +39,19 @@ def iter_fasta(file_path):
         yield (headerStr, seq)
 
 
-def read_fasta(file_path):
-    """Read the fasta file as ordered dictionary
+def write_fasta(file_path, seq_list, name_list=None):
+    """Write a fasta file
+
+    # Arguments
+      file_path: file path
+      seq_list: List of strings
+      name_list: List of names corresponding to the sequences.
+    If not None, it should have the same length as `seq_list`
     """
-    return OrderedDict([x for x in iter_fasta(file_path)])
+    if name_list is None:
+        name_list = [str(i) for i in range(len(seq_list))]
+
+    # needs to be dict or seq
+    with open(file_path, "w") as f:
+        for i in range(len(seq_list)):
+            f.write(">" + name_list[i] + "\n" + seq_list[i] + "\n")

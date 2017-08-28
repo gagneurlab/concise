@@ -12,16 +12,12 @@ def _load_motifs():
 
 
 def get_metadata():
-    """Get pandas.DataFrame with metadata about the PWM's.
+    """Get pandas.DataFrame with metadata about the PWM's. Columns:
 
-    # TODO - provide the citation + database link 
-    Database: AtT
-
-    Columns:
-        PWM_id (id of the PWM - pass to get_pwm_list() for getting the pwm
-        info1 - additional information about the motifs
-        info2
-        consensus: PWM consensus sequence
+    - PWM_id (id of the PWM - pass to get_pwm_list() for getting the pwm
+    - info1 - additional information about the motifs
+    - info2
+    - consensus: PWM consensus sequence
     """
     motifs = _load_motifs()
 
@@ -36,7 +32,14 @@ def get_metadata():
 
 
 def get_pwm_list(motif_name_list, pseudocountProb=0.0001):
-    """ TODO -
+    """Get a list of ENCODE PWM's.
+
+    # Arguments
+        pwm_id_list: List of id's from the `PWM_id` column in `get_metadata()` table
+        pseudocountProb: Added pseudocount probabilities to the PWM
+
+    # Returns
+        List of `concise.utils.pwm.PWM` instances.
     """
     l = _load_motifs()
     l = {k.split()[0]: v for k, v in l.items()}

@@ -54,8 +54,72 @@ def _truncated_normal(mean,
     return X
 
 
+class PSSMKernelInitializer(Initializer):
+    """Truncated normal distribution shifted by a position-specific scoring matrix (PSSM)
+
+    # Arguments
+        pwm_list: a list of PWM's or motifs
+        stddev: a python scalar or a scalar tensor. Standard deviation of the
+          random values to generate.
+        seed: A Python integer. Used to seed the random generator.
+        background_probs: A dictionary of background probabilities.
+                  Default: `{'A': .25, 'C': .25, 'G': .25, 'T': .25}`
+        add_noise_before_Pwm2Pssm: bool, if True the gaussian noise is added
+    to the PWM (representing nt probabilities) which is then
+    transformed to a PSSM with $log(p_{ij}/b_i)$. If False, the noise is added directly to the
+    PSSM.
+    """
+
+    def __init__(self, pwm_list=[], stddev=0.05, seed=None,
+                 background_probs=DEFAULT_BASE_BACKGROUND,
+                 add_noise_before_Pwm2Pssm=True):
+        if len(pwm_list) > 0 and isinstance(pwm_list[0], dict):
+            pwm_list = [PWM.from_config(pwm) for pwm in pwm_list]
+
+        self.pwm_list = pwm_list
+        _check_pwm_list(pwm_list)
+        self.stddev = stddev
+        self.seed = seed
+        self.background_probs = background_probs
+        self.add_noise_before_Pwm2Pssm = add_noise_before_Pwm2Pssm
+
+    def __call__(self, shape, dtype=None):
+        # print("PWMKernelInitializer shape: ", shape)
+
+        pwm = pwm_list2pwm_array(self.pwm_list, shape, dtype, self.background_probs)
+
+        if self.add_noise_before_Pwm2Pssm:
+            # add noise with numpy truncnorm function
+            pwm = _truncated_normal(mean=pwm,
+                                    stddev=self.stddev,
+                                    seed=self.seed)
+
+            pssm = pwm_array2pssm_array(pwm, background_probs=self.background_probs)
+
+            # Force sttdev to be 0, because noise already added. May just use tf.Variable(pssm)
+            # return K.Variable(pssm) # this raise error
+            return K.truncated_normal(shape,
+                                      mean=pssm,
+                                      stddev=0,
+                                      dtype=dtype, seed=self.seed)
+        else:
+            pssm = pwm_array2pssm_array(pwm, background_probs=self.background_probs)
+            return K.truncated_normal(shape,
+                                      mean=pssm,
+                                      stddev=self.stddev,
+                                      dtype=dtype, seed=self.seed)
+
+    def get_config(self):
+        return {
+            'pwm_list': [pwm.get_config() for pwm in self.pwm_list],
+            'stddev': self.stddev,
+            'seed': self.seed,
+            'background_probs': self.background_probs,
+        }
+
+
 class PSSMBiasInitializer(Initializer):
-    """Bias initializer
+    """Bias initializer complementary to `PSSMKernelInitializer`
 
     By defult, it will initialize all weights to 0.
 
@@ -111,68 +175,42 @@ class PSSMBiasInitializer(Initializer):
         }
 
 
-class PSSMKernelInitializer(Initializer):
-    """truncated normal distribution shifted by a PSSM
+class PWMKernelInitializer(Initializer):
+    """Truncated normal distribution shifted by a PWM
 
     # Arguments
         pwm_list: a list of PWM's or motifs
         stddev: a python scalar or a scalar tensor. Standard deviation of the
           random values to generate.
         seed: A Python integer. Used to seed the random generator.
-        background_probs: A dictionary of background probabilities.
-                  Default: `{'A': .25, 'C': .25, 'G': .25, 'T': .25}`
     """
 
-    def __init__(self, pwm_list=[], stddev=0.05, seed=None,
-                 background_probs=DEFAULT_BASE_BACKGROUND,
-                 add_noise_before_Pwm2Pssm=True):
+    def __init__(self, pwm_list=[], stddev=0.05, seed=None):
         if len(pwm_list) > 0 and isinstance(pwm_list[0], dict):
             pwm_list = [PWM.from_config(pwm) for pwm in pwm_list]
 
-        self.pwm_list = pwm_list
-        _check_pwm_list(pwm_list)
         self.stddev = stddev
         self.seed = seed
-        self.background_probs = background_probs
-        self.add_noise_before_Pwm2Pssm = add_noise_before_Pwm2Pssm
+        self.pwm_list = pwm_list
+        _check_pwm_list(pwm_list)
 
     def __call__(self, shape, dtype=None):
         # print("PWMKernelInitializer shape: ", shape)
-
-        pwm = pwm_list2pwm_array(self.pwm_list, shape, dtype, self.background_probs)
-
-        if self.add_noise_before_Pwm2Pssm:
-            # add noise with numpy truncnorm function
-            pwm = _truncated_normal(mean=pwm,
-                                    stddev=self.stddev,
-                                    seed=self.seed)
-
-            pssm = pwm_array2pssm_array(pwm, background_probs=self.background_probs)
-
-            # Force sttdev to be 0, because noise already added. May just use tf.Variable(pssm)
-            # return K.Variable(pssm) # this raise error
-            return K.truncated_normal(shape,
-                                      mean=pssm,
-                                      stddev=0,
-                                      dtype=dtype, seed=self.seed)
-        else:
-            pssm = pwm_array2pssm_array(pwm, background_probs=self.background_probs)
-            return K.truncated_normal(shape,
-                                      mean=pssm,
-                                      stddev=self.stddev,
-                                      dtype=dtype, seed=self.seed)
+        return K.truncated_normal(shape,
+                                  mean=pwm_list2pwm_array(self.pwm_list, shape, dtype),
+                                  stddev=self.stddev,
+                                  dtype=dtype, seed=self.seed)
 
     def get_config(self):
         return {
             'pwm_list': [pwm.get_config() for pwm in self.pwm_list],
             'stddev': self.stddev,
             'seed': self.seed,
-            'background_probs': self.background_probs,
         }
 
 
 class PWMBiasInitializer(Initializer):
-    """Bias initializer
+    """Bias initializer complementary to `PWMKernelInitializer`
 
     # Arguments
         pwm_list: list of PWM's
@@ -218,40 +256,6 @@ class PWMBiasInitializer(Initializer):
             "pwm_list": [pwm.get_config() for pwm in self.pwm_list],
             "kernel_size": self.kernel_size,
             "mean_max_scale": self.mean_max_scale,
-        }
-
-
-class PWMKernelInitializer(Initializer):
-    """truncated normal distribution shifted by a PWM
-
-    # Arguments
-        pwm_list: a list of PWM's or motifs
-        stddev: a python scalar or a scalar tensor. Standard deviation of the
-          random values to generate.
-        seed: A Python integer. Used to seed the random generator.
-    """
-
-    def __init__(self, pwm_list=[], stddev=0.05, seed=None):
-        if len(pwm_list) > 0 and isinstance(pwm_list[0], dict):
-            pwm_list = [PWM.from_config(pwm) for pwm in pwm_list]
-
-        self.stddev = stddev
-        self.seed = seed
-        self.pwm_list = pwm_list
-        _check_pwm_list(pwm_list)
-
-    def __call__(self, shape, dtype=None):
-        # print("PWMKernelInitializer shape: ", shape)
-        return K.truncated_normal(shape,
-                                  mean=pwm_list2pwm_array(self.pwm_list, shape, dtype),
-                                  stddev=self.stddev,
-                                  dtype=dtype, seed=self.seed)
-
-    def get_config(self):
-        return {
-            'pwm_list': [pwm.get_config() for pwm in self.pwm_list],
-            'stddev': self.stddev,
-            'seed': self.seed,
         }
 
 

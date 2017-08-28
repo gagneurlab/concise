@@ -43,6 +43,7 @@ pages:
     - Position weights matrix (PWM): utils/pwm.md
     - Splines: utils/splines.md
 - Data:
-    - ENCODE PWMs: data/encode.md
     - ATtRACT PWMs: data/attract.md
+    - ENCODE PWMs: data/encode.md
+    - HOCOMOCO PWMs: data/hocomoco.md
 # - Contributing: contributing.md

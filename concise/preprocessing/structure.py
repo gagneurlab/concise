@@ -105,10 +105,11 @@ def encodeRNAStructure(seq_vec, maxlen=None, seq_align="start",
 
     # Arguments
          seq_vec: list of DNA/RNA sequences
-         maxlen, seq_align: see `pad_sequences`
-         W, Int: span - window length
-         L, Int, maxiumm span
-         U, Int, size of unpaired region
+         maxlen: Maximum sequence length. See `concise.preprocessing.pad_sequences` for more detail
+         seq_align: How to align the sequences of variable lengths. See `concise.preprocessing.pad_sequences` for more detail
+         W: Int; span - window length
+         L: Int; maxiumm span
+         U: Int; size of unpaired region
          tmpdir: Where to store the intermediary files of RNAplfold.
 
     # Note

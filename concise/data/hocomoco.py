@@ -10,15 +10,14 @@ HOCOMOCO_PWM = resource_filename('concise', 'resources/HOCOMOCOv10_pcms_HUMAN_mo
 
 def get_metadata():
     """
-    Get pandas.DataFrame with metadata about the PWM's.
+    Get pandas.DataFrame with metadata about the PWM's. Columns:
 
-    Columns:
-        PWM_id (id of the PWM - pass to get_pwm_list() for getting the pwm
-        TF
-        Organism
-        DB
-        Info
-        consensus
+    - PWM_id (id of the PWM - pass to get_pwm_list() for getting the pwm
+    - TF
+    - Organism
+    - DB
+    - Info
+    - consensus
     """
 
     motifs = load_motif_db(HOCOMOCO_PWM)
@@ -42,6 +41,15 @@ def _normalize_pwm(pwm):
 
 
 def get_pwm_list(pwm_id_list, pseudocountProb=0.0001):
+    """Get a list of HOCOMOCO PWM's.
+
+    # Arguments
+        pwm_id_list: List of id's from the `PWM_id` column in `get_metadata()` table
+        pseudocountProb: Added pseudocount probabilities to the PWM
+
+    # Returns
+        List of `concise.utils.pwm.PWM` instances.
+    """
     l = load_motif_db(HOCOMOCO_PWM)
     l = {k.split()[0]: v for k, v in l.items()}
     pwm_list = [PWM(_normalize_pwm(l[m]) + pseudocountProb, name=m) for m in pwm_id_list]

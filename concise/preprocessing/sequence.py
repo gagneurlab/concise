@@ -77,24 +77,29 @@ def token2one_hot(tvec, vocab_size):
 
 def encodeSequence(seq_vec, vocab, neutral_vocab, maxlen=None,
                    seq_align="start", pad_value="N", encode_type="one_hot"):
-    """Convert the sequence into one-hot-encoding.
+    """Convert a list of genetic sequences into one-hot-encoded array.
 
     # Arguments
-       seq_vec: list of sequences
+       seq_vec: list of strings (genetic sequences)
        vocab: list of chars: List of "words" to use as the vocabulary. Can be strings of length>0,
-           but all need to have the same length. For DNA, this is: ["A", "C", "G", "T"]
+            but all need to have the same length. For DNA, this is: ["A", "C", "G", "T"].
        neutral_vocab: list of chars: Values used to pad the sequence or represent unknown-values. For DNA, this is: ["N"].
-       maxlen, seq_align: see pad_sequences
+       maxlen: int or None,
+            Should we trim (subset) the resulting sequence. If None don't trim.
+            Note that trims wrt the align parameter.
+            It should be smaller than the longest sequence.
+       seq_align: character; 'end' or 'start'
+            To which end should we align sequences?
        encode_type: "one_hot" or "token". "token" represents each vocab element as a positive integer from 1 to len(vocab) + 1.
                   neutral_vocab is represented with 0.
 
     # Returns
         Array with shape for encode_type:
 
-            - "one_hot": (len(seq_vec), maxlen, len(vocab))
-            - "token": (len(seq_vec), maxlen)
+            - "one_hot": `(len(seq_vec), maxlen, len(vocab))`
+            - "token": `(len(seq_vec), maxlen)`
 
-        If maxlen is None, it gets the value of the longest sequence length from seq_vec.
+        If `maxlen=None`, it gets the value of the longest sequence length from `seq_vec`.
     """
     if isinstance(neutral_vocab, str):
         neutral_vocab = [neutral_vocab]
@@ -241,9 +246,8 @@ def encodeAA(seq_vec, maxlen=None, seq_align="start", encode_type="one_hot"):
 
 
 def pad_sequences(sequence_vec, maxlen=None, align="end", value="N"):
-    """Pad and/or trim a list of sequences to have common length
+    """Pad and/or trim a list of sequences to have common length. Procedure:
 
-    Procedure:
         1. Pad the sequence with N's or any other string or list element (`value`)
         2. Subset the sequence
 

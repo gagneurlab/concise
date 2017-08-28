@@ -1,4 +1,4 @@
-TODO - write brief description
+The variant effect prediction parts integrated in concise are designed to extract importance scores for a single nucleotide variant in a given sequence. Predictions are made for each output individually for a multi-task model. 
 
 ## Available functions
 

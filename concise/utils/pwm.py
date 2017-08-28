@@ -14,18 +14,42 @@ DEFAULT_BASE_BACKGROUND = {"A": .25, "C": .25, "G": .25, "T": .25}
 
 
 class PWM(object):
+    """Class holding the position-weight matrix (PWM)
+
+    # Arguments
+       pwm: PWM matrix of shape `(seq_len, 4)`. All elements need to be larger or equal to 0.
+       name: str, optional name argument
+
+    # Attributes
+        pwm: np.array of shape `(seq_len, 4)`. All rows sum to 1
+        name: PWM name
+
+    # Methods
+        - **plotPWM(figsize=(10, 2))** - Make a sequence logo plot from the pwm.
+            Letter height corresponds to the probability.
+        - **plotPWMInfo(figsize=(10, 2))** - Make the sequence logo plot with information content
+            corresponding to the letter height.
+        - **get_pssm(background_probs=DEFAULT_BASE_BACKGROUND)** - Get the position-specific scoring matrix (PSSM)
+            cumputed as `np.log(pwm / b)`, where b are the background base probabilities..
+        - **plotPWMInfo(background_probs=DEFAULT_BASE_BACKGROUND, figsize=(10, 2))** - Make the sequence logo plot with
+            letter height corresponding to the position-specific scoring matrix (PSSM).
+        - **normalize()** - force all rows to sum to 1.
+        - **get_consensus()** - returns the consensus sequence
+
+    # Class methods
+        - **from_consensus(consensus_seq, background_proportion=0.1, name=None)** - Construct PWM from a consensus sequence
+                   - **consensus_seq**: string representing the consensus sequence (ex: ACTGTAT)
+                   - **background_proportion**: Let's denote it with a. The row in the resulting PWM
+    will be: `'C' -> [a/3, a/3, 1-a, a/3]`
+                   - **name** - PWM.name.
+        - **from_background(length=9, name=None, probs=DEFAULT_BASE_BACKGROUND)** - Create a background PWM.
+
+    """
+
     letterToIndex = DEFAULT_LETTER_TO_INDEX
     indexToLetter = DEFAULT_INDEX_TO_LETTER
 
     def __init__(self, pwm, name=None):
-        """PWM matrix
-
-        ## Arguments
-            pwm: np.array or motif ;
-            name: PWM name
-            motif: None
-
-        """
         self.pwm = np.asarray(pwm)  # needs to by np.array
         self.name = name
 
@@ -37,6 +61,9 @@ class PWM(object):
             raise Exception("All pwm elements need to be positive")
         if not np.all(np.sum(self.pwm, axis=1) > 0):
             raise Exception("All pwm rows need to have sum > 0")
+
+        # all elements need to be >0
+        assert np.all(self.pwm >= 0)
 
         # normalize the pwm
         self.normalize()
@@ -112,16 +139,19 @@ class PWM(object):
         return cls(**pwm_dict)
 
     def plotPWM(self, figsize=(10, 2)):
-
         pwm = self.pwm
-        return seqlogo_fig(pwm, vocab="DNA", figsize=figsize)
+        fig = seqlogo_fig(pwm, vocab="DNA", figsize=figsize)
+        plt.ylabel("Probability")
+        return fig
 
     def plotPWMInfo(self, figsize=(10, 2)):
         pwm = self.pwm
 
         info = _pwm2pwm_info(pwm)
-        # TODO add ylab
-        return seqlogo_fig(info, vocab="DNA", figsize=figsize)
+
+        fig = seqlogo_fig(info, vocab="DNA", figsize=figsize)
+        plt.ylabel("Bits")
+        return fig
 
     def get_pssm(self, background_probs=DEFAULT_BASE_BACKGROUND):
         b = background_probs2array(background_probs)
@@ -225,11 +255,15 @@ def pssm_array2pwm_array(arr, background_probs=DEFAULT_BASE_BACKGROUND):
 def load_motif_db(filename, skipn_matrix=0):
     """Read the motif file in the following format
 
+    ```
     >motif_name
     <skip n>0.1<delim>0.2<delim>0.5<delim>0.6
     ...
     >motif_name2
     ....
+    ```
+
+    Delim can be anything supported by np.loadtxt
 
     # Arguments
         filename: str, file path
@@ -239,7 +273,6 @@ def load_motif_db(filename, skipn_matrix=0):
     # Returns
         Dictionary of numpy arrays
 
-    Delim can be anything supported by np.loadtxt
     """
 
     # read-lines

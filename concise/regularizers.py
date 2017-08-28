@@ -6,7 +6,9 @@ from concise.utils.helper import get_from_module
 
 
 class SplineSmoother(Regularizer):
-    """Regularizer for the spline transformation
+    """Smoothness regularizer for spline transformation.
+
+    It penalizes the differences of neighbouring coefficients.
 
     # Arguments
         diff_order: neighbouring coefficient difference order
@@ -68,6 +70,7 @@ class GAMRegularizer(Regularizer):
 
     def __init__(self, n_bases=10, spline_order=3, l2_smooth=0., l2=0.):
         """Regularizer for GAM's
+
         # Arguments
             n_bases: number of b-spline bases
             order: spline order (2 for quadratic, 3 for qubic splines)

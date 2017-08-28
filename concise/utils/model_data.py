@@ -9,7 +9,7 @@ import logging
 
 
 def test_len(train):
-    """Test if all the elements in the training have the same shape[0]
+    """Test if all the elements in `train=(x,y)` the same `shape[0]`
     """
     l = train[1].shape[0]
     if isinstance(train[0], dict):
@@ -56,19 +56,23 @@ def split_KFold_idx(train, cv_n_folds=5, stratified=False, random_state=None):
 
 
 def subset(train, idx, keep_other=True):
-    """Subset the (train, test) data tuple, each of the form:
+    """Subset the `train=(x, y)` data tuple, each of the form:
+
     - list, np.ndarray
     - tuple, np.ndarray
     - dictionary, np.ndarray
     - np.ndarray, np.ndarray
 
-    In case there are other data present in the tuple:
-    (train, test, other1, other2, ...), these get passed on as:
-    (train_sub, test_sub, other1, other2)
+    # Note
+        In case there are other data present in the tuple:
+        `(x, y, other1, other2, ...)`, these get passed on as:
+        `(x_sub, y_sub, other1, other2)`
 
-    idx = indices to subset the data with
-
-    Further fields are ignored
+    # Arguments
+        train: `(x,y, other1, other2, ...)` tuple of data
+        idx: indices to subset the data with
+        keep_other: bool; If True, the additional tuple elements `(other1, other2, ...)` are passed
+    together with `(x, y)` but don't get subsetted.
     """
     test_len(train)
     y = train[1][idx]

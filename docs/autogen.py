@@ -50,13 +50,10 @@ from concise import utils
 from concise.utils import fasta
 from concise.utils import helper
 from concise.utils import model_data
-from concise.utils import pwm
+from concise.utils import pwm, load_motif_db
 from concise.utils import splines
-from concise.data import encode
-from concise.data import attract
-from concise.preprocessing import sequence
-from concise.preprocessing import splines
-from concise.preprocessing import structure
+from concise.data import encode, attract, hocomoco
+from concise.preprocessing import sequence, splines, structure
 from concise import constraints
 from concise import eval_metrics
 from concise import metrics
@@ -181,7 +178,10 @@ PAGES = [
     },
     {
         'page': 'utils/pwm.md',
-        'classes': [utils.pwm.PWM]
+        'classes': [utils.pwm.PWM],
+        'functions': [
+            load_motif_db,
+        ]
     },
     {
         'page': 'utils/splines.md',
@@ -210,6 +210,13 @@ PAGES = [
         'functions': [
             attract.get_metadata,
             attract.get_pwm_list,
+        ]
+    },
+    {
+        'page': 'data/hocomoco.md',
+        'functions': [
+            hocomoco.get_metadata,
+            hocomoco.get_pwm_list,
         ]
     },
 ]
