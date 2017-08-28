@@ -1,15 +1,11 @@
-=======
-Credits
-=======
+# Credits
 
-Development Lead
-----------------
+## Development Lead
 
 * Žiga Avsec <avsec@in.tum.de>
 
 
-Contributors
-------------
+## Contributors
 
 * Jun Cheng <chengju@in.tum.de>
 * Roman Kreuzhuber <rk536@medschl.cam.ac.uk>

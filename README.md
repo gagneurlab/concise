@@ -18,8 +18,6 @@ If allows you to:
 5. share and re-use models: every concise component (layer, initializer, regularizer, loss) is fully compatible with keras:
     -  saving, loading and reusing the models works out-of-the-box
 
-<!-- TODO - include image of concise -->
-
 
 ## Installation
 
