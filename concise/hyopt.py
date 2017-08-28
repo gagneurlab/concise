@@ -421,15 +421,15 @@ class CompileFN():
             or a function taking two numpy arrays: `y_true`, `y_pred`.
             These metrics are ment to supplement those specified in
             `model.compile(.., metrics = .)`.
-        loss_metric: str; Metric to monitor. Must be in
+        optim_metric: str; Metric to optimize. Must be in
             `add_eval_metrics` or `model.metrics_names`.
-        loss_metric_mode: one of {min, max}. In `min` mode,
-            training will stop when the metric
+        optim_metric_mode: one of {min, max}. In `min` mode,
+            training will stop when the optimized metric
             monitored has stopped decreasing; in `max`
-            mode it will stop when the metric
+            mode it will stop when the optimized metric
             monitored has stopped increasing; in `auto`
             mode, the direction is automatically inferred
-            from the name of the monitored metric.
+            from the name of the optimized metric.
         valid_split: Fraction of the training points to use for the validation. If set to None,
                      the second element returned by data_fn is used as the validation dataset.
         cv_n_folds: If not None, use cross-validation with `cv_n_folds`-folds instead of train, validation split.
@@ -451,8 +451,8 @@ class CompileFN():
                  model_fn,
                  # validation metric
                  add_eval_metrics=[],
-                 loss_metric="loss",  # val_loss
-                 loss_metric_mode="min",
+                 optim_metric="loss",  # val_loss
+                 optim_metric_mode="min",
                  # validation split
                  valid_split=.2,
                  cv_n_folds=None,
@@ -463,6 +463,7 @@ class CompileFN():
                  save_model="best",
                  save_results=True,
                  save_dir=DEFAULT_SAVE_DIR,
+                 **kwargs
                  ):
         self.data_fn = data_fn
         self.model_fn = model_fn
@@ -472,11 +473,24 @@ class CompileFN():
         else:
             self.add_eval_metrics = {_to_string(fn_str): _get_ce_fun(fn_str)
                                      for fn_str in add_eval_metrics}
-        assert isinstance(loss_metric, str)
+        assert isinstance(optim_metric, str)
 
-        self.loss_metric = loss_metric
-        assert loss_metric_mode in ["min", "max"]
-        self.loss_metric_mode = loss_metric_mode
+        # backcompatibility:
+        # allow only "loss_metric" and "loss_metric_mode" to be passed in kwargs
+        if "loss_metric" in kwargs and optim_metric == "loss":
+            optim_metric = kwargs["loss_metric"]
+        if "loss_metric_mode" in kwargs and optim_metric_mode == "min":
+            optim_metric_mode = kwargs["loss_metric_mode"]
+        possible_kwargs = ["loss_metric", "loss_metric_mode"]
+        add_arguments = set(kwargs.keys()).difference(possible_kwargs)
+
+        if len(add_arguments) > 0:
+            raise ValueError("Unknown argument(s) {0}. **kwargs accepts only arguments: {0}.  ".
+                             format(add_arguments, possible_kwargs))
+
+        self.optim_metric = optim_metric
+        assert optim_metric_mode in ["min", "max"]
+        self.optim_metric_mode = optim_metric_mode
 
         self.data_name = data_fn.__name__
         self.model_name = model_fn.__name__
@@ -504,12 +518,12 @@ class CompileFN():
     def save_dir_exp(self):
         return self.save_dir + "/{db}/{exp}/".format(db=self.db_name, exp=self.exp_name)
 
-    def _assert_loss_metric(self, model):
+    def _assert_optim_metric(self, model):
         model_metrics = _listify(model.metrics_names)
         eval_metrics = list(self.add_eval_metrics.keys())
 
-        if self.loss_metric not in model_metrics + eval_metrics:
-            raise ValueError("loss_metric: '{0}' not in ".format(self.loss_metric) +
+        if self.optim_metric not in model_metrics + eval_metrics:
+            raise ValueError("optim_metric: '{0}' not in ".format(self.optim_metric) +
                              "either sets of the losses: \n" +
                              "model.metrics_names: {0}\n".format(model_metrics) +
                              "add_eval_metrics: {0}".format(eval_metrics))
@@ -565,7 +579,7 @@ class CompileFN():
             # no cross-validation
             model = get_model(self.model_fn, train, param)
             print(_listify(model.metrics_names))
-            self._assert_loss_metric(model)
+            self._assert_optim_metric(model)
             if self.valid_split is not None:
                 train_idx, valid_idx = split_train_test_idx(train,
                                                             self.valid_split,
@@ -602,7 +616,7 @@ class CompileFN():
                                                                        self.random_state)):
                 logger.info("Fold {0}/{1}".format(i + 1, self.cv_n_folds))
                 model = get_model(self.model_fn, subset(train, train_idx), param)
-                self._assert_loss_metric(model)
+                self._assert_optim_metric(model)
                 c_model_path = model_path.replace(".h5", "_fold_{0}.h5".format(i))
                 c_callbacks = deepcopy(callbacks)
                 if self.save_model == "best":
@@ -627,8 +641,8 @@ class CompileFN():
             eval_metrics = _mean_dict(eval_metrics_list)
 
         # get loss from eval_metrics
-        loss = eval_metrics[self.loss_metric]
-        if self.loss_metric_mode == "max":
+        loss = eval_metrics[self.optim_metric]
+        if self.optim_metric_mode == "max":
             loss = - loss  # loss should get minimized
 
         time_end = datetime.now()
@@ -645,8 +659,8 @@ class CompileFN():
                "name": {
                    "data": self.data_name,
                    "model": self.model_name,
-                   "loss_metric": self.loss_metric,
-                   "loss_metric_mode": self.loss_metric,
+                   "optim_metric": self.optim_metric,
+                   "optim_metric_mode": self.optim_metric,
                },
                "history": history,
                # execution times

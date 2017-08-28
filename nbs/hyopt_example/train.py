@@ -29,8 +29,8 @@ objective = CompileFN(db_name="hyopt_example", exp_name="motif_initialization", 
                       data_fn=data.data,
                       model_fn=model.model,
                       add_eval_metrics=["auprc", "auc"],  # metrics from concise.eval_metrics, you can also use your own
-                      loss_metric="auprc",  # which metric to optimize for
-                      loss_metric_mode="max",  # maximum should be searched for
+                      optim_metric="auprc",  # which metric to optimize for
+                      optim_metric_mode="max",  # maximum should be searched for
                       valid_split=None,  # use valid from the data function
                       save_model='best',  # checkpoint the best model
                       save_results=True,  # save the results as .json (in addition to mongoDB)
