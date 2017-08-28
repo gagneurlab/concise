@@ -12,16 +12,13 @@ if sys.version_info[0] != 3:
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
-# with open('HISTORY.rst') as history_file:
-#     history = history_file.read()
-
 requirements = [
     "numpy",
     "pandas",
     "scipy",
     "scikit-learn>=0.18",
     "matplotlib",
-    "tensorflow",
+    # "tensorflow", # - not per-se required
     # "glmnet",
     "keras>=2.0.4",
     'hyperopt',
@@ -37,7 +34,7 @@ setup(
     name='concise',
     version='0.6.3',
     description="CONCISE (COnvolutional Neural for CIS-regulatory Elements)",
-    long_description=readme,  # + '\n\n' + history,
+    long_description=readme,
     author="Žiga Avsec",
     author_email='avsec@in.tum.de',
     url='https://github.com/gagneurlab/concise',
@@ -47,13 +44,16 @@ setup(
                                         'HOCOMOCOv10_pcms_HUMAN_mono.txt'],
                   'concise.resources.RNAplfold': ["H_RNAplfold", "I_RNAplfold", "M_RNAplfold", "E_RNAplfold"]},
     include_package_data=True,
-    # setup_requires=['numpy'],
+    setup_requires=['numpy'],
     install_requires=requirements,
     # dependency_links=dependency_links,
     license="MIT license",
     zip_safe=False,
     keywords=["computational biology", "bioinformatics", "genomics",
               "deep learning", "tensorflow", ],
+    extras_require={
+        'tensorflow': ['tensorflow>=1.0'],
+        'tensorflow with gpu': ['tensorflow-gpu>=1.0']},
     classifiers=[
         # classifiers
         # default
