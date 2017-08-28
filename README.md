@@ -3,7 +3,7 @@
 </div>
 
 
-# Concise: Keras extension for regulatory genomics ![](https://travis-ci.org/gagneurlab/concise.svg?branch=master)
+# Concise: Keras extension for regulatory genomics
 
 [![Build Status](https://travis-ci.org/gagneurlab/concise.svg?branch=master)](https://travis-ci.org/gagneurlab/concise)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](https://github.com/fchollet/keras/blob/master/LICENSE)
