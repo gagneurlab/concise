@@ -183,7 +183,7 @@ class ConvSequence(Conv1D):
         config["seq_length"] = self.seq_length
         return config
 
-    def _plot_weights_heatmap(self, index=None, figsize=(6, 2), **kwargs):
+    def _plot_weights_heatmap(self, index=None, figsize=None, **kwargs):
         """Plot weights as a heatmap
 
         index = can be a particular index or a list of indicies
@@ -195,13 +195,13 @@ class ConvSequence(Conv1D):
 
         fig = heatmap(np.swapaxes(W[:, :, index], 0, 1), plot_name="filter: ",
                       vocab=self.VOCAB, figsize=figsize, **kwargs)
-        plt.show()
+        # plt.show()
         return fig
 
     def _plot_weights_motif(self, index, plot_type="motif_raw",
                             background_probs=DEFAULT_BASE_BACKGROUND,
                             ncol=1,
-                            figsize=(10, 2)):
+                            figsize=None):
         """Index can only be a single int
         """
 
@@ -228,10 +228,10 @@ class ConvSequence(Conv1D):
             raise ValueError("plot_type needs to be from {0}".format(self.AVAILABLE_PLOTS))
 
         fig = seqlogo_fig(arr, vocab=self.VOCAB_name, figsize=figsize, ncol=ncol, plot_name="filter: ")
-        fig.show()
+        # fig.show()
         return fig
 
-    def plot_weights(self, index=None, plot_type="motif_raw", figsize=(6, 2), ncol=1, **kwargs):
+    def plot_weights(self, index=None, plot_type="motif_raw", figsize=None, ncol=1, **kwargs):
         """Plot filters as heatmap or motifs
 
         index = can be a particular index or a list of indicies
@@ -533,6 +533,7 @@ class SplineT(Layer):
         return dict(list(base_config.items()) + list(config.items()))
 
     # TODO - add X_spline as non-trainable weights
+
 
 # Deprecated
 class GAMSmooth(Layer):

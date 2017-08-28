@@ -11,11 +11,11 @@ Concise (CONvolutional neural networks for CIS-regulatory Elements) is a Keras e
 
 If allows you to:
 
-1. pre-process sequence-related data (say convert a list of sequences into one-hot-encoded numpy arrays)
-2. specify a keras model with additional utilites: concise provides custom `layers`, `initializers` and `regularizers` useful for regulatory genomics
-3. tune the hyper-parameters (`hyopt`): concise provides convenience functions for working with `hyperopt` package.
-4. interpret: concise layers contain visualization methods
-5. share and re-use models: every concise component (layer, initializer, regularizer, loss) is fully compatible with keras:
+1. Pre-process sequence-related data (say convert a list of sequences into one-hot-encoded numpy arrays).
+2. Specify a Keras model with additional modules. Concise provides custom `layers`, `initializers` and `regularizers`.
+3. Tune the hyper-parameters (`hyopt`): concise provides convenience functions for working with the `hyperopt` package.
+4. Interpret: most of Concise layers contain plotting methods
+5. Share and re-use models: every Concise component (layer, initializer, regularizer, loss) is fully compatible with Keras:
     -  saving, loading and reusing the models works out-of-the-box
 
 
@@ -32,7 +32,7 @@ To successfully use concise plotting functionality, please also install the libg
 - Ubuntu: `sudo apt-get install -y libgeos-dev`
 - Red-hat/CentOS: `sudo yum install geos-devel`
 
-<!-- Make sure your keras is installed properly and configured with the backend of choice. -->
+<!-- Make sure your Keras is installed properly and configured with the backend of choice. -->
 
 ## Documentation
 
