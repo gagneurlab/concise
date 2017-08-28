@@ -4,6 +4,7 @@ from tests.setup_concise_load_data import load_example_data
 from concise.legacy.models import single_layer_pos_effect as concise_model
 import numpy as np
 
+
 def get_list_input_model():
     import keras
     from keras.layers.merge import concatenate
@@ -50,7 +51,8 @@ def get_list_input_model():
     merged_model = Model(inputs=[n1.input, n2.input], outputs=out)
     merged_model.compile(optimizer=opt, loss=ls, metrics=ls_metrics)
 
-    merged_model.fit([X_seq, X_seq], y, epochs=1, validation_data=([X_seq, X_seq], y))
+    # this is slow - subset
+    merged_model.fit([X_seq[:500], X_seq[:500]], y[:500], batch_size=128, epochs=1, validation_data=([X_seq, X_seq], y))
     return {"model": merged_model, "out_annotation": np.array(["output_1"])}
 
 
@@ -71,6 +73,7 @@ def get_concise_model():
 # Requires: A model that can be tested
 # An input dataset that can be tested
 
+
 def get_model():
     import socket
     if not "ebi" in socket.gethostname():
@@ -86,6 +89,7 @@ def get_model():
         model = model_from_json(f.read())
     model.load_weights(model_path + "/best_w.h5")
     return {"model": model, "out_annotation": output_labels}
+
 
 def get_example_data():
     dataset_path = "./data/sample_hqtl_res.hdf5"
@@ -103,6 +107,3 @@ def get_example_data():
     dataset["mutation_position"] = np.array([500] * dataset["ref"].shape[0])
     ifh.close()
     return dataset
-
-
-
