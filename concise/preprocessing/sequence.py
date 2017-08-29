@@ -16,8 +16,6 @@ CODONS = ["AAA", "AAC", "AAG", "AAT", "ACA", "ACC", "ACG", "ACT", "AGA",
 STOP_CODONS = ["TAG", "TAA", "TGA"]
 
 
-# TODO - implement one_hot -> token
-
 def _get_vocab_dict(vocab):
     return {l: i for i, l in enumerate(vocab)}
 
@@ -28,6 +26,7 @@ def _get_index_dict(vocab):
 
 def one_hot2token(arr):
     return arr.argmax(axis=2)
+
 
 # TODO - take into account the neutral vocab
 def one_hot2string(arr, vocab):
@@ -63,16 +62,33 @@ def tokenize(seq, vocab, neutral_vocab=[]):
     for l in neutral_vocab:
         vocab_dict[l] = -1
 
+    # current performance bottleneck
     return [vocab_dict[seq[(i * nchar):((i + 1) * nchar)]] for i in range(len(seq) // nchar)]
+
+
+# 512 ms vs 121 -> 4x slower than custom token2one_hot
+# def token2one_hot(tvec, vocab_size):
+#     """
+#     Note: everything out of the vucabulary is transformed into `np.zeros(vocab_size)`
+#     """
+#     # This costs the most - memory allocation?
+#     lb = sklearn.preprocessing.LabelBinarizer()
+#     lb.fit(range(vocab_size))
+#     return lb.transform(tvec)
+#     # alternatively:
+#     # return sklearn.preprocessing.label_binarize(tvec, list(range(vocab_size)))
 
 
 def token2one_hot(tvec, vocab_size):
     """
     Note: everything out of the vucabulary is transformed into `np.zeros(vocab_size)`
     """
-    lb = sklearn.preprocessing.LabelBinarizer()
-    lb.fit(range(vocab_size))
-    return lb.transform(tvec)
+    arr = np.zeros((len(tvec), vocab_size))
+
+    tvec_range = np.arange(len(tvec))
+    tvec = np.asarray(tvec)
+    arr[tvec_range[tvec >= 0], tvec[tvec >= 0]] = 1
+    return arr
 
 
 def encodeSequence(seq_vec, vocab, neutral_vocab, maxlen=None,
@@ -116,7 +132,7 @@ def encodeSequence(seq_vec, vocab, neutral_vocab, maxlen=None,
 
     if encode_type == "one_hot":
         arr_list = [token2one_hot(tokenize(seq, vocab, neutral_vocab), len(vocab))
-                    for seq in seq_vec]
+                    for i, seq in enumerate(seq_vec)]
     elif encode_type == "token":
         arr_list = [1 + np.array(tokenize(seq, vocab, neutral_vocab)) for seq in seq_vec]
         # we add 1 to be compatible with keras: https://keras.io/layers/embeddings/

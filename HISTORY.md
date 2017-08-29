@@ -67,3 +67,10 @@
 - added utility function for position extraction
 - fix: hyopt and memoization of data() now works
 - implemented seqlogo plot
+
+## 0.6.4 (2017-08-29)
+
+- Added more documentation
+- hyopt.CompileFN: loss_metric -> optim_metric
+- eval_metrics: y,z -> y_true, y_pred arguments
+- speedup encodeSequences by 4x
