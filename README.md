@@ -10,16 +10,18 @@
 
 ## 
 
-Concise (CONvolutional neural networks for CIS-regulatory Elements) is a Keras extension for regulatory genomics. 
+Concise (originally CONvolutional neural networks for CIS-regulatory Elements) allows you to:
 
-If allows you to:
-
-1. Pre-process sequence-related data (say convert a list of sequences into one-hot-encoded numpy arrays).
-2. Specify a Keras model with additional modules. Concise provides custom `layers`, `initializers` and `regularizers`.
-3. Tune the hyper-parameters (`hyopt`): concise provides convenience functions for working with the `hyperopt` package.
-4. Interpret: most of Concise layers contain plotting methods
-5. Share and re-use models: every Concise component (layer, initializer, regularizer, loss) is fully compatible with Keras:
-    -  saving, loading and reusing the models works out-of-the-box
+1. Pre-process sequence-related data (`concise.preprocessing`)
+    - convert a list of sequences into one-hot-encoded numpy array or tokens.
+2. Specify a Keras model with additional modules
+    - Concise provides custom `layers`, `initializers` and `regularizers`.
+3. Tune the hyper-parameters (`concise.hyopt`)
+    - Concise provides convenience functions for working with the `hyperopt` package.
+4. Interpret the model
+    - most of Concise layers contain plotting methods
+5. Share and re-use models
+    - every component (layer, initializer, regularizer, loss) is fully compatible with Keras. Model saving and loading works out-of-the-box.
 
 
 ## Installation
