@@ -3,19 +3,9 @@ import pandas as pd
 from copy import deepcopy
 from concise.utils.helper import get_from_module, _to_string
 import logging
+from gtfparse import read_gtf_as_dataframe
 
 _logger = logging.getLogger('genomelake')
-
-
-def read_gtf(path):
-    gtf = pd.read_table(path,
-                        header=None,
-                        comment="#",
-                        index_col=False,
-                        names=["seqnames", "source", "feature", "start", "end", "score", "strand", "frame", "info"],
-                        skip_blank_lines=True)
-    return gtf
-
 
 ALL_LANDMARKS = ["tss", "polya",
                  "exon_intron", "intron_exon",
@@ -28,7 +18,7 @@ def extract_landmarks(gtf, landmarks=ALL_LANDMARKS):
 
     # Arguments
         gtf: File path or a loaded `pd.DataFrame` with columns:
-    seqnames, feature, start, end, strand
+    seqname, feature, start, end, strand
         landmarks: list or a dictionary of landmark extractors (function or name)
 
     # Note
@@ -37,11 +27,11 @@ def extract_landmarks(gtf, landmarks=ALL_LANDMARKS):
 
     # Returns
         Dictionary of pd.DataFrames with landmark positions
-    (columns: seqnames, position, strand)
+    (columns: seqname, position, strand)
     """
     if isinstance(gtf, str):
         _logger.info("Reading gtf file..")
-        gtf = read_gtf(gtf)
+        gtf = read_gtf_as_dataframe(gtf)
         _logger.info("Done")
 
     _logger.info("Running landmark extractors..")
@@ -60,14 +50,14 @@ def extract_landmarks(gtf, landmarks=ALL_LANDMARKS):
 
 def range_start(gtf):
     position = np.where(gtf.strand == "-", gtf.end, gtf.start)
-    return pd.DataFrame.from_items([("seqnames", gtf.seqnames),
+    return pd.DataFrame.from_items([("seqname", gtf.seqname),
                                     ("position", position),
                                     ("strand", gtf.strand)])
 
 
 def range_end(gtf):
     position = np.where(gtf.strand == "-", gtf.start, gtf.end)
-    return pd.DataFrame.from_items([("seqnames", gtf.seqnames),
+    return pd.DataFrame.from_items([("seqname", gtf.seqname),
                                     ("position", position),
                                     ("strand", gtf.strand)])
 
@@ -142,10 +132,10 @@ def _validate_pos(df):
     """Validates the returned positional object
     """
     assert isinstance(df, pd.DataFrame)
-    assert ["seqnames", "position", "strand"] == df.columns.tolist()
+    assert ["seqname", "position", "strand"] == df.columns.tolist()
     assert df.position.dtype == np.dtype("int64")
     assert df.strand.dtype == np.dtype("O")
-    assert df.seqnames.dtype == np.dtype("O")
+    assert df.seqname.dtype == np.dtype("O")
     return df
 
 

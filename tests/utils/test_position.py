@@ -4,6 +4,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from concise.utils.position import extract_landmarks, get
+from gtfparse import read_gtf_as_dataframe
 
 
 @pytest.fixture
@@ -14,12 +15,13 @@ def gtf():
     # gtf = read_gtf(gtf_path)
     # gtf_small = gtf[gtf.seqnames == "chr22"]
     # gtf_small.to_pickle("data/gencode_v25_chr22.gtf.pkl.gz")  # 116k
-    return pd.read_pickle("data/gencode_v25_chr22.gtf.pkl.gz")
+
+    return read_gtf_as_dataframe("data/gencode.v24.annotation_chr22.gtf.gz")
 
 
 @pytest.fixture
 def gtf_simple():
-    gtfs = pd.DataFrame({"seqnames": "chr22",
+    gtfs = pd.DataFrame({"seqname": "chr22",
                          "feature": ["exon", "exon", "transcript", "transcript"],
                          "start": [100, 300, 100, 150],
                          "end": [200, 400, 200, 250],

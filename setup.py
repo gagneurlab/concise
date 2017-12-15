@@ -23,7 +23,8 @@ requirements = [
     "keras>=2.0.4",
     'hyperopt',
     'descartes',
-    'shapely'
+    'shapely',
+    'gtfparse'
 ]
 
 test_requirements = [
