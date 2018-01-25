@@ -74,3 +74,7 @@
 - hyopt.CompileFN: loss_metric -> optim_metric
 - eval_metrics: y,z -> y_true, y_pred arguments
 - speedup encodeSequences by 4x
+
+## 0.6.5 (2018-01-25)
+
+- Added `gtfparse` dependency for parsing the gtf files
