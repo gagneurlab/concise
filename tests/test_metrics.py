@@ -34,10 +34,19 @@ def test_metrics():
     assert np.allclose(K.eval(cm.tpr(y_true, y_pred)), cem.tpr(y_true, y_pred))
     assert np.allclose(K.eval(cm.accuracy(y_true, y_pred)), cem.accuracy(y_true, y_pred))
 
+    # other metrics
+    assert cem.auprc(y_true, y_pred) > 0
+    assert cem.recall_at_precision(y_true, y_pred, .5) > 0
+
     # test serialization
     s = serialize_keras_object(cm.accuracy)
     a = deserialize_keras_object(s)
     assert a == cm.accuracy
+
+
+def test_classification_metrics():
+    y_pred = np.array([0, 0.2, 0.6, 0.4, 1, 0])
+    y_true = np.array([1, 0, -1, 1, 0, 0])
 
 
 def test_regression_metrics():

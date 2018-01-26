@@ -49,15 +49,22 @@ def auc(y_true, y_pred, round=True):
 def auprc(y_true, y_pred):
     """Area under the precision-recall curve
     """
+    y_true, y_pred = _mask_value_nan(y_true, y_pred)
     precision, recall, _ = skm.precision_recall_curve(y_true, y_pred)
     return skm.auc(recall, precision)
 
 
-def recall_at_precision_threshold(y_true, y_pred, precision_threshold):
+def recall_at_precision(y_true, y_pred, precision):
     """Recall at a certain precision threshold
+
+    Args:
+      y_true: true labels
+      y_pred: predicted labels
+      precision: resired precision level at which where to compute the recall
     """
+    y_true, y_pred = _mask_value_nan(y_true, y_pred)
     precision, recall, _ = skm.precision_recall_curve(y_true, y_pred)
-    return recall[np.searchsorted(precision - precision_threshold, 0)]
+    return recall[np.searchsorted(precision - precision, 0)]
 
 
 def accuracy(y_true, y_pred, round=True):
