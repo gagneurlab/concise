@@ -70,3 +70,4 @@ target/
 .idea
 .ipynb_checkpoints
 logfile.txt
+.pytest_cache/

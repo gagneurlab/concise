@@ -24,7 +24,7 @@ requirements = [
     'hyperopt',
     'descartes',
     'shapely',
-    'gtfparse'
+    'gtfparse>=1.0.7'
 ]
 
 test_requirements = [

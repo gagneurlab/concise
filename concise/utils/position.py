@@ -3,7 +3,7 @@ import pandas as pd
 from copy import deepcopy
 from concise.utils.helper import get_from_module, _to_string
 import logging
-from gtfparse import read_gtf_as_dataframe
+from gtfparse import read_gtf
 
 _logger = logging.getLogger('genomelake')
 
@@ -31,7 +31,7 @@ def extract_landmarks(gtf, landmarks=ALL_LANDMARKS):
     """
     if isinstance(gtf, str):
         _logger.info("Reading gtf file..")
-        gtf = read_gtf_as_dataframe(gtf)
+        gtf = read_gtf(gtf)
         _logger.info("Done")
 
     _logger.info("Running landmark extractors..")
