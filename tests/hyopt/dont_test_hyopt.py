@@ -8,6 +8,34 @@ from concise.utils.helper import merge_dicts
 import subprocess
 from tests.hyopt import data, model
 from copy import deepcopy
+import pytest
+
+def test_argument_compileCN():
+    a = CompileFN("test", "test2",
+                  data_fn=data.data,
+                  model_fn=model.build_model)
+
+    # backcompatibility
+    a = CompileFN("test", "test2",
+                  data_fn=data.data,
+                  model_fn=model.build_model,
+                  optim_metric="acc",
+                  optim_metric_mode="max")
+
+    a = CompileFN("test", "test2",
+                  data_fn=data.data,
+                  model_fn=model.build_model,
+                  loss_metric="acc",
+                  loss_metric_mode="max")
+
+    # raises error
+    with pytest.raises(ValueError) as excinfo:
+        a = CompileFN("test", "test2",
+                      data_fn=data.data,
+                      model_fn=model.build_model,
+                      loss_metric="acc",
+                      loss_metric_mode="max",
+                      unknown_arg=3)
 
 
 def test_compilefn_train_test_split(tmpdir):
@@ -16,8 +44,8 @@ def test_compilefn_train_test_split(tmpdir):
     fn = CompileFN(db_name, exp_name,
                    data_fn=data.data,
                    model_fn=model.build_model,
-                   loss_metric="acc",
-                   loss_metric_mode="max",
+                   optim_metric="acc",
+                   optim_metric_mode="max",
                    # eval
                    valid_split=.5,
                    stratified=False,
@@ -46,8 +74,8 @@ def test_compilefn_cross_val(tmpdir):
                    random_state=True,
                    data_fn=data.data,
                    model_fn=model.build_model,
-                   loss_metric="loss",
-                   loss_metric_mode="min",
+                   optim_metric="loss",
+                   optim_metric_mode="min",
                    save_dir="/tmp/")
     hyper_params = {
         "data": {},
@@ -102,8 +130,8 @@ def test_hyopt(tmpdir):
     fn = CompileFN(db_name, exp_name,
                    data_fn=data.data,
                    model_fn=model.build_model,
-                   loss_metric="acc",
-                   loss_metric_mode="max",
+                   optim_metric="acc",
+                   optim_metric_mode="max",
                    save_dir=results_path)
     hyper_params = {
         "data": {},

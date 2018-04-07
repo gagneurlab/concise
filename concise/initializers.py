@@ -144,6 +144,7 @@ class PSSMKernelInitializer(Initializer):
     random values to generate.
         seed: A Python integer. Used to seed the random generator.
         background_probs: A dictionary of background probabilities.
+
     Default: `{'A': .25, 'C': .25, 'G': .25, 'T': .25}`
         scale_glorot: boolean; If True, each generated filter is min-max scaled to match 
 
@@ -208,19 +209,22 @@ class PSSMKernelInitializer(Initializer):
         }
 
 
-class PWMBiasInitializer(Initializer):
-    # TODO - automatically determined kernel_size
+class PSSMBiasInitializer(Initializer):
+    """Bias initializer complementary to `PSSMKernelInitializer`
 
-    def __init__(self, pwm_list=[], kernel_size=None, mean_max_scale=0.):
-        """Bias initializer
+    By defult, it will initialize all weights to 0.
 
-        # Arguments
-            pwm_list: list of PWM's
-            kernel_size: Has to be the same as kernel_size in kl.Conv1D
-            mean_max_scale: float; factor for convex conbination between
-                                    mean pwm match (mean_max_scale = 0.) and
-                                    max pwm match (mean_max_scale = 1.)
-        """
+    # Arguments
+        pwm_list: list of PWM's
+        kernel_size: Has to be the same as kernel_size in kl.Conv1D
+        mean_max_scale: float; factor for convex conbination between
+                                mean pwm match (mean_max_scale = 0.) and
+                                max pwm match (mean_max_scale = 1.)
+        background_probs: A dictionary of background probabilities. Default: `{'A': .25, 'C': .25, 'G': .25, 'T': .25}`
+    """
+
+    def __init__(self, pwm_list=[], kernel_size=None, mean_max_scale=0., background_probs=DEFAULT_BASE_BACKGROUND):
+
         # handle pwm_list as a dictionary
         if len(pwm_list) > 0 and isinstance(pwm_list[0], dict):
             pwm_list = [PWM.from_config(pwm) for pwm in pwm_list]
@@ -228,22 +232,25 @@ class PWMBiasInitializer(Initializer):
         if kernel_size is None:
             kernel_size = len(pwm_list)
 
+        _check_pwm_list(pwm_list)
         self.pwm_list = pwm_list
         self.kernel_size = kernel_size
         self.mean_max_scale = mean_max_scale
-        _check_pwm_list(pwm_list)
+        self.background_probs = background_probs
 
     def __call__(self, shape, dtype=None):
         # pwm_array
         # print("PWMBiasInitializer shape: ", shape)
-        pwma = pwm_list2pwm_array(self.pwm_list,
-                                  shape=(self.kernel_size, 4, shape[0]),
-                                  dtype=dtype)
+        pwm = pwm_list2pwm_array(self.pwm_list,
+                                 shape=(self.kernel_size, 4, shape[0]),
+                                 background_probs=self.background_probs,
+                                 dtype=dtype)
+
+        pssm = pwm_array2pssm_array(pwm, background_probs=self.background_probs)
 
         # maximum sequence match
-        max_scores = np.sum(np.amax(pwma, axis=1), axis=0)
-        # mean sequence match = 0.25 * pwm length
-        mean_scores = np.sum(np.mean(pwma, axis=1), axis=0)
+        max_scores = np.sum(np.amax(pssm, axis=1), axis=0)
+        mean_scores = np.sum(np.mean(pssm, axis=1), axis=0)
 
         biases = - (mean_scores + self.mean_max_scale * (max_scores - mean_scores))
 
@@ -255,12 +262,13 @@ class PWMBiasInitializer(Initializer):
             "pwm_list": [pwm.get_config() for pwm in self.pwm_list],
             "kernel_size": self.kernel_size,
             "mean_max_scale": self.mean_max_scale,
+            "background_probs": self.background_probs,
         }
 
 
 # TODO pack everything into a single initializer without the bias init?
 class PWMKernelInitializer(Initializer):
-    """truncated normal distribution shifted by a PWM
+    """Truncated normal distribution shifted by a PWM
 
     # Arguments
         pwm_list: a list of PWM's or motifs
@@ -294,15 +302,13 @@ class PWMKernelInitializer(Initializer):
 
 
 # util functions
-
-
 def _glorot_uniform_scale(shape):
     """Compute the glorot_uniform scale
     """
     fan_in, fan_out = _compute_fans(shape)
     return np.sqrt(2 * 3.0 / max(1., float(fan_in + fan_out)))
 
-
+  
 AVAILABLE = ["PWMBiasInitializer", "PWMKernelInitializer",
              "PSSMBiasInitializer", "PSSMKernelInitializer"]
 

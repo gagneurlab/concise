@@ -1,7 +1,11 @@
 import numpy as np
 import copy
 from concise.preprocessing.sequence import DNA, _get_vocab_dict
-from deeplift.visualization import viz_sequence
+from io import StringIO
+import gzip
+from concise.utils.plot import seqlogo, seqlogo_fig
+import matplotlib.pyplot as plt
+
 
 DEFAULT_LETTER_TO_INDEX = _get_vocab_dict(DNA)
 DEFAULT_INDEX_TO_LETTER = dict((DEFAULT_LETTER_TO_INDEX[x], x)
@@ -10,18 +14,42 @@ DEFAULT_BASE_BACKGROUND = {"A": .25, "C": .25, "G": .25, "T": .25}
 
 
 class PWM(object):
+    """Class holding the position-weight matrix (PWM)
+
+    # Arguments
+       pwm: PWM matrix of shape `(seq_len, 4)`. All elements need to be larger or equal to 0.
+       name: str, optional name argument
+
+    # Attributes
+        pwm: np.array of shape `(seq_len, 4)`. All rows sum to 1
+        name: PWM name
+
+    # Methods
+        - **plotPWM(figsize=(10, 2))** - Make a sequence logo plot from the pwm.
+            Letter height corresponds to the probability.
+        - **plotPWMInfo(figsize=(10, 2))** - Make the sequence logo plot with information content
+            corresponding to the letter height.
+        - **get_pssm(background_probs=DEFAULT_BASE_BACKGROUND)** - Get the position-specific scoring matrix (PSSM)
+            cumputed as `np.log(pwm / b)`, where b are the background base probabilities..
+        - **plotPWMInfo(background_probs=DEFAULT_BASE_BACKGROUND, figsize=(10, 2))** - Make the sequence logo plot with
+            letter height corresponding to the position-specific scoring matrix (PSSM).
+        - **normalize()** - force all rows to sum to 1.
+        - **get_consensus()** - returns the consensus sequence
+
+    # Class methods
+        - **from_consensus(consensus_seq, background_proportion=0.1, name=None)** - Construct PWM from a consensus sequence
+                   - **consensus_seq**: string representing the consensus sequence (ex: ACTGTAT)
+                   - **background_proportion**: Let's denote it with a. The row in the resulting PWM
+    will be: `'C' -> [a/3, a/3, 1-a, a/3]`
+                   - **name** - PWM.name.
+        - **from_background(length=9, name=None, probs=DEFAULT_BASE_BACKGROUND)** - Create a background PWM.
+
+    """
+
     letterToIndex = DEFAULT_LETTER_TO_INDEX
     indexToLetter = DEFAULT_INDEX_TO_LETTER
 
     def __init__(self, pwm, name=None):
-        """PWM matrix
-
-        ## Arguments
-            pwm: np.array or motif ;
-            name: PWM name
-            motif: None
-
-        """
         self.pwm = np.asarray(pwm)  # needs to by np.array
         self.name = name
 
@@ -33,6 +61,9 @@ class PWM(object):
             raise Exception("All pwm elements need to be positive")
         if not np.all(np.sum(self.pwm, axis=1) > 0):
             raise Exception("All pwm rows need to have sum > 0")
+
+        # all elements need to be >0
+        assert np.all(self.pwm >= 0)
 
         # normalize the pwm
         self.normalize()
@@ -108,17 +139,19 @@ class PWM(object):
         return cls(**pwm_dict)
 
     def plotPWM(self, figsize=(10, 2)):
-
         pwm = self.pwm
-
-        return viz_sequence.plot_weights(pwm, figsize=figsize)
+        fig = seqlogo_fig(pwm, vocab="DNA", figsize=figsize)
+        plt.ylabel("Probability")
+        return fig
 
     def plotPWMInfo(self, figsize=(10, 2)):
         pwm = self.pwm
 
         info = _pwm2pwm_info(pwm)
-        # TODO add ylab
-        return viz_sequence.plot_weights(info, figsize=figsize)
+
+        fig = seqlogo_fig(info, vocab="DNA", figsize=figsize)
+        plt.ylabel("Bits")
+        return fig
 
     def get_pssm(self, background_probs=DEFAULT_BASE_BACKGROUND):
         b = background_probs2array(background_probs)
@@ -127,7 +160,7 @@ class PWM(object):
 
     def plotPSSM(self, background_probs=DEFAULT_BASE_BACKGROUND, figsize=(10, 2)):
         pssm = self.get_pssm()
-        return viz_sequence.plot_weights(pssm, figsize=figsize)
+        return seqlogo_fig(pssm, vocab="DNA", figsize=figsize)
 
 
 def _pwm2pwm_info(pwm):
@@ -138,7 +171,7 @@ def _pwm2pwm_info(pwm):
     pwm = pwm / col_sums[:, np.newaxis]
     H = - np.sum(pwm * np.log2(pwm), axis=1)
     R = np.log2(4) - H
-    info = pwm * R.reshape([-1, 1])
+    info = pwm * R[:, np.newaxis, ...]
     return info
 
 
@@ -217,3 +250,57 @@ def pssm_array2pwm_array(arr, background_probs=DEFAULT_BASE_BACKGROUND):
     b = background_probs2array(background_probs)
     b = b.reshape([1, 4, 1])
     return (np.exp(arr) * b).astype(arr.dtype)
+
+
+def load_motif_db(filename, skipn_matrix=0):
+    """Read the motif file in the following format
+
+    ```
+    >motif_name
+    <skip n>0.1<delim>0.2<delim>0.5<delim>0.6
+    ...
+    >motif_name2
+    ....
+    ```
+
+    Delim can be anything supported by np.loadtxt
+
+    # Arguments
+        filename: str, file path
+        skipn_matrix: integer, number of characters to skip when reading
+    the numeric matrix (for Encode = 2)
+
+    # Returns
+        Dictionary of numpy arrays
+
+    """
+
+    # read-lines
+    if filename.endswith(".gz"):
+        f = gzip.open(filename, 'rt', encoding='utf-8')
+    else:
+        f = open(filename, 'r')
+    lines = f.readlines()
+    f.close()
+
+    motifs_dict = {}
+    motif_lines = ""
+    motif_name = None
+
+    def lines2matrix(lines):
+        return np.loadtxt(StringIO(lines))
+
+    for line in lines:
+        if line.startswith(">"):
+            if motif_lines:
+                # lines -> matrix
+                motifs_dict[motif_name] = lines2matrix(motif_lines)
+            motif_name = line[1:].strip()
+            motif_lines = ""
+        else:
+            motif_lines += line[skipn_matrix:]
+
+    if motif_lines and motif_name is not None:
+        motifs_dict[motif_name] = lines2matrix(motif_lines)
+
+    return motifs_dict

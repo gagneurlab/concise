@@ -2,7 +2,7 @@
 
 __author__ = 'Žiga Avsec'
 __email__ = 'avsec@in.tum.de'
-__version__ = '0.6.1'
+__version__ = '0.6.5'
 
 from . import layers
 from . import preprocessing
@@ -28,3 +28,16 @@ for mod in custom_objects_modules:
 
 # remove variables from the scope
 del get_custom_objects
+
+
+# Setup logging
+import logging
+
+log_formatter = \
+    logging.Formatter('%(levelname)s:%(asctime)s:%(name)s] %(message)s')
+_logger = logging.getLogger('concise')
+_handler = logging.StreamHandler()
+_handler.setLevel(logging.DEBUG)
+_handler.setFormatter(log_formatter)
+_logger.setLevel(logging.DEBUG)
+_logger.addHandler(_handler)

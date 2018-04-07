@@ -6,7 +6,7 @@ import hyperopt
 from hyperopt.utils import coarse_utcnow
 from hyperopt.mongoexp import MongoTrials
 import concise.eval_metrics as ce
-from concise.utils.helper import write_json, merge_dicts
+from concise.utils.helper import write_json, merge_dicts, _to_string
 from concise.utils.model_data import (subset, split_train_test_idx, split_KFold_idx)
 from datetime import datetime, timedelta
 from uuid import uuid4
@@ -31,15 +31,15 @@ DEFAULT_SAVE_DIR = "/s/project/deepcis/hyperopt/"
 
 
 def test_fn(fn, hyper_params, n_train=1000, tmp_dir="/tmp/concise_hyopt_test/"):
-    """Test the correctness of the function before executing on large scale
-    1. Run without error
-    2. Correct save/load model to disk
+    """Test the correctness of the compiled objective function (CompileFN). I will also test
+    model saving/loading from disk.
 
     # Arguments
         fn: CompileFN instance
         hyper_params: pyll graph of hyper-parameters - as later provided to `hyperopt.fmin`
         n_train: int, number of training points
         tmp_dir: Temporary path where to write the trained model.
+
     """
     def wrap_data_fn(data_fn, n_train=100):
         def new_data_fn(*args, **kwargs):
@@ -76,24 +76,35 @@ def test_fn(fn, hyper_params, n_train=1000, tmp_dir="/tmp/concise_hyopt_test/"):
 
 
 class CMongoTrials(MongoTrials):
+    """`hyperopt.MonoTrials` extended with the following methods:
+
+    - get_trial(tid) - Retrieve trial by tid (Trial ID).
+    - get_param(tid) - Retrieve used hyper-parameters for a trial.
+    - best_trial_tid(rank=0) - Return the trial with lowest loss.
+            - rank - rank=0 means the best model, rank=1 means second best, ...
+    - optimal_epochs(tid) - Number of optimal epochs (after early-stopping)
+    - delete_running(timeout_last_refresh=0, dry_run=False) - Delete jobs stalled in the running state for too long
+            - timeout_last_refresh, int: number of seconds
+            - dry_run, bool: If True, just simulate the removal but don't actually perform it.
+    - valid_tid() - List all valid tid's
+    - train_history(tid=None) - Get train history as pd.DataFrame with columns: `(epoch, loss, val_loss, ...)`
+            - tid: Trial ID or list of trial ID's. If None, report for all trial ID's.
+    - get_ok_results - Return a list of trial results with an "ok" status
+    - load_model(tid) - Load a Keras model of a tid.
+    - as_df - Returns a tidy `pandas.DataFrame` of the trials database.
+
+    # Arguments
+        db_name: str, MongoTrials database name
+        exp_name: strm, MongoTrials experiment name
+        ip: str, MongoDB IP address.
+        port: int, MongoDB port.
+        kill_timeout: int, Maximum runtime of a job (in seconds) before it gets killed. None for infinite.
+        **kwargs: Additional keyword arguments passed to the `hyperopt.MongoTrials` constructor.
+
+    """
 
     def __init__(self, db_name, exp_name,
                  ip=DEFAULT_IP, port=1234, kill_timeout=None, **kwargs):
-        """
-        Concise Mongo trials. Extends MonoTrials with the following four methods:
-
-        - get_trial
-        - best_trial_tid
-        - optimal_epochs
-        - overrides: count_by_state_unsynced
-        - delete_running
-        - valid_tid
-        - train_history
-        - get_ok_results
-        - as_df
-
-        kill_timeout, int: Maximum runtime of a job (in seconds) before it gets killed. None for infinite.
-        """
         self.kill_timeout = kill_timeout
         if self.kill_timeout is not None and self.kill_timeout < 60:
             logger.warning("kill_timeout < 60 -> Very short time for " +
@@ -109,6 +120,7 @@ class CMongoTrials(MongoTrials):
         return self.trials[lid]
 
     def get_param(self, tid):
+        # TODO - return a dictionary - add .to_dict()
         return self.get_trial(tid)["result"]["param"]
 
     def best_trial_tid(self, rank=0):
@@ -288,7 +300,7 @@ class CMongoTrials(MongoTrials):
             df_epoch = self.train_history().groupby("tid")["epoch"].max().reset_index()
             df_epoch.rename(columns={"epoch": "n_epoch"}, inplace=True)
             return pd.merge(df, df_epoch, on="tid", how="left")
-            
+
         results = self.get_ok_results(verbose=verbose)
         rp = [_flatten_dict(_delete_keys(add_eval(x), ignore_vals), separator) for x in results]
         df = pd.DataFrame.from_records(rp)
@@ -340,6 +352,19 @@ def _train_and_eval_single(train, valid, model,
 
 
 def eval_model(model, test, add_eval_metrics={}):
+    """Evaluate model's performance on the test-set.
+
+    # Arguments
+        model: Keras model
+        test: test-dataset. Tuple of inputs `x` and target `y` - `(x, y)`.
+        add_eval_metrics: Additional evaluation metrics to use. Can be a dictionary or a list of functions
+    accepting arguments: `y_true`, `y_predicted`. Alternatively, you can provide names of functions from
+    the `concise.eval_metrics` module.
+
+    # Returns
+        dictionary with evaluation metrics
+
+    """
     # evaluate the model
     logger.info("Evaluate...")
     # - model_metrics
@@ -378,6 +403,47 @@ def get_data(data_fn, param):
 
 
 class CompileFN():
+    """Compile an objective function that
+
+    - trains the model on the training set
+    - evaluates the model on the validation set
+    - reports the performance metric on the validation set as the objective loss
+
+    # Arguments
+        db_name: Database name of the CMongoTrials.
+        exp_name: Experiment name of the CMongoTrials.
+        data_fn: Tuple containing training data as the x,y pair at the first (index=0) element:
+                 `((train_x, test_y), ...)`. If `valid_split` and `cv_n_folds` are both `None`,
+                 the second (index=1) tuple is used as the validation dataset.
+        add_eval_metrics: Additional list of (global) evaluation
+            metrics. Individual elements can be
+            a string (referring to concise.eval_metrics)
+            or a function taking two numpy arrays: `y_true`, `y_pred`.
+            These metrics are ment to supplement those specified in
+            `model.compile(.., metrics = .)`.
+        optim_metric: str; Metric to optimize. Must be in
+            `add_eval_metrics` or `model.metrics_names`.
+        optim_metric_mode: one of {min, max}. In `min` mode,
+            training will stop when the optimized metric
+            monitored has stopped decreasing; in `max`
+            mode it will stop when the optimized metric
+            monitored has stopped increasing; in `auto`
+            mode, the direction is automatically inferred
+            from the name of the optimized metric.
+        valid_split: Fraction of the training points to use for the validation. If set to None,
+                     the second element returned by data_fn is used as the validation dataset.
+        cv_n_folds: If not None, use cross-validation with `cv_n_folds`-folds instead of train, validation split.
+                    Overrides `valid_split` and `use_data_fn_valid`.
+        stratified: boolean. If True, use stratified data splitting in train-validation split or cross-validation.
+        random_state: Random seed for performing data-splits.
+        use_tensorboard: If True, tensorboard callback is used. Each trial is written into a separate `log_dir`.
+        save_model: It not None, the trained model is saved to the `save_dir` directory as hdf5 file.
+                    If save_model="best", save the best model using `keras.callbacks.ModelCheckpoint`, and
+                    if save_model="last", save the model after training it.
+        save_results: If True, the return value is saved as .json to the `save_dir` directory.
+        save_dir: Path to the save directory.
+
+    """
     # TODO - check if we can get (db_name, exp_name) from hyperopt
 
     def __init__(self, db_name, exp_name,
@@ -385,8 +451,8 @@ class CompileFN():
                  model_fn,
                  # validation metric
                  add_eval_metrics=[],
-                 loss_metric="loss",  # val_loss
-                 loss_metric_mode="min",
+                 optim_metric="loss",  # val_loss
+                 optim_metric_mode="min",
                  # validation split
                  valid_split=.2,
                  cv_n_folds=None,
@@ -397,42 +463,8 @@ class CompileFN():
                  save_model="best",
                  save_results=True,
                  save_dir=DEFAULT_SAVE_DIR,
+                 **kwargs
                  ):
-        """
-        # Arguments:
-            db_name: Database name of the CMongoTrials.
-            exp_name: Experiment name of the CMongoTrials.
-            data_fn: Tuple containing training data as the x,y pair at the first (index=0) element:
-                     `((train_x, test_y), ...)`. If `valid_split` and `cv_n_folds` are both `None`,
-                     the second (index=1) tuple is used as the validation dataset.
-            add_eval_metrics: Additional list of (global) evaluation
-                metrics. Individual elements can be
-                a string (referring to concise.eval_metrics)
-                or a function taking two numpy arrays: `y_true`, `y_pred`.
-                These metrics are ment to supplement those specified in
-                `model.compile(.., metrics = .)`.
-            loss_metric: str; Metric to monitor. Must be in
-                `add_eval_metrics` or `model.metrics_names`.
-            loss_metric_mode: one of {min, max}. In `min` mode,
-                training will stop when the metric
-                monitored has stopped decreasing; in `max`
-                mode it will stop when the metric
-                monitored has stopped increasing; in `auto`
-                mode, the direction is automatically inferred
-                from the name of the monitored metric.
-            valid_split: Fraction of the training points to use for the validation. If set to None,
-                         the second element returned by data_fn is used as the validation dataset.
-            cv_n_folds: If not None, use cross-validation with `cv_n_folds`-folds instead of train, validation split.
-                        Overrides `valid_split` and `use_data_fn_valid`.
-            stratified: boolean. If True, use stratified data splitting in train-validation split or cross-validation.
-            random_state: Random seed for performing data-splits.
-            use_tensorboard: If True, tensorboard callback is used. Each trial is written into a separate `log_dir`.
-            save_model: It not None, the trained model is saved to the `save_dir` directory as hdf5 file.
-                        If save_model="best", save the best model using `keras.callbacks.ModelCheckpoint`, and
-                        if save_model="last", save the model after training it.
-            save_results: If True, the return value is saved as .json to the `save_dir` directory.
-            save_dir: Path to the save directory.
-        """
         self.data_fn = data_fn
         self.model_fn = model_fn
         assert isinstance(add_eval_metrics, (list, tuple, set, dict))
@@ -441,14 +473,27 @@ class CompileFN():
         else:
             self.add_eval_metrics = {_to_string(fn_str): _get_ce_fun(fn_str)
                                      for fn_str in add_eval_metrics}
-        assert isinstance(loss_metric, str)
+        assert isinstance(optim_metric, str)
 
-        self.loss_metric = loss_metric
-        assert loss_metric_mode in ["min", "max"]
-        self.loss_metric_mode = loss_metric_mode
+        # backcompatibility:
+        # allow only "loss_metric" and "loss_metric_mode" to be passed in kwargs
+        if "loss_metric" in kwargs and optim_metric == "loss":
+            optim_metric = kwargs["loss_metric"]
+        if "loss_metric_mode" in kwargs and optim_metric_mode == "min":
+            optim_metric_mode = kwargs["loss_metric_mode"]
+        possible_kwargs = ["loss_metric", "loss_metric_mode"]
+        add_arguments = set(kwargs.keys()).difference(possible_kwargs)
 
-        self.data_name = data_fn.__code__.co_name
-        self.model_name = model_fn.__code__.co_name
+        if len(add_arguments) > 0:
+            raise ValueError("Unknown argument(s) {0}. **kwargs accepts only arguments: {0}.  ".
+                             format(add_arguments, possible_kwargs))
+
+        self.optim_metric = optim_metric
+        assert optim_metric_mode in ["min", "max"]
+        self.optim_metric_mode = optim_metric_mode
+
+        self.data_name = data_fn.__name__
+        self.model_name = model_fn.__name__
         self.db_name = db_name
         self.exp_name = exp_name
         # validation
@@ -473,12 +518,12 @@ class CompileFN():
     def save_dir_exp(self):
         return self.save_dir + "/{db}/{exp}/".format(db=self.db_name, exp=self.exp_name)
 
-    def _assert_loss_metric(self, model):
+    def _assert_optim_metric(self, model):
         model_metrics = _listify(model.metrics_names)
         eval_metrics = list(self.add_eval_metrics.keys())
 
-        if self.loss_metric not in model_metrics + eval_metrics:
-            raise ValueError("loss_metric: '{0}' not in ".format(self.loss_metric) +
+        if self.optim_metric not in model_metrics + eval_metrics:
+            raise ValueError("optim_metric: '{0}' not in ".format(self.optim_metric) +
                              "either sets of the losses: \n" +
                              "model.metrics_names: {0}\n".format(model_metrics) +
                              "add_eval_metrics: {0}".format(eval_metrics))
@@ -534,7 +579,7 @@ class CompileFN():
             # no cross-validation
             model = get_model(self.model_fn, train, param)
             print(_listify(model.metrics_names))
-            self._assert_loss_metric(model)
+            self._assert_optim_metric(model)
             if self.valid_split is not None:
                 train_idx, valid_idx = split_train_test_idx(train,
                                                             self.valid_split,
@@ -571,7 +616,7 @@ class CompileFN():
                                                                        self.random_state)):
                 logger.info("Fold {0}/{1}".format(i + 1, self.cv_n_folds))
                 model = get_model(self.model_fn, subset(train, train_idx), param)
-                self._assert_loss_metric(model)
+                self._assert_optim_metric(model)
                 c_model_path = model_path.replace(".h5", "_fold_{0}.h5".format(i))
                 c_callbacks = deepcopy(callbacks)
                 if self.save_model == "best":
@@ -596,8 +641,8 @@ class CompileFN():
             eval_metrics = _mean_dict(eval_metrics_list)
 
         # get loss from eval_metrics
-        loss = eval_metrics[self.loss_metric]
-        if self.loss_metric_mode == "max":
+        loss = eval_metrics[self.optim_metric]
+        if self.optim_metric_mode == "max":
             loss = - loss  # loss should get minimized
 
         time_end = datetime.now()
@@ -614,8 +659,8 @@ class CompileFN():
                "name": {
                    "data": self.data_name,
                    "model": self.model_name,
-                   "loss_metric": self.loss_metric,
-                   "loss_metric_mode": self.loss_metric,
+                   "optim_metric": self.optim_metric,
+                   "optim_metric_mode": self.optim_metric,
                },
                "history": history,
                # execution times
@@ -681,15 +726,6 @@ def _listify(arg):
     return [arg, ]
 
 
-def _to_string(fn_str):
-    if isinstance(fn_str, str):
-        return fn_str
-    elif callable(fn_str):
-        return fn_str.__name__
-    else:
-        raise ValueError("fn_str has to be callable or str")
-
-
 def _get_ce_fun(fn_str):
     if isinstance(fn_str, str):
         return ce.get(fn_str)
@@ -698,17 +734,20 @@ def _get_ce_fun(fn_str):
     else:
         raise ValueError("fn_str has to be callable or str")
 
+
 def _flatten_dict(dd, separator='_', prefix=''):
     return {prefix + separator + k if prefix else k: v
             for kk, vv in dd.items()
             for k, v in _flatten_dict(vv, separator, kk).items()
             } if isinstance(dd, dict) else {prefix: dd}
 
+
 def _flatten_dict_ignore(dd, prefix=''):
     return {k if prefix else k: v
             for kk, vv in dd.items()
             for k, v in _flatten_dict_ignore(vv, kk).items()
             } if isinstance(dd, dict) else {prefix: dd}
+
 
 def _dict_to_filestring(d):
     def to_str(v):

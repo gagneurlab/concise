@@ -20,7 +20,7 @@ class EncodeSplines(object):
     """Transformer (class) for computing the B-spline basis values.
 
     Pre-processing step for spline transformation (`SplineT`) layer.
-    This transformer works on arrays that are either N x D or N x L x D dimensional.
+    This transformer works on arrays that are either `N x D` or `N x L x D` dimensional.
     Last dimension encodes different features (D) and first dimension different examples.
     Knot placement is specific for each feature individually,
     unless `share_knots` is set `True`.
@@ -63,7 +63,7 @@ class EncodeSplines(object):
             self.data_min_[:] = np.min(self.data_min_)
             self.data_max_[:] = np.max(self.data_max_)
 
-    def transform(self, x):
+    def transform(self, x, warn=True):
         """Obtain the transformed values
         """
         # 1. split across last dimension
@@ -72,6 +72,7 @@ class EncodeSplines(object):
         array_list = [encodeSplines(x[..., i].reshape((-1, 1)),
                                     n_bases=self.n_bases,
                                     spline_order=self.degree,
+                                    warn=warn,
                                     start=self.data_min_[i],
                                     end=self.data_max_[i]).reshape(x[..., i].shape + (self.n_bases,))
                       for i in range(x.shape[-1])]
@@ -89,7 +90,7 @@ class EncodeSplines(object):
 # TODO - Should we explicitly state? EncodeSplines1D, EncodeSplines0D, EncodeSplines2D?
 
 # TODO - use as pre-processor function? - predict for the test set
-def encodeSplines(x, n_bases=10, spline_order=3, start=None, end=None):
+def encodeSplines(x, n_bases=10, spline_order=3, start=None, end=None, warn=True):
     """**Deprecated**. Function version of the transformer class `EncodeSplines`.
     Get B-spline base-function expansion
 
@@ -106,6 +107,7 @@ def encodeSplines(x, n_bases=10, spline_order=3, start=None, end=None):
         spline_order: 2 for quadratic, 3 for qubic splines
         start, end: range of values. If None, they are inferred from the data
         as minimum and maximum value.
+        warn: Show warnings.
 
     # Returns
         `np.ndarray` of shape `(x.shape[0], x.shape[1], n_bases)`
@@ -119,13 +121,15 @@ def encodeSplines(x, n_bases=10, spline_order=3, start=None, end=None):
         start = np.nanmin(x)
     else:
         if x.min() < start:
-            print("WARNING, x.min() < start for some elements. Truncating them to start: x[x < start] = start")
+            if warn:
+                print("WARNING, x.min() < start for some elements. Truncating them to start: x[x < start] = start")
             x = _trunc(x, minval=start)
     if end is None:
         end = np.nanmax(x)
     else:
         if x.max() > end:
-            print("WARNING, x.max() > end for some elements. Truncating them to end: x[x > end] = end")
+            if warn:
+                print("WARNING, x.max() > end for some elements. Truncating them to end: x[x > end] = end")
             x = _trunc(x, maxval=end)
     bs = BSpline(start, end,
                  n_bases=n_bases,

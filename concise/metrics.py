@@ -39,36 +39,50 @@ def contingency_table(y, z):
 
 
 def tpr(y, z):
+    """True positive rate `tp / (tp + fn)`
+    """
     tp, tn, fp, fn = contingency_table(y, z)
     return tp / (tp + fn)
 
 
 def tnr(y, z):
+    """True negative rate `tn / (tn + fp)`
+    """
     tp, tn, fp, fn = contingency_table(y, z)
     return tn / (tn + fp)
 
 
 def fpr(y, z):
+    """False positive rate `fp / (fp + tn)`
+    """
     tp, tn, fp, fn = contingency_table(y, z)
     return fp / (fp + tn)
 
 
 def fnr(y, z):
+    """False negative rate `fn / (fn + tp)`
+    """
     tp, tn, fp, fn = contingency_table(y, z)
     return fn / (fn + tp)
 
 
 def precision(y, z):
+    """Precision `tp / (tp + fp)`
+    """
     tp, tn, fp, fn = contingency_table(y, z)
     return tp / (tp + fp)
 
 
 def fdr(y, z):
+    """False discovery rate `fp / (tp + fp)`
+    """
     tp, tn, fp, fn = contingency_table(y, z)
     return fp / (tp + fp)
 
 
 def accuracy(y, z):
+    """Classification accuracy `(tp + tn) / (tp + tn + fp + fn)`
+    """
     tp, tn, fp, fn = contingency_table(y, z)
     return (tp + tn) / (tp + tn + fp + fn)
 
@@ -78,12 +92,16 @@ specificity = tnr
 
 
 def f1(y, z):
+    """F1 score: `2 * (p * r) / (p + r)`, where p=precision and r=recall.
+    """
     _recall = recall(y, z)
     _prec = precision(y, z)
     return 2 * (_prec * _recall) / (_prec + _recall)
 
 
 def mcc(y, z):
+    """Matthews correlation coefficient
+    """
     tp, tn, fp, fn = contingency_table(y, z)
     return (tp * tn - fp * fn) / K.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
 
@@ -106,6 +124,8 @@ def _cat_sample_weights(y, mask=None):
 
 
 def cat_acc(y, z):
+    """Classification accuracy for multi-categorical case
+    """
     weights = _cat_sample_weights(y)
     _acc = K.cast(K.equal(K.argmax(y, axis=-1),
                           K.argmax(z, axis=-1)),

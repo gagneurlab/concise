@@ -139,3 +139,12 @@ def get_from_module(identifier, module_params, ignore_case=True):
     if not item:
         raise ValueError('Invalid identifier "%s"!' % identifier)
     return item
+
+
+def _to_string(fn_str):
+    if isinstance(fn_str, str):
+        return fn_str
+    elif callable(fn_str):
+        return fn_str.__name__
+    else:
+        raise ValueError("fn_str has to be callable or str")

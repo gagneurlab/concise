@@ -6,13 +6,14 @@ from concise.preprocessing import (encodeDNA, encodeSplines,
                                    encodeRNA, encodeAA, encodeCodon,
                                    encodeRNAStructure)
 import concise.layers as cl
+from concise.layers import ConvDNA, ConvRNA, ConvAA
 import concise.initializers as ci
 from concise.utils import PWM
 from keras.models import Model
 import keras.layers as kl
 from keras.models import load_model, Model
 from concise.data import encode
-from concise.utils.plot import heatmap
+from concise.utils.plot import heatmap, seqlogo, seqlogo_fig
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -48,13 +49,13 @@ def manual_test_layer_plots():
     input_dna = cl.InputDNA(seq_length)
 
     # convolutional layer with filters initialized on a PWM
-    x = cl.ConvDNA(filters=1,
-                   kernel_size=motif_width,  # motif width
-                   activation="relu",
-                   kernel_initializer=ci.PSSMKernelInitializer(pwm_list),
-                   bias_initializer=ci.PSSMBiasInitializer(pwm_list, kernel_size=motif_width, mean_max_scale=1)
-                   # mean_max_scale of 1 means that only consensus sequence gets score larger than 0
-                   )(input_dna)
+    x = ConvDNA(filters=2,
+                kernel_size=motif_width,  # motif width
+                activation="relu",
+                kernel_initializer=ci.PSSMKernelInitializer(pwm_list),
+                bias_initializer=ci.PSSMBiasInitializer(pwm_list, kernel_size=motif_width, mean_max_scale=1)
+                # mean_max_scale of 1 means that only consensus sequence gets score larger than 0
+                )(input_dna)
 
     # Smoothing layer - positional-dependent effect
     x = cl.GAMSmooth(n_bases=10, l2_smooth=1e-3, l2=0)(x)
@@ -62,11 +63,74 @@ def manual_test_layer_plots():
     x = kl.Dense(units=1, activation="linear")(x)
     model = Model(inputs=input_dna, outputs=x)
     model.compile("adam", "mse")
+    # TODO - test
     model.layers[1].plot_weights(plot_type="heatmap")
 
     model.layers[1].plot_weights(0, plot_type="motif_raw")
     model.layers[1].plot_weights(0, plot_type="motif_pwm_info")
 
+def manual_test_layer_plots_RNA():
+    motifs = ["TTAATGA"]
+    pwm_list = [PWM.from_consensus(motif) for motif in motifs]
+    seq_length = 100
+    motif_width = 7
+    # specify the input shape
+    input_dna = cl.InputDNA(seq_length)
+
+    # convolutional layer with filters initialized on a PWM
+    x = ConvRNA(filters=1,
+                kernel_size=motif_width,  # motif width
+                activation="relu",
+                kernel_initializer=ci.PSSMKernelInitializer(pwm_list),
+                bias_initializer=ci.PSSMBiasInitializer(pwm_list, kernel_size=motif_width, mean_max_scale=1)
+                # mean_max_scale of 1 means that only consensus sequence gets score larger than 0
+                )(input_dna)
+
+    # Smoothing layer - positional-dependent effect
+    x = cl.GAMSmooth(n_bases=10, l2_smooth=1e-3, l2=0)(x)
+    x = cl.GlobalSumPooling1D()(x)
+    x = kl.Dense(units=1, activation="linear")(x)
+    model = Model(inputs=input_dna, outputs=x)
+    model.compile("adam", "mse")
+    # TODO - test
+    model.layers[1].plot_weights(plot_type="heatmap")
+
+    model.layers[1].plot_weights(0, plot_type="motif_raw")
+    model.layers[1].plot_weights(0, plot_type="motif_pwm_info")
+
+
+def manual_test_layer_plots_AA():
+    motifs = ["ACDEFGGIKNY"]
+
+    seq = encodeAA(motifs)
+
+    seq_length = 100
+    motif_width = 7
+
+    seqlogo_fig(seq[0], vocab="AA")
+    plt.show()
+
+    # specify the input shape
+    input_dna = cl.InputAA(seq_length)
+
+    # convolutional layer with filters initialized on a PWM
+    x = ConvAA(filters=1,
+               kernel_size=motif_width,  # motif width
+               activation="relu",
+               # mean_max_scale of 1 means that only consensus sequence gets score larger than 0
+               )(input_dna)
+
+    # Smoothing layer - positional-dependent effect
+    x = cl.GAMSmooth(n_bases=10, l2_smooth=1e-3, l2=0)(x)
+    x = cl.GlobalSumPooling1D()(x)
+    x = kl.Dense(units=1, activation="linear")(x)
+    model = Model(inputs=input_dna, outputs=x)
+    model.compile("adam", "mse")
+    # TODO - test
+    model.layers[1].plot_weights(plot_type="heatmap")
+
+    model.layers[1].plot_weights(0, plot_type="motif_raw")
+    model.layers[1].plot_weights(0, plot_type="motif_pwm_info")
 
 def manual_test_layer_plots_Codon():
     motifs = ["TTAATGAAT"]

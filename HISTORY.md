@@ -53,3 +53,28 @@
 ## 0.6.0 (2017-07-16)
 
 - Complete re-write. Now moved completely to Keras from pure TensorFlow.
+
+## 0.6.1 (2017-07-16)
+
+- fix: required version keras>=2.0.2
+
+## 0.6.2 (2017-08-17)
+## 0.6.3 (2017-08-16)
+
+- added more documentation
+- ipynb -> docs compilation
+- hocomoco motif database added to `concise.data.hocomoco`
+- added utility function for position extraction
+- fix: hyopt and memoization of data() now works
+- implemented seqlogo plot
+
+## 0.6.4 (2017-08-29)
+
+- Added more documentation
+- hyopt.CompileFN: loss_metric -> optim_metric
+- eval_metrics: y,z -> y_true, y_pred arguments
+- speedup encodeSequences by 4x
+
+## 0.6.5 (2018-01-25)
+
+- Added `gtfparse` dependency for parsing the gtf files

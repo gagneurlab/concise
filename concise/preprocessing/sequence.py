@@ -20,6 +20,24 @@ def _get_vocab_dict(vocab):
     return {l: i for i, l in enumerate(vocab)}
 
 
+def _get_index_dict(vocab):
+    return {i: l for i, l in enumerate(vocab)}
+
+
+def one_hot2token(arr):
+    return arr.argmax(axis=2)
+
+
+# TODO - take into account the neutral vocab
+def one_hot2string(arr, vocab):
+    """Convert a one-hot encoded array back to string
+    """
+    tokens = one_hot2token(arr)
+    indexToLetter = _get_index_dict(vocab)
+
+    return [''.join([indexToLetter[x] for x in row]) for row in tokens]
+
+
 def tokenize(seq, vocab, neutral_vocab=[]):
     """Convert sequence to integers
 
@@ -28,7 +46,7 @@ def tokenize(seq, vocab, neutral_vocab=[]):
        vocab: Vocabulary to use
        neutral_vocab: Neutral vocabulary -> assign those values to -1
 
-    # Returns:
+    # Returns
        List of length `len(seq)` with integers from `-1` to `len(vocab) - 1`
     """
     # Req: all vocabs have the same length
@@ -44,38 +62,60 @@ def tokenize(seq, vocab, neutral_vocab=[]):
     for l in neutral_vocab:
         vocab_dict[l] = -1
 
+    # current performance bottleneck
     return [vocab_dict[seq[(i * nchar):((i + 1) * nchar)]] for i in range(len(seq) // nchar)]
+
+
+# 512 ms vs 121 -> 4x slower than custom token2one_hot
+# def token2one_hot(tvec, vocab_size):
+#     """
+#     Note: everything out of the vucabulary is transformed into `np.zeros(vocab_size)`
+#     """
+#     # This costs the most - memory allocation?
+#     lb = sklearn.preprocessing.LabelBinarizer()
+#     lb.fit(range(vocab_size))
+#     return lb.transform(tvec)
+#     # alternatively:
+#     # return sklearn.preprocessing.label_binarize(tvec, list(range(vocab_size)))
 
 
 def token2one_hot(tvec, vocab_size):
     """
     Note: everything out of the vucabulary is transformed into `np.zeros(vocab_size)`
     """
-    lb = sklearn.preprocessing.LabelBinarizer()
-    lb.fit(range(vocab_size))
-    return lb.transform(tvec)
+    arr = np.zeros((len(tvec), vocab_size))
+
+    tvec_range = np.arange(len(tvec))
+    tvec = np.asarray(tvec)
+    arr[tvec_range[tvec >= 0], tvec[tvec >= 0]] = 1
+    return arr
 
 
 def encodeSequence(seq_vec, vocab, neutral_vocab, maxlen=None,
                    seq_align="start", pad_value="N", encode_type="one_hot"):
-    """Convert the sequence into one-hot-encoding.
+    """Convert a list of genetic sequences into one-hot-encoded array.
 
     # Arguments
-       seq_vec: list of sequences
+       seq_vec: list of strings (genetic sequences)
        vocab: list of chars: List of "words" to use as the vocabulary. Can be strings of length>0,
-           but all need to have the same length. For DNA, this is: ["A", "C", "G", "T"]
+            but all need to have the same length. For DNA, this is: ["A", "C", "G", "T"].
        neutral_vocab: list of chars: Values used to pad the sequence or represent unknown-values. For DNA, this is: ["N"].
-       maxlen, seq_align: see pad_sequences
+       maxlen: int or None,
+            Should we trim (subset) the resulting sequence. If None don't trim.
+            Note that trims wrt the align parameter.
+            It should be smaller than the longest sequence.
+       seq_align: character; 'end' or 'start'
+            To which end should we align sequences?
        encode_type: "one_hot" or "token". "token" represents each vocab element as a positive integer from 1 to len(vocab) + 1.
                   neutral_vocab is represented with 0.
 
     # Returns
         Array with shape for encode_type:
 
-            - "one_hot": (len(seq_vec), maxlen, len(vocab))
-            - "token": (len(seq_vec), maxlen)
+            - "one_hot": `(len(seq_vec), maxlen, len(vocab))`
+            - "token": `(len(seq_vec), maxlen)`
 
-        If maxlen is None, it gets the value of the longest sequence length from seq_vec.
+        If `maxlen=None`, it gets the value of the longest sequence length from `seq_vec`.
     """
     if isinstance(neutral_vocab, str):
         neutral_vocab = [neutral_vocab]
@@ -92,7 +132,7 @@ def encodeSequence(seq_vec, vocab, neutral_vocab, maxlen=None,
 
     if encode_type == "one_hot":
         arr_list = [token2one_hot(tokenize(seq, vocab, neutral_vocab), len(vocab))
-                    for seq in seq_vec]
+                    for i, seq in enumerate(seq_vec)]
     elif encode_type == "token":
         arr_list = [1 + np.array(tokenize(seq, vocab, neutral_vocab)) for seq in seq_vec]
         # we add 1 to be compatible with keras: https://keras.io/layers/embeddings/
@@ -222,9 +262,8 @@ def encodeAA(seq_vec, maxlen=None, seq_align="start", encode_type="one_hot"):
 
 
 def pad_sequences(sequence_vec, maxlen=None, align="end", value="N"):
-    """Pad and/or trim a list of sequences to have common length
+    """Pad and/or trim a list of sequences to have common length. Procedure:
 
-    Procedure:
         1. Pad the sequence with N's or any other string or list element (`value`)
         2. Subset the sequence
 
