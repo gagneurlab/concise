@@ -134,7 +134,8 @@ class CMongoTrials(MongoTrials):
                       if t['result']['status'] == STATUS_OK]
         losses = [float(t['result']['loss']) for t in candidates]
         assert not np.any(np.isnan(losses))
-        lid = np.where(np.argsort(losses).argsort() == rank)[0][0]
+        if losses is not None and len(losses) > 0:
+            lid = np.where(np.argsort(losses).argsort() == rank)[0][0]
         return candidates[lid]["tid"]
 
     def optimal_epochs(self, tid):
