@@ -310,7 +310,7 @@ class ConvCodon(ConvSequence):
 class SplineWeight1D(Layer):
     """Up- or down-weight positions in the activation array of 1D convolutions:
 
-    `x^{out}_{ijk} = x^{in}_{ijk} + f_S^k(j) \;,`
+    `x^{out}_{ijk} = x^{in}_{ijk}* (1 + f_S^k(j)) \;,`
     where f_S is the spline transformation.
 
     # Arguments
