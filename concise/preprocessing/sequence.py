@@ -310,7 +310,8 @@ def pad_sequences(sequence_vec, maxlen=None, align="end", value="N"):
         maxlen = int(maxlen)
 
     if max_seq_len < maxlen:
-        #print("WARNING: Maximum sequence length (%s) is less than maxlen (%s)" % (max_seq_len, maxlen))
+        import warnings
+        warnings.warn("Maximum sequence length (%s) is less than maxlen (%s)" % (max_seq_len, maxlen))
         max_seq_len = maxlen
 
     # check the case when len > 1
