@@ -112,8 +112,8 @@ def standardize_polygons_str(data_str):
         polygons_data.append(data)
 
     # standardize the coordinates
-    min_coords = np.vstack(data.min(0) for data in polygons_data).min(0)
-    max_coords = np.vstack(data.max(0) for data in polygons_data).max(0)
+    min_coords = np.vstack([data.min(0) for data in polygons_data]).min(0)
+    max_coords = np.vstack([data.max(0) for data in polygons_data]).max(0)
     for data in polygons_data:
         data[:, ] -= min_coords
         data[:, ] /= (max_coords - min_coords)
