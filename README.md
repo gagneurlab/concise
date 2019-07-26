@@ -26,7 +26,7 @@ Concise (originally CONvolutional neural networks for CIS-regulatory Elements) a
 
 ## Installation
 
-Concise is available for Python versions greater than 3.4 and can be installed from [PyPI](pypi.python.org) using `pip`:
+Concise is tested for python versions 3.5 and 3.6 and can be installed from [PyPI](pypi.python.org) using `pip`:
 
 ```sh
 pip install concise
