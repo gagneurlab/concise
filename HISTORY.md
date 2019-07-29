@@ -78,3 +78,11 @@
 ## 0.6.5 (2018-01-25)
 
 - Added `gtfparse` dependency for parsing the gtf files
+
+## 0.6.7 (2019-07-29)
+
+- cosmetic changes to get rid of warnings due to external package updates
+  - https://github.com/gagneurlab/concise/commit/cf9ec50238e5ef3a9fee4a6bcb57ea24bfaca09d
+  - https://github.com/gagneurlab/concise/commit/761571772050ea1b892c6c3d89c1beebd85430ff
+  - https://github.com/gagneurlab/concise/commit/9277d15b6f97d923ecc0297c5b40f80dba382a54
+  - https://github.com/gagneurlab/concise/commit/2c704312203c388e1b2bde165c26ea647011d600
