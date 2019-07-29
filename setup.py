@@ -9,8 +9,8 @@ if sys.version_info[0] != 3:
     # sys.exit("Only Python 3 is supported")
     print("WARNING: Only Python 3 is supported")
 
-with open('README.md') as readme_file:
-    readme = readme_file.read()
+# with open('README.md') as readme_file:
+#     readme = readme_file.read()
 
 requirements = [
     "numpy",
@@ -35,7 +35,7 @@ setup(
     name='concise',
     version='0.6.6',
     description="CONCISE (COnvolutional Neural for CIS-regulatory Elements)",
-    long_description=readme,
+    # long_description=readme,
     author="Žiga Avsec",
     author_email='avsec@in.tum.de',
     url='https://github.com/gagneurlab/concise',
