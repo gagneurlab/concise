@@ -310,7 +310,8 @@ def pad_sequences(sequence_vec, maxlen=None, align="end", value="N"):
         maxlen = int(maxlen)
 
     if max_seq_len < maxlen:
-        print("WARNING: Maximum sequence length (%s) is less than maxlen (%s)" % (max_seq_len, maxlen))
+        import warnings
+        warnings.warn("Maximum sequence length (%s) is less than maxlen (%s)" % (max_seq_len, maxlen))
         max_seq_len = maxlen
 
     # check the case when len > 1
@@ -324,13 +325,13 @@ def pad_sequences(sequence_vec, maxlen=None, align="end", value="N"):
     def pad(seq, max_seq_len, value="N", align="end"):
         seq_len = len(seq)
         assert max_seq_len >= seq_len
-        if align is "end":
+        if align == "end":
             n_left = max_seq_len - seq_len
             n_right = 0
-        elif align is "start":
+        elif align == "start":
             n_right = max_seq_len - seq_len
             n_left = 0
-        elif align is "center":
+        elif align == "center":
             n_left = (max_seq_len - seq_len) // 2 + (max_seq_len - seq_len) % 2
             n_right = (max_seq_len - seq_len) // 2
         else:
@@ -346,11 +347,11 @@ def pad_sequences(sequence_vec, maxlen=None, align="end", value="N"):
         seq_len = len(seq)
 
         assert maxlen <= seq_len
-        if align is "end":
+        if align == "end":
             return seq[-maxlen:]
-        elif align is "start":
+        elif align == "start":
             return seq[0:maxlen]
-        elif align is "center":
+        elif align == "center":
             dl = seq_len - maxlen
             n_left = dl // 2 + dl % 2
             n_right = seq_len - dl // 2
