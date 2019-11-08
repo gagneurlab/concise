@@ -20,7 +20,7 @@ requirements = [
     "matplotlib",
     # "tensorflow", # - not per-se required
     # "glmnet",
-    "keras>=2.0.4",
+    "keras>=2.0.4,<=2.2.5",
     'descartes',
     'shapely',
     'gtfparse>=1.0.7'
