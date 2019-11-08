@@ -21,7 +21,6 @@ requirements = [
     # "tensorflow", # - not per-se required
     # "glmnet",
     "keras>=2.0.4",
-    'hyperopt',
     'descartes',
     'shapely',
     'gtfparse>=1.0.7'
@@ -29,6 +28,7 @@ requirements = [
 
 test_requirements = [
     "pytest",
+    'hyperopt',
 ]
 
 setup(
