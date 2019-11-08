@@ -2,15 +2,11 @@
 """
 from keras.callbacks import EarlyStopping, History, TensorBoard, ModelCheckpoint
 from keras.models import load_model
-import hyperopt
-from hyperopt.utils import coarse_utcnow
-from hyperopt.mongoexp import MongoTrials
 import concise.eval_metrics as ce
 from concise.utils.helper import write_json, merge_dicts, _to_string
 from concise.utils.model_data import (subset, split_train_test_idx, split_KFold_idx)
 from datetime import datetime, timedelta
 from uuid import uuid4
-from hyperopt import STATUS_OK
 import numpy as np
 import pandas as pd
 from copy import deepcopy
@@ -41,6 +37,9 @@ def test_fn(fn, hyper_params, n_train=1000, tmp_dir="/tmp/concise_hyopt_test/"):
         tmp_dir: Temporary path where to write the trained model.
 
     """
+    import hyperopt
+    from hyperopt import STATUS_OK
+
     def wrap_data_fn(data_fn, n_train=100):
         def new_data_fn(*args, **kwargs):
             data = data_fn(*args, **kwargs)
@@ -73,6 +72,12 @@ def test_fn(fn, hyper_params, n_train=1000, tmp_dir="/tmp/concise_hyopt_test/"):
                      key=os.path.getctime)
     assert datetime.fromtimestamp(os.path.getctime(model_path)) > start_time
     load_model(model_path)
+
+
+try:
+    from hyperopt.mongoexp import MongoTrials
+except ModuleNotFoundError:
+    MongoTrials = object
 
 
 class CMongoTrials(MongoTrials):
@@ -130,6 +135,7 @@ class CMongoTrials(MongoTrials):
         rank=1 means second best
         ...
         """
+        from hyperopt import STATUS_OK
         candidates = [t for t in self.trials
                       if t['result']['status'] == STATUS_OK]
         losses = [float(t['result']['loss']) for t in candidates]
@@ -176,6 +182,7 @@ class CMongoTrials(MongoTrials):
 
         timeout_last_refresh, int: number of seconds
         """
+        from hyperopt.utils import coarse_utcnow
         running_all = self.handle.jobs_running()
         running_timeout = [job for job in running_all
                            if coarse_utcnow() > job["refresh_time"] +
@@ -529,6 +536,7 @@ class CompileFN():
                              "add_eval_metrics: {0}".format(eval_metrics))
 
     def __call__(self, param):
+        from hyperopt import STATUS_OK
         time_start = datetime.now()
 
         # set default early-stop parameters
