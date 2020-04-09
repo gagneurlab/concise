@@ -50,14 +50,14 @@ def extract_landmarks(gtf, landmarks=ALL_LANDMARKS):
 
 def range_start(gtf):
     position = np.where(gtf.strand == "-", gtf.end, gtf.start)
-    return pd.DataFrame.from_items([("seqname", gtf.seqname),
+    return pd.DataFrame.from_records([("seqname", gtf.seqname),
                                     ("position", position),
                                     ("strand", gtf.strand)])
 
 
 def range_end(gtf):
     position = np.where(gtf.strand == "-", gtf.start, gtf.end)
-    return pd.DataFrame.from_items([("seqname", gtf.seqname),
+    return pd.DataFrame.from_records([("seqname", gtf.seqname),
                                     ("position", position),
                                     ("strand", gtf.strand)])
 
