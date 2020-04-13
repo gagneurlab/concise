@@ -21,13 +21,3 @@ install:
   - pip install -U pip
   - pip install -U tox
 script: travis_wait 30 tox -e ${TOXENV}
-deploy:
-  provider: pypi
-  distributions: sdist bdist_wheel
-  user: avsecz
-  password:
-    secure: F8mJjB5wnWaXVYzHTBzAJjow1FnyMEZrnRXMyAg9qEkbdC4do88f75sfy/z8wJBPoypIx3FDG+U7bwvaA2Rp1087L+xEBxwj1BjGH/4e+sbVJjtoMpX65njCphZVZK6ceYyui4rS65PWVMrZ4j8w+0OvlVJLFA8AICoCMhBHbtPbBbdYZwT7asy+GYyxDJK2sKtq8vZPr0FFyh4lTxzlRA8GkBdofmO9frdBqxsBGQGOSY88B4kg72jx9nZpbB6VV2+EZfPsBAKQLhxILQ/InSS55Fp3peSQw9HQ2kMgYYUJRQyZTP8AI8+UzPLFm+qE/ZtBF1ZUYW3Jt+8AQdjgJE3J+ARi7DqDE2VDeVTpr8hbY8i0RqQlAtII7cRBWKz2UvXCw49QBnlBUtXre02tiTouKhb+ts32IDWeuKdU3shgo5/dDT+QNihSYf9fVJHLk8zUTn7hbcRIFO2dwDzLrtWWFnSPWEGGoPhmj++1J32EkJDxmfK3Dl+6Gqc9RTfDEFfK5nhovBDwbCxdFkzJygWk3npfOCQPvsQgygvwa9SK2Xk/apYUVpT3RW5s68w0yorTXL9+ArOkfmGPsgs3JUH83fssJsIKJUFD2MfgScCvwInm9CKRinkuDvpdKdAEuLq7PVQYbwiU7uuwKqjITj3NEhN2z3+S6pPvtbwoP4U=
-  on:
-    tags: true
-    repo: avsecz/concise
-    condition: $TOXENV == py35
