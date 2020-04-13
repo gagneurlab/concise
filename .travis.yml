@@ -5,11 +5,6 @@ dist: trusty
 services:
   - mongodb
   
-branches:
-  only:
-  - master
-  - /^devel.*$/
-  
 matrix:
     include:
         #- python: 3.4
