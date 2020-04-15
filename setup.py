@@ -33,7 +33,7 @@ test_requirements = [
 
 setup(
     name='concise',
-    version='0.6.8',
+    version='0.6.9',
     description="CONCISE (COnvolutional Neural for CIS-regulatory Elements)",
     # long_description=readme,
     author="Žiga Avsec",
